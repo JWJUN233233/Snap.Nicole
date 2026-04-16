@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Snap.Nicole (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "Snap.Nicole (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
