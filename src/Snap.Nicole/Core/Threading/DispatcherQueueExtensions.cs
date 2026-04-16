@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace Snap.Nicole.Core.Threading;
 
-internal static class DispatcherQueueExtension
+internal static class DispatcherQueueExtensions
 {
     private static readonly ObjectPool<ManualResetEventSlim> EventPool = new DefaultObjectPoolProvider().Create(new PooledManualResetEventSlimPolicy());
 

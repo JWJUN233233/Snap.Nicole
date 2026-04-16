@@ -1,0 +1,4 @@
+﻿Shell_NotifyIconW
+
+E_FAIL
+ERROR_TIMEOUT

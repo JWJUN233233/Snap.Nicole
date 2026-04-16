@@ -2,3 +2,4 @@
 src/Snap.Nicole/bin
 src/Snap.Nicole/obj
 *.user
+src/.idea

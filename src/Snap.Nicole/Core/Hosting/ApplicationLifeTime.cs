@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Xaml;
 using System;
 using System.Threading.Tasks;
 
@@ -13,6 +14,6 @@ internal sealed class ApplicationLifeTime(IHost host) : IApplicationLifeTime
             await host.StopAsync();
         }
 
-        Environment.Exit(0);
+        Application.Current.Exit();
     }
 }
