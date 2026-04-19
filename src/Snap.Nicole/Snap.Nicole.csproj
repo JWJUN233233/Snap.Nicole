@@ -12,6 +12,8 @@
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>disable</ImplicitUsings>
     <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <WindowsAppSdkUndockedRegFreeWinRTInitialize>true</WindowsAppSdkUndockedRegFreeWinRTInitialize>
@@ -48,9 +50,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Snap.Nicole.Native\Snap.Nicole.Native.vcxproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Native\" />
   </ItemGroup>
 
   <!--
