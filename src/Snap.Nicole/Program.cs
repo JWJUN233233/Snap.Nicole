@@ -5,8 +5,11 @@ using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
 using Snap.Nicole.Core.Threading;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using WinRT;
+
+[assembly: DisableRuntimeMarshalling]
 
 namespace Snap.Nicole;
 
@@ -15,8 +18,8 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
-        IHostBuilder builder = Host.CreateDefaultBuilder(args);
-        builder.ConfigureServices(static (context, services) =>
+        IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
+        hostBuilder.ConfigureServices(static (context, services) =>
         {
             services
                 .AddXamlApplication<App>()
@@ -26,17 +29,17 @@ internal static class Program
                 });
         });
 
-        IHost host = builder.Build();
+        IHost host = hostBuilder.Build();
         App.Host = host;
         App.IsHostInitialized = true;
 
         ComWrappersSupport.InitializeComWrappers();
-        Application.Start(ignored =>
+        Application.Start(static ignored =>
         {
             SynchronizationContextPolyfill context = new(DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
 
-            App app = host.Services.GetRequiredService<App>();
+            App app = App.Host.Services.GetRequiredService<App>();
         });
     }
 }

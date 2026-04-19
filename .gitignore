@@ -3,3 +3,6 @@ src/Snap.Nicole/bin
 src/Snap.Nicole/obj
 *.user
 src/.idea
+src/packages
+src/x64/Debug
+src/Snap.Nicole.Native/x64/Debug

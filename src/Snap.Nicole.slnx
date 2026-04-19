@@ -1,13 +1,12 @@
 <Solution>
   <Configurations>
-    <Platform Name="ARM64" />
     <Platform Name="x64" />
-    <Platform Name="x86" />
   </Configurations>
-  <Project Path="Snap.Nicole/Snap.Nicole.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
+  <Project Path="Snap.Nicole.Native/Snap.Nicole.Native.vcxproj" Id="6cbeb489-3946-447d-a1b9-155899bba2be">
     <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="Snap.Nicole/Snap.Nicole.csproj">
+    <Platform Solution="*|x64" Project="x64" />
     <Deploy />
   </Project>
 </Solution>

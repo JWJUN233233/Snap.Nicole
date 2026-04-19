@@ -15,7 +15,7 @@ internal static class ServiceCollectionExtensions
             XamlWindowBuilder xamlWindowBuilder = new(services);
             configure(xamlWindowBuilder);
 
-            services.TryAddTransient(typeof(IWindowLifeTime<>), typeof(WindowLifeTime<>));
+            services.TryAddSingleton(typeof(IWindowLifeTime<>), typeof(WindowLifeTime<>));
             return services;
         }
 

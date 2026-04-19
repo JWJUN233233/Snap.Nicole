@@ -24,7 +24,7 @@ public partial class App : Application
     {
         if (IsHostInitialized)
         {
-            _ = Host.StartAsync().ContinueWith(task =>
+            _ = Host.StartAsync().ContinueWith(static task =>
             {
                 Host.Services.GetRequiredService<IWindowLifeTime<MainWindow>>().Show();
             }, TaskScheduler.FromCurrentSynchronizationContext());
