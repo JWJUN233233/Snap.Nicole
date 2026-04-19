@@ -24,6 +24,7 @@ namespace Snap::Nicole::Native
     {
         static const UINT s_wmTaskbarCreated = RegisterWindowMessageW(L"TaskbarCreated");
         static const UINT s_wmNotifyIconCallback = RegisterWindowMessageW(L"SnapNicoleNotifyIconCallback");
+        static wil::srwlock s_lock;
         static std::unordered_map<HWND, std::tuple<NicoleNativeNotifyIconCallback, LPVOID>> s_callbacks;
         static std::unordered_map<HWND, GUID> s_iconIds;
 
@@ -162,6 +163,7 @@ namespace Snap::Nicole::Native
                 return DefWindowProcW(hWnd, uMsg, wParam, lParam);
             }
 
+            auto lock = s_lock.lock_shared();
             auto& [callback, userData] = s_callbacks[hWnd];
             GUID id = s_iconIds[hWnd];
 
@@ -234,6 +236,7 @@ namespace Snap::Nicole::Native
         m_hWndMessage = CreateWindowExW(0, MAKEINTATOM(m_atomWndClass), L"SnapNicoleNotifyIconMessageWindow", WS_OVERLAPPED, 0, 0, 0, 0, NULL, NULL, NULL, NULL);
         RETURN_LAST_ERROR_IF_MSG(!m_hWndMessage, "Failed to create window");
 
+        auto lock = Private::NotifyIcon::s_lock.lock_exclusive();
         Private::NotifyIcon::s_callbacks[m_hWndMessage] = { callback, userData };
         Private::NotifyIcon::s_iconIds[m_hWndMessage] = m_iconId;
 
@@ -242,6 +245,7 @@ namespace Snap::Nicole::Native
 
     HRESULT NicoleNativeNotifyIcon::Recreate(LPCWSTR tip)
     {
+        // We can ignore the error of deleting a non-existing icon, since we want to make sure the icon is deleted before adding it again
         Private::NotifyIcon::Delete(&m_iconId);
 
         // ERROR_NO_TOKEN
@@ -270,6 +274,7 @@ namespace Snap::Nicole::Native
 
         if (hWnd)
         {
+            auto lock = Private::NotifyIcon::s_lock.lock_exclusive();
             Private::NotifyIcon::s_callbacks.erase(hWnd);
             Private::NotifyIcon::s_iconIds.erase(hWnd);
         }
@@ -279,11 +284,7 @@ namespace Snap::Nicole::Native
 
     HRESULT NicoleNativeNotifyIcon::IsPromoted(BOOL* pIsPromoted)
     {
-        if (pIsPromoted == nullptr)
-        {
-            return S_OK;
-        }
-
+        RETURN_HR_IF_NULL_MSG(E_POINTER, pIsPromoted, FORMAT_ARGUMENT_NULL_MSG(pIsPromoted));
         *pIsPromoted = FALSE;
 
         HRESULT result;
@@ -334,7 +335,8 @@ namespace Snap::Nicole::Native
                 DWORD error = GetLastError();
                 if (error == ERROR_SUCCESS)
                 {
-                    *pIsPromoted = TRUE;
+                    // If the Button is not found, it means the notify icon is not promoted to the overflow area, we can directly return true without comparing the rect
+                    *pIsPromoted = FALSE;
                     return S_OK;
                 }
                 else
