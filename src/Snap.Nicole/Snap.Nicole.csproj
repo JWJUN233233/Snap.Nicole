@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Snap.Nicole.Native\Snap.Nicole.Native.vcxproj" />
+    <ProjectReference Include="..\Snap.Nicole.SourceGeneration\Snap.Nicole.SourceGeneration.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=netstandard2.0" />
   </ItemGroup>
 
   <!--

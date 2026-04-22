@@ -6,7 +6,7 @@ using WinRT.Interop;
 
 namespace Snap.Nicole.Native;
 
-internal sealed unsafe class NicoleNativeNotifyIcon(ObjectReference<NicoleNativeNotifyIcon.Vftbl> objRef)
+internal sealed unsafe partial class NicoleNativeNotifyIcon(ObjectReference<NicoleNativeNotifyIcon.Vftbl> objRef)
 {
     public BOOL IsPromoted
     {
@@ -50,7 +50,7 @@ internal sealed unsafe class NicoleNativeNotifyIcon(ObjectReference<NicoleNative
 
     internal readonly unsafe partial struct Callback
     {
-        // [GeneratedUnmanagedFunctionPointer]
+        [GeneratedUnmanagedFunctionPointer]
         private readonly delegate* unmanaged[Stdcall]<CallbackKind, RECT, POINT, nint, void> value;
     }
 
