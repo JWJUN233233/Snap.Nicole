@@ -2,6 +2,5 @@
 
 namespace Snap.Nicole.Native;
 
-internal sealed class GeneratedUnmanagedFunctionPointerAttribute : Attribute
-{
-}
+[AttributeUsage(AttributeTargets.Field, Inherited = false)]
+internal sealed class GeneratedUnmanagedFunctionPointerAttribute : Attribute;
