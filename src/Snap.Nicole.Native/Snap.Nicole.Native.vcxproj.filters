@@ -21,6 +21,9 @@
     <ClInclude Include="NicoleNative.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="WindowUtilities.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -30,6 +33,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="NicoleNative.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowUtilities.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="NicoleNativeWindowSubclass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

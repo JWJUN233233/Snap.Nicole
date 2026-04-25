@@ -160,11 +160,14 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="NicoleNative.h" />
+    <ClInclude Include="WindowUtilities.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="NicoleNative.cpp" />
     <ClCompile Include="NicoleNativeNotifyIcon.cpp" />
+    <ClCompile Include="NicoleNativeWindowSubclass.cpp" />
+    <ClCompile Include="WindowUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

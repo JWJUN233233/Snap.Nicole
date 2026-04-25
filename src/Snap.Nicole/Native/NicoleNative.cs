@@ -1,4 +1,5 @@
-﻿using Snap.Nicole.Native.Foundation;
+﻿using Snap.Nicole.Core.Hosting;
+using Snap.Nicole.Native.Foundation;
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -12,6 +13,7 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
     public const string DllName = "Snap.Nicole.Native.dll";
     public const string IID_INicoleNative = "E5EEEB3A-C782-4C90-8F93-91830D7F1F58";
     public const string IID_INicoleNativeNotifyIcon = "6F37022E-238B-426D-8C91-07A431B00FAC";
+    public const string IID_INicoleNativeWindowSubclass = "2F14C477-E0CF-40D5-BBA4-7DA17D63C736";
 
     public static NicoleNative Default { get => LazyInitializer.EnsureInitialized(ref field, NicoleCreateInstance); }
 
@@ -35,6 +37,13 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
         }
     }
 
+    public NicoleNativeWindowSubclass MakeWindowSubclass(HWND hWnd, NicoleNativeWindowSubclass.Callback callback, GCHandle<WindowSubclassLifeTime> userData)
+    {
+        nint pv = default;
+        Marshal.ThrowExceptionForHR(objRef.Vftbl.MakeWindowSubclass(objRef.ThisPtr, hWnd, callback, userData, (NicoleNativeWindowSubclass.Vftbl**)&pv));
+        return new(ObjectReference<NicoleNativeWindowSubclass.Vftbl>.Attach(ref pv, typeof(NicoleNativeWindowSubclass.Vftbl).GUID));
+    }
+
     [DllImport(DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
     private static extern HRESULT NicoleCreateInstance(Vftbl** ppv);
 
@@ -42,7 +51,7 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
     internal readonly struct Vftbl
     {
         internal readonly IUnknownVftbl IUnknownVftbl;
-        // virtual HRESULT APIENTRY MakeNotifyIcon(LPCWSTR iconPath, LPCGUID pId, INicoleNativeNotifyIcon** ppv) = 0;
         internal readonly delegate* unmanaged[Stdcall]<nint, PCWSTR, Guid*, NicoleNativeNotifyIcon.Vftbl**, HRESULT> MakeNotifyIcon;
+        internal readonly delegate* unmanaged[Stdcall]<nint, HWND, NicoleNativeWindowSubclass.Callback, GCHandle<WindowSubclassLifeTime>, NicoleNativeWindowSubclass.Vftbl**, HRESULT> MakeWindowSubclass;
     }
 }

@@ -13,6 +13,14 @@ namespace Snap::Nicole::Native
         RETURN_IF_FAILED_MSG(result, "The ctor of NicoleNativeNotifyIcon failed");
         return S_OK;
     }
+
+    HRESULT NicoleNative::MakeWindowSubclass(HWND hWnd, NicoleNativeWindowSubclassCallback callback, LPVOID userData, INicoleNativeWindowSubclass** ppv)
+    {
+        RETURN_HR_IF_NULL_MSG(E_POINTER, callback, FORMAT_ARGUMENT_NULL_MSG(callback));
+        RETURN_HR_IF_NULL_MSG(E_POINTER, ppv, FORMAT_ARGUMENT_NULL_MSG(ppv));
+        RETURN_IF_FAILED_MSG(Make<NicoleNativeWindowSubclass>(hWnd, callback, userData).CopyTo(ppv), "Failed to make NicoleNativeWindowSubclass");
+        return S_OK;
+    }
 }
 
 using namespace Microsoft::WRL;

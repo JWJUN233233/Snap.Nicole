@@ -4,6 +4,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
 using Snap.Nicole.Core.Threading;
+using Snap.Nicole.UI.Shell;
 using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -25,7 +26,9 @@ internal static class Program
                 .AddXamlApplication<App>()
                 .AddXamlWindows(static builder =>
                 {
-                    builder.AddXamlWindow<MainWindow>();
+                    builder
+                        .AddXamlWindow<MainWindow>()
+                        .AddXamlWindow<NotifyIconXamlHostWindow>();
                 });
         });
 

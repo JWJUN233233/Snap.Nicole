@@ -2,6 +2,9 @@
   <Configurations>
     <Platform Name="x64" />
   </Configurations>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
   <Project Path="Snap.Nicole.Native/Snap.Nicole.Native.vcxproj" Id="6cbeb489-3946-447d-a1b9-155899bba2be" />
   <Project Path="Snap.Nicole.SourceGeneration/Snap.Nicole.SourceGeneration.csproj" Id="8bd6a0b8-a06a-446d-ada0-a0bd05129d3f" />
   <Project Path="Snap.Nicole/Snap.Nicole.csproj">

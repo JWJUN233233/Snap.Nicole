@@ -41,12 +41,23 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.6" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.6" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-preview2" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-experimental7" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Snap.Nicole.Native\Snap.Nicole.Native.vcxproj" />
+    <ProjectReference Include="..\Snap.Nicole.Native\Snap.Nicole.Native.vcxproj">
+      <ReferenceOutputAssembly>True</ReferenceOutputAssembly>
+    </ProjectReference>
     <ProjectReference Include="..\Snap.Nicole.SourceGeneration\Snap.Nicole.SourceGeneration.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=netstandard2.0" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <NativePlatform Condition="'$(Platform)' == 'x86'">Win32</NativePlatform>
+    <NativePlatform Condition="'$(NativePlatform)' == ''">$(Platform)</NativePlatform>
+  </PropertyGroup>
+
+  <Target Name="CopyNicoleNativeDll" AfterTargets="Build" Condition="Exists('..\$(NativePlatform)\$(Configuration)\Snap.Nicole.Native.dll')">
+    <Copy SourceFiles="..\$(NativePlatform)\$(Configuration)\Snap.Nicole.Native.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 
   <!--
     Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
