@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.Hosting;
+using Snap.Nicole.UI.Shell;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
@@ -12,7 +13,7 @@ public partial class App : Application
     public static IHost? Host { get; set; }
 
     [MemberNotNullWhen(true, nameof(Host))]
-    public static bool IsHostInitialized {  get; set; }
+    public static bool IsHostInitialized { get; set; }
 
     public App()
     {
@@ -26,7 +27,9 @@ public partial class App : Application
         {
             _ = Host.StartAsync().ContinueWith(static task =>
             {
-                Host.Services.GetRequiredService<IWindowLifeTime<MainWindow>>().Show();
+                IServiceProvider serviceProvider = Host.Services;
+                serviceProvider.GetRequiredService<INotifyIcon>().Create();
+                serviceProvider.GetRequiredService<IWindowLifeTime<MainWindow>>().Show();
             }, TaskScheduler.FromCurrentSynchronizationContext());
         }
     }

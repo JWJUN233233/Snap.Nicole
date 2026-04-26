@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Native;
@@ -7,7 +6,6 @@ using System;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 
 namespace Snap.Nicole.Core.Hosting;
 
@@ -15,41 +13,47 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
     where TWindow : Window
 {
     // All methods in this class must be called on the UI thread, so we don't need to consider thread safety issues.
-    private TWindow? currentWindow;
     private NicoleNativeWindowSubclass? subclass;
-    private GCHandle<WindowSubclassLifeTime> gcHandle;
+    private GCHandle<IWindowSubclassLifeTime> gcHandle;
+
+    public TWindow? Window { get; private set; }
 
     public unsafe void Show()
     {
-        if (currentWindow != null)
+        if (Window == null)
         {
-            currentWindow.Activate();
-            return;
+            TWindow window = serviceProvider.GetRequiredService<TWindow>();
+            Window = window;
+            gcHandle = new(new WindowSubclassLifeTime(window));
+            subclass = NicoleNative.Default.MakeWindowSubclass(window.WindowHandle, NicoleNativeWindowSubclass.Callback.Create(&WindowSubclassLifeTime.WindowSubclassCallback), gcHandle);
+            subclass.Attach();
+
+            AppWindow appWindow = window.AppWindow;
+            appWindow.PersistedStateId = MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window))));
+            appWindow.PlacementRestorationBehavior = PlacementRestorationBehavior.All;
+
+            window.Closed += OnWindowClose;
         }
 
-        currentWindow = serviceProvider.GetRequiredService<TWindow>();
-
-        gcHandle = new(new(currentWindow));
-        subclass = NicoleNative.Default.MakeWindowSubclass(currentWindow.WindowHandle, NicoleNativeWindowSubclass.Callback.Create(&WindowSubclassLifeTime.WindowSubclassCallback), gcHandle);
-        subclass.Attach();
-
-        string windowName = TypeNameHelper.GetTypeDisplayName(currentWindow);
-        byte[] data = CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(windowName));
-        currentWindow.AppWindow.PersistedStateId = MemoryMarshal.AsRef<Guid>(data);
-        currentWindow.AppWindow.PlacementRestorationBehavior = PlacementRestorationBehavior.All;
-
-        currentWindow.Closed += OnWindowClose;
-        currentWindow.Activate();
+        Window.Activate();
     }
 
     public void Close()
     {
-        currentWindow?.Close();
+        Window?.Close();
     }
 
     private void OnWindowClose(object ignore, WindowEventArgs args)
     {
-        // TODO: support closing cancellation
+        if (Window is IXamlWindowCloseHandler handler)
+        {
+            handler.OnWindowClosing(out bool cancel);
+            if (cancel)
+            {
+                args.Handled = true;
+                return;
+            }
+        }
 
         // 1. Detach subclass to avoid callback after window is closed
         subclass?.Detach();
@@ -59,6 +63,6 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
         gcHandle.Dispose();
 
         // 3. Clear window reference
-        currentWindow = null;
+        Window = null;
     }
 }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Snap.Nicole.Native.Foundation;
+﻿namespace Snap.Nicole.Native.Foundation;
 
 internal readonly struct HWND
 {

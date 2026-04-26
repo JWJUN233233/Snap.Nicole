@@ -8,14 +8,14 @@ using static Snap.Nicole.Native.ConstValues;
 
 namespace Snap.Nicole.Core.Hosting;
 
-internal sealed class WindowSubclassLifeTime(Window currentWindow)
+internal sealed class WindowSubclassLifeTime(Window window) : IWindowSubclassLifeTime
 {
-    private Window CurrentWindow { get; } = currentWindow;
+    public Window Window { get; } = window;
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
-    public static unsafe BOOL WindowSubclassCallback(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, GCHandle<WindowSubclassLifeTime> userData, LRESULT* result)
+    public static unsafe BOOL WindowSubclassCallback(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, GCHandle<IWindowSubclassLifeTime> userData, LRESULT* result)
     {
-        WindowSubclassLifeTime? lifeTime = userData.Target;
+        IWindowSubclassLifeTime? lifeTime = userData.Target;
         switch (uMsg)
         {
             case WM_NCRBUTTONDOWN:
@@ -24,7 +24,7 @@ internal sealed class WindowSubclassLifeTime(Window currentWindow)
 
             case WM_NCLBUTTONDBLCLK:
                 {
-                    if (lifeTime.CurrentWindow.AppWindow.Presenter is OverlappedPresenter { IsMaximizable: false })
+                    if (lifeTime.Window.AppWindow.Presenter is OverlappedPresenter { IsMaximizable: false })
                     {
                         return BOOL.FALSE;
                     }
@@ -34,7 +34,7 @@ internal sealed class WindowSubclassLifeTime(Window currentWindow)
 
             case WM_ERASEBKGND:
                 {
-                    if (lifeTime.CurrentWindow is IXamlWindowEraseBackground)
+                    if (lifeTime.Window is IXamlWindowEraseBackground)
                     {
                         *result = BOOL.TRUE;
                         return BOOL.FALSE;

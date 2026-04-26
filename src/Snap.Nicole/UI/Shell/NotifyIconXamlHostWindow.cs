@@ -1,15 +1,19 @@
 ﻿using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.UI.Xaml;
 using System;
 
 namespace Snap.Nicole.UI.Shell;
 
-internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackground
+internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackground, IXamlWindowCloseHandler
 {
+    private readonly IServiceProvider serviceProvider;
+
     public NotifyIconXamlHostWindow(IServiceProvider serviceProvider)
     {
+        this.serviceProvider = serviceProvider;
         Content = new Border();
 
         this.AddExtendedStyleLayered();
@@ -27,5 +31,10 @@ internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackgro
             presenter.IsAlwaysOnTop = true;
             presenter.SetBorderAndTitleBar(false, false);
         }
+    }
+
+    public void OnWindowClosing(out bool cancel)
+    {
+        cancel = !serviceProvider.GetRequiredService<IApplicationLifeTime>().IsExiting;
     }
 }

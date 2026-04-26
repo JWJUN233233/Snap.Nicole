@@ -1,4 +1,5 @@
-using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.DependencyInjection;
+
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
@@ -19,6 +20,8 @@ internal static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        ComWrappersSupport.InitializeComWrappers();
+
         IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
         hostBuilder.ConfigureServices(static (context, services) =>
         {
@@ -29,14 +32,14 @@ internal static class Program
                     builder
                         .AddXamlWindow<MainWindow>()
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
-                });
+                })
+                .AddSingleton<INotifyIcon, NotifyIcon>();
         });
 
         IHost host = hostBuilder.Build();
         App.Host = host;
         App.IsHostInitialized = true;
 
-        ComWrappersSupport.InitializeComWrappers();
         Application.Start(static ignored =>
         {
             SynchronizationContextPolyfill context = new(DispatcherQueue.GetForCurrentThread());

@@ -37,7 +37,7 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
         }
     }
 
-    public NicoleNativeWindowSubclass MakeWindowSubclass(HWND hWnd, NicoleNativeWindowSubclass.Callback callback, GCHandle<WindowSubclassLifeTime> userData)
+    public NicoleNativeWindowSubclass MakeWindowSubclass(HWND hWnd, NicoleNativeWindowSubclass.Callback callback, GCHandle<IWindowSubclassLifeTime> userData)
     {
         nint pv = default;
         Marshal.ThrowExceptionForHR(objRef.Vftbl.MakeWindowSubclass(objRef.ThisPtr, hWnd, callback, userData, (NicoleNativeWindowSubclass.Vftbl**)&pv));
@@ -52,6 +52,6 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
     {
         internal readonly IUnknownVftbl IUnknownVftbl;
         internal readonly delegate* unmanaged[Stdcall]<nint, PCWSTR, Guid*, NicoleNativeNotifyIcon.Vftbl**, HRESULT> MakeNotifyIcon;
-        internal readonly delegate* unmanaged[Stdcall]<nint, HWND, NicoleNativeWindowSubclass.Callback, GCHandle<WindowSubclassLifeTime>, NicoleNativeWindowSubclass.Vftbl**, HRESULT> MakeWindowSubclass;
+        internal readonly delegate* unmanaged[Stdcall]<nint, HWND, NicoleNativeWindowSubclass.Callback, GCHandle<IWindowSubclassLifeTime>, NicoleNativeWindowSubclass.Vftbl**, HRESULT> MakeWindowSubclass;
     }
 }

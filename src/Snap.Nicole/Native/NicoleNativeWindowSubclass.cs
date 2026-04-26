@@ -21,7 +21,7 @@ internal sealed unsafe partial class NicoleNativeWindowSubclass(ObjectReference<
     internal readonly unsafe partial struct Callback
     {
         [GeneratedUnmanagedFunctionPointer]
-        private readonly delegate* unmanaged[Stdcall]<HWND, uint, WPARAM, LPARAM, GCHandle<WindowSubclassLifeTime>, LRESULT*, BOOL> value;
+        private readonly delegate* unmanaged[Stdcall]<HWND, uint, WPARAM, LPARAM, GCHandle<IWindowSubclassLifeTime>, LRESULT*, BOOL> value;
     }
 
     [Guid(NicoleNative.IID_INicoleNativeWindowSubclass)]

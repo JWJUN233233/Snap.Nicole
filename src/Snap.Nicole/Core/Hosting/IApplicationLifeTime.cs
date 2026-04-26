@@ -4,5 +4,7 @@ namespace Snap.Nicole.Core.Hosting;
 
 internal interface IApplicationLifeTime
 {
+    bool IsExiting { get; }
+
     Task ShowdownAsync();
 }

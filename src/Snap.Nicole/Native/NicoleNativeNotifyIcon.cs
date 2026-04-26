@@ -1,4 +1,5 @@
 ﻿using Snap.Nicole.Native.Foundation;
+using Snap.Nicole.UI.Shell;
 using System;
 using System.Runtime.InteropServices;
 using WinRT;
@@ -18,7 +19,7 @@ internal sealed unsafe partial class NicoleNativeNotifyIcon(ObjectReference<Nico
         }
     }
 
-    public void Create(Callback callback, nint userData, ReadOnlySpan<char> tip)
+    public void Create(Callback callback, GCHandle<INotifyIcon> userData, ReadOnlySpan<char> tip)
     {
         fixed (char* pTip = tip)
         {
@@ -51,7 +52,7 @@ internal sealed unsafe partial class NicoleNativeNotifyIcon(ObjectReference<Nico
     internal readonly unsafe partial struct Callback
     {
         [GeneratedUnmanagedFunctionPointer]
-        private readonly delegate* unmanaged[Stdcall]<CallbackKind, RECT, POINT, nint, void> value;
+        private readonly delegate* unmanaged[Stdcall]<CallbackKind, RECT, POINT, GCHandle<INotifyIcon>, void> value;
     }
 
     [Guid(NicoleNative.IID_INicoleNativeNotifyIcon)]
@@ -59,7 +60,7 @@ internal sealed unsafe partial class NicoleNativeNotifyIcon(ObjectReference<Nico
     {
 #pragma warning disable CS0649
         internal readonly IUnknownVftbl IUnknownVftbl;
-        internal readonly delegate* unmanaged[Stdcall]<nint, Callback, nint, PCWSTR, HRESULT> Create;
+        internal readonly delegate* unmanaged[Stdcall]<nint, Callback, GCHandle<INotifyIcon>, PCWSTR, HRESULT> Create;
         internal readonly delegate* unmanaged[Stdcall]<nint, PCWSTR, HRESULT> Recreate;
         internal readonly delegate* unmanaged[Stdcall]<nint, HRESULT> Destroy;
         internal readonly delegate* unmanaged[Stdcall]<nint, BOOL*, HRESULT> IsPromoted;
