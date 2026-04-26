@@ -18,7 +18,12 @@
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <WindowsAppSdkUndockedRegFreeWinRTInitialize>true</WindowsAppSdkUndockedRegFreeWinRTInitialize>
     <ApplicationIcon>Assets\Logo.ico</ApplicationIcon>
+    <NeutralLanguage>zh-CN</NeutralLanguage>
+    <DefaultLanguage>zh-CN</DefaultLanguage>
   </PropertyGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="Resources\SR.resx" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\Logo.ico" />

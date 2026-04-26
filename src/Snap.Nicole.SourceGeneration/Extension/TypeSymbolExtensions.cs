@@ -1,13 +1,11 @@
 ﻿using Microsoft.CodeAnalysis;
 using Snap.Nicole.SourceGeneration.Primitive;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace Snap.Nicole.SourceGeneration.Extension;
 
-internal static class TypeSymbolExtension
+internal static class TypeSymbolExtensions
 {
     public static bool HasOrInheritsFromFullyQualifiedMetadataName(this ITypeSymbol typeSymbol, string name)
     {

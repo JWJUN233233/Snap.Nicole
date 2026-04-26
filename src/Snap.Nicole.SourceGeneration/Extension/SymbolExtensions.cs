@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Snap.Nicole.SourceGeneration.Extension;
 
-internal static class SymbolExtension
+internal static class SymbolExtensions
 {
     private static readonly FrozenSet<char> InvalidFileNameChars = Path.GetInvalidFileNameChars().ToFrozenSet();
 

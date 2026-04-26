@@ -2,7 +2,7 @@
 
 namespace Snap.Nicole.SourceGeneration.Extension;
 
-internal static class SyntaxNodeExtension
+internal static class SyntaxNodeExtensions
 {
     public static string ToFullStringWithHeader(this SyntaxNode node)
     {
