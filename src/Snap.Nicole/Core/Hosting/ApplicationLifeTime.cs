@@ -11,11 +11,11 @@ internal sealed class ApplicationLifeTime(IHost host) : IApplicationLifeTime
     public async Task ShowdownAsync()
     {
         IsExiting = true;
+        Application.Current.Exit();
+
         using (host)
         {
             await host.StopAsync();
         }
-
-        Application.Current.Exit();
     }
 }

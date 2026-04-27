@@ -76,7 +76,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
 
         hostWindowLifeTime.Show();
         flyout.Value ??= new NotifyIconContextMenuFlyout(serviceProvider.GetRequiredService<NotifyIconContextMenuFlyoutViewModel>());
-        hostWindowLifeTime.Window.ShowFlyoutAt(flyout.Value, cursorPos, iconRect);
+        hostWindowLifeTime.Window.ShowFlyoutAt(flyout.Value, iconRect, cursorPos);
     }
 
     public void RequestMainWindow()

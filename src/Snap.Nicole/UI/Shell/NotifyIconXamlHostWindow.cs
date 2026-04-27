@@ -6,7 +6,6 @@ using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.UI.Xaml;
 using System;
-using Windows.Foundation;
 
 namespace Snap.Nicole.UI.Shell;
 
@@ -17,8 +16,13 @@ internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackgro
     public NotifyIconXamlHostWindow(IServiceProvider serviceProvider)
     {
         this.serviceProvider = serviceProvider;
+
+        // The Border class is specially chosen to bring minimal overhead
         Content = new Border();
 
+        // 1. AddExtendedStyleLayered(): Allowing the window to be set to transparent and click-through
+        // 2. SetLayeredWindowTransparency(0): Making the window fully transparent
+        // 3. AddExtendedStyleToolWindow(): Allowing the window can be set to smaller size than the window control buttons
         this.AddExtendedStyleLayered();
         this.SetLayeredWindowTransparency(0);
         this.AddExtendedStyleToolWindow();
@@ -41,8 +45,9 @@ internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackgro
         cancel = !serviceProvider.GetRequiredService<IApplicationLifeTime>().IsExiting;
     }
 
-    public void ShowFlyoutAt(FlyoutBase flyout, POINT point, RECT icon)
+    public void ShowFlyoutAt(FlyoutBase flyout, RECT icon, POINT point)
     {
+        // Enlarge the icon rect to make the flyout position better
         icon.left -= 8;
         icon.top -= 8;
         icon.right += 8;
@@ -54,7 +59,7 @@ internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackgro
         }
 
         this.SwitchTo();
-        AppWindow.MoveAndResize(new(icon.left, icon.top, icon.right - icon.left, icon.bottom - icon.top));
+        AppWindow.MoveAndResize(icon);
 
         flyout.ShowAt(Content, new()
         {

@@ -187,12 +187,24 @@
 
         <Grid
             Grid.Row="0"
+            Padding="8"
             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1">
+            BorderThickness="0,0,0,1"
+            ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Image
+                Grid.Column="0"
+                Width="32"
+                Source="ms-appx:///Assets/Logo.png" />
             <TextBlock
+                Grid.Column="1"
                 Margin="8"
-                Style="{StaticResource BodyTextBlockStyle}"
+                VerticalAlignment="Center"
+                Style="{StaticResource BaseTextBlockStyle}"
                 Text="{snuxm:StringResource Name=AppName}" />
         </Grid>
 
@@ -213,7 +225,10 @@
                 HorizontalAlignment="Right"
                 Orientation="Horizontal"
                 Spacing="2">
-                <AppBarButton AllowFocusOnInteraction="True" Label="TEST MAIN WINDOW">
+                <AppBarButton
+                    AllowFocusOnInteraction="True"
+                    Command="{Binding ShowMainWindowCommand}"
+                    Label="{snuxm:StringResource Name=ShowMainWindow}">
                     <AppBarButton.Icon>
                         <FontIcon
                             Width="20"
@@ -221,7 +236,10 @@
                             Glyph="&#xE80F;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
-                <AppBarButton AllowFocusOnInteraction="True" Label="TEST EXIT">
+                <AppBarButton
+                    AllowFocusOnInteraction="True"
+                    Command="{Binding ExitCommand}"
+                    Label="{snuxm:StringResource Name=ExitApplication}">
                     <AppBarButton.Icon>
                         <FontIcon
                             Width="20"

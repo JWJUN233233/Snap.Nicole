@@ -1,4 +1,6 @@
-﻿namespace Snap.Nicole.Native.Foundation;
+﻿using Windows.Graphics;
+
+namespace Snap.Nicole.Native.Foundation;
 
 internal struct RECT
 {
@@ -13,5 +15,10 @@ internal struct RECT
         this.top = top;
         this.right = right;
         this.bottom = bottom;
+    }
+
+    public static implicit operator RectInt32(RECT rect)
+    {
+        return new RectInt32(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
     }
 }
