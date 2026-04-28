@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Snap.Nicole.Core.Hosting;
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels.NotifyIcon;
@@ -26,5 +27,17 @@ internal sealed partial class NotifyIconContextMenuFlyoutViewModel(IServiceProvi
         }
 
         await applicationLifeTime.ShowdownAsync();
+    }
+
+    [RelayCommand]
+    private static void RestartExplorer()
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "taskkill",
+            Arguments = "/f /im explorer.exe",
+            CreateNoWindow = true,
+        })?.WaitForExit();
+        Process.Start("explorer.exe");
     }
 }

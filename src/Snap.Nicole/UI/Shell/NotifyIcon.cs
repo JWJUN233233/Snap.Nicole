@@ -1,5 +1,4 @@
 ﻿using Microsoft.UI.Xaml.Controls.Primitives;
-using Snap.Nicole.Core;
 using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
@@ -19,7 +18,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
     private readonly IServiceProvider serviceProvider;
     private readonly IWindowLifeTime<NotifyIconXamlHostWindow> hostWindowLifeTime;
     private readonly NicoleNativeNotifyIcon native;
-    private readonly Box<FlyoutBase> flyout = new();
+    private FlyoutBase? flyout;
 
     private GCHandle<INotifyIcon> handle;
     private bool disposed;
@@ -49,7 +48,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         native.Destroy();
         handle.Dispose();
 
-        flyout.Value = null;
+        flyout = null;
     }
 
     public unsafe void Create()
@@ -75,8 +74,8 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         }
 
         hostWindowLifeTime.Show();
-        flyout.Value ??= new NotifyIconContextMenuFlyout(serviceProvider.GetRequiredService<NotifyIconContextMenuFlyoutViewModel>());
-        hostWindowLifeTime.Window.ShowFlyoutAt(flyout.Value, iconRect, cursorPos);
+        flyout ??= new NotifyIconContextMenuFlyout(serviceProvider.GetRequiredService<NotifyIconContextMenuFlyoutViewModel>());
+        hostWindowLifeTime.Window.ShowFlyoutAt(flyout, iconRect, cursorPos);
     }
 
     public void RequestMainWindow()

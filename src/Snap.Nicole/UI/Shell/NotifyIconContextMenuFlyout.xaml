@@ -210,9 +210,10 @@
 
         <StackPanel Grid.Row="1" Padding="0,2">
             <MenuFlyoutItem
-                Icon="{snuxm:FontIcon Glyph=&#xE768;}"
+                Command="{Binding RestartExplorerCommand}"
+                Icon="{snuxm:FontIcon Glyph=&#xE72C;}"
                 Style="{ThemeResource NotifyIconContextMenuFlyoutItemStyle}"
-                Text="TEST" />
+                Text="{snuxm:StringResource Name=RestartExplorer}" />
         </StackPanel>
 
         <Grid
