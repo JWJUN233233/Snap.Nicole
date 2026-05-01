@@ -2,6 +2,7 @@
 using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
+using Snap.Nicole.UI.Xaml.Windows;
 using Snap.Nicole.ViewModels.NotifyIcon;
 using System;
 using System.IO;

@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.UI.Shell;
+using Snap.Nicole.UI.Xaml.Windows;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;

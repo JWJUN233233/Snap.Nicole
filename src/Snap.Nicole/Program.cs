@@ -6,6 +6,9 @@ using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.UI.Shell;
+using Snap.Nicole.UI.Xaml.Navigation;
+using Snap.Nicole.UI.Xaml.Windows;
+using Snap.Nicole.ViewModels;
 using Snap.Nicole.ViewModels.NotifyIcon;
 using System;
 using System.Runtime.CompilerServices;
@@ -34,8 +37,12 @@ internal static class Program
                         .AddXamlWindow<MainWindow>()
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
                 })
+                .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
-                .AddTransient<NotifyIconContextMenuFlyoutViewModel>();
+                .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
+                .AddTransient<MainViewModel>()
+                .AddTransient<HomeViewModel>()
+                .AddTransient<SettingsViewModel>();
         });
 
         IHost host = hostBuilder.Build();

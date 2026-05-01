@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.DependencyInjection;
 using Snap.Nicole.Core.Hosting;
+using Snap.Nicole.UI.Xaml.Windows;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;

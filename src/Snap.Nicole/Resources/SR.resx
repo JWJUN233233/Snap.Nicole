@@ -129,4 +129,13 @@
   <data name="RestartExplorer" xml:space="preserve">
     <value>重启资源管理器</value>
   </data>
+  <data name="HomePageTitle" xml:space="preserve">
+    <value>主页</value>
+  </data>
+  <data name="WelcomeMessage" xml:space="preserve">
+    <value>欢迎使用 Snap Nicole</value>
+  </data>
+  <data name="SettingsPageTitle" xml:space="preserve">
+    <value>设置</value>
+  </data>
 </root>
