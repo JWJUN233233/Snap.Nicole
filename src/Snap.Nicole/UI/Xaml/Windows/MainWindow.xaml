@@ -23,7 +23,7 @@
         <NavigationView.MenuItems>
             <NavigationViewItem
                 snux:NavigationExtensions.NavigateTo="snuxp:HomePage"
-                Content="{snuxm:StringResource Name=HomePageTitle}"
+                Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowHeaderHomePageTitle}"
                 Icon="{snuxm:FontIcon Glyph=&#xE80F;}" />
         </NavigationView.MenuItems>
         <Frame x:Name="ContentFrame" />

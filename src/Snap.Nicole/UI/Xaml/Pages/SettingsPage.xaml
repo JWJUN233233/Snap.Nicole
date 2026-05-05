@@ -12,7 +12,7 @@
         <StackPanel Spacing="8">
             <TextBlock
                 Style="{StaticResource TitleTextBlockStyle}"
-                Text="{snuxm:StringResource Name=SettingsPageTitle}" />
+                Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageHeaderTitle}" />
         </StackPanel>
     </Grid>
 </Page>

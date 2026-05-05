@@ -117,25 +117,25 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AppName" xml:space="preserve">
+  <data name="UIShellNotifyIconContextMenuFlyoutLabelAppName" xml:space="preserve">
     <value>莱恩自动机</value>
   </data>
-  <data name="ExitApplication" xml:space="preserve">
+  <data name="UIShellNotifyIconContextMenuFlyoutLabelExitApplication" xml:space="preserve">
     <value>退出程序</value>
   </data>
-  <data name="ShowMainWindow" xml:space="preserve">
+  <data name="UIShellNotifyIconContextMenuFlyoutLabelShowMainWindow" xml:space="preserve">
     <value>主窗口</value>
   </data>
-  <data name="RestartExplorer" xml:space="preserve">
+  <data name="UIShellNotifyIconContextMenuFlyoutLabelRestartExplorer" xml:space="preserve">
     <value>重启资源管理器</value>
   </data>
-  <data name="HomePageTitle" xml:space="preserve">
+  <data name="UIXamlWindowsMainWindowHeaderHomePageTitle" xml:space="preserve">
     <value>主页</value>
   </data>
-  <data name="WelcomeMessage" xml:space="preserve">
+  <data name="UIXamlPagesHomePageMessageWelcome" xml:space="preserve">
     <value>欢迎使用 Snap Nicole</value>
   </data>
-  <data name="SettingsPageTitle" xml:space="preserve">
+  <data name="UIXamlPagesSettingsPageHeaderTitle" xml:space="preserve">
     <value>设置</value>
   </data>
 </root>

@@ -205,7 +205,7 @@
                 Margin="8"
                 VerticalAlignment="Center"
                 Style="{StaticResource BaseTextBlockStyle}"
-                Text="{snuxm:StringResource Name=AppName}" />
+                Text="{snuxm:StringResource Name=UIShellNotifyIconContextMenuFlyoutLabelAppName}" />
         </Grid>
 
         <StackPanel Grid.Row="1" Padding="0,2">
@@ -213,7 +213,7 @@
                 Command="{Binding RestartExplorerCommand}"
                 Icon="{snuxm:FontIcon Glyph=&#xE72C;}"
                 Style="{ThemeResource NotifyIconContextMenuFlyoutItemStyle}"
-                Text="{snuxm:StringResource Name=RestartExplorer}" />
+                Text="{snuxm:StringResource Name=UIShellNotifyIconContextMenuFlyoutLabelRestartExplorer}" />
         </StackPanel>
 
         <Grid
@@ -229,7 +229,7 @@
                 <AppBarButton
                     AllowFocusOnInteraction="True"
                     Command="{Binding ShowMainWindowCommand}"
-                    Label="{snuxm:StringResource Name=ShowMainWindow}">
+                    Label="{snuxm:StringResource Name=UIShellNotifyIconContextMenuFlyoutLabelShowMainWindow}">
                     <AppBarButton.Icon>
                         <FontIcon
                             Width="20"
@@ -240,7 +240,7 @@
                 <AppBarButton
                     AllowFocusOnInteraction="True"
                     Command="{Binding ExitCommand}"
-                    Label="{snuxm:StringResource Name=ExitApplication}">
+                    Label="{snuxm:StringResource Name=UIShellNotifyIconContextMenuFlyoutLabelExitApplication}">
                     <AppBarButton.Icon>
                         <FontIcon
                             Width="20"
