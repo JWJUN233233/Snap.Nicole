@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 
 namespace Snap.Nicole.ViewModels;

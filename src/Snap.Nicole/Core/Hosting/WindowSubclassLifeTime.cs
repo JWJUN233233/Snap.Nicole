@@ -1,21 +1,36 @@
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.UI.Xaml;
+using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using static Snap.Nicole.Native.ConstValues;
 
 namespace Snap.Nicole.Core.Hosting;
 
-internal sealed class WindowSubclassLifeTime(Window window) : IWindowSubclassLifeTime
+internal sealed class WindowSubclassLifeTime : IDisposable
 {
-    public Window Window { get; } = window;
+    private readonly Window window;
+    private NicoleNativeWindowSubclass? subclass;
+    private GCHandle<WindowSubclassLifeTime> gcHandle;
+
+    private bool disposed;
+
+    public unsafe WindowSubclassLifeTime(Window window)
+    {
+        this.window = window;
+        gcHandle = new(this);
+        subclass = NicoleNative.Default.MakeWindowSubclass(window.WindowHandle, NicoleNativeWindowSubclass.Callback.Create(&WindowSubclassCallback), gcHandle);
+        subclass.Attach();
+    }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvStdcall)])]
-    public static unsafe BOOL WindowSubclassCallback(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, GCHandle<IWindowSubclassLifeTime> userData, LRESULT* result)
+    public static unsafe BOOL WindowSubclassCallback(HWND hWnd, uint uMsg, WPARAM wParam, LPARAM lParam, GCHandle<WindowSubclassLifeTime> userData, LRESULT* result)
     {
-        IWindowSubclassLifeTime? lifeTime = userData.Target;
+        WindowSubclassLifeTime? lifeTime = userData.Target;
         switch (uMsg)
         {
             case WM_NCRBUTTONDOWN:
@@ -24,7 +39,7 @@ internal sealed class WindowSubclassLifeTime(Window window) : IWindowSubclassLif
 
             case WM_NCLBUTTONDBLCLK:
                 {
-                    if (lifeTime.Window.AppWindow.Presenter is OverlappedPresenter { IsMaximizable: false })
+                    if (lifeTime.window.AppWindow.Presenter is OverlappedPresenter { IsMaximizable: false })
                     {
                         return BOOL.FALSE;
                     }
@@ -34,7 +49,7 @@ internal sealed class WindowSubclassLifeTime(Window window) : IWindowSubclassLif
 
             case WM_ERASEBKGND:
                 {
-                    if (lifeTime.Window is IXamlWindowEraseBackground)
+                    if (lifeTime.window is IXamlWindowEraseBackground)
                     {
                         *result = BOOL.TRUE;
                         return BOOL.FALSE;
@@ -58,5 +73,18 @@ internal sealed class WindowSubclassLifeTime(Window window) : IWindowSubclassLif
         }
 
         return BOOL.TRUE;
+    }
+
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref disposed, true))
+        {
+            return;
+        }
+
+        subclass?.Detach();
+        subclass = null;
+
+        gcHandle.Dispose();
     }
 }
