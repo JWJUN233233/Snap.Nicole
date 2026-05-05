@@ -2,6 +2,7 @@
 using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.Native.UI.Shell;
+using System;
 using WinRT;
 using WinRT.Interop;
 
@@ -24,6 +25,11 @@ internal static class WindowExtensions
         public HWND WindowHandle
         {
             get => WindowNative.GetWindowHandle(window);
+        }
+
+        public void EnablePlacementRestoration(Guid guid)
+        {
+            WindowUtilities.AppWindowEnablePlacementRestoration(window.AppWindow.Id, guid);
         }
 
         public void SwitchTo()

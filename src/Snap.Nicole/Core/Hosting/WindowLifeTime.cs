@@ -28,9 +28,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
             subclass = NicoleNative.Default.MakeWindowSubclass(window.WindowHandle, NicoleNativeWindowSubclass.Callback.Create(&WindowSubclassLifeTime.WindowSubclassCallback), gcHandle);
             subclass.Attach();
 
-            AppWindow appWindow = window.AppWindow;
-            appWindow.PersistedStateId = MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window))));
-            appWindow.PlacementRestorationBehavior = PlacementRestorationBehavior.All;
+            window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window)))));
 
             window.Closed += OnWindowClose;
         }

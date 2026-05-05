@@ -2,6 +2,37 @@
 #include <cmath>
 #include <wil/result.h>
 #include <wrl.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Microsoft.UI.Windowing.h>
+
+HRESULT WindowUtilitiesAppWindowEnablePlacementRestoration(winrt::Microsoft::UI::WindowId windowId, GUID guid)
+{
+    // using namespace winrt::Windows::Foundation;
+    // using namespace winrt::Microsoft::UI::Windowing;
+    // AppWindow appWindow = AppWindow::GetFromWindowId(windowId);
+    // appWindow.PlacementRestorationBehavior(PlacementRestorationBehavior::All);
+    // winrt::guid winrtGuid(guid);
+    // IReference<winrt::guid> guidReference{ winrtGuid };
+    // appWindow.PersistedStateId(guidReference);
+    // return S_OK;
+    using namespace winrt;
+    using namespace winrt::Microsoft::UI::Windowing;
+    using namespace winrt::Windows::Foundation;
+
+    AppWindow appWindow = AppWindow::GetFromWindowId(windowId);
+
+    winrt::guid winrtGuid(guid);
+    IReference<winrt::guid> guidReference{ winrtGuid };
+
+    constexpr winrt::guid iid{ 0x04DB96C7,0xDEB6,0x5BE4,{ 0xBF,0xDC,0x1B,0xC0,0x36,0x1C,0x8A,0x12 } };
+    com_ptr<::IUnknown> raw{};
+    RETURN_IF_FAILED(reinterpret_cast<::IUnknown*>(get_abi(appWindow))->QueryInterface(iid, put_abi(raw)));
+
+    void** vtable = *reinterpret_cast<void***>(get_abi(raw));
+    RETURN_IF_FAILED((reinterpret_cast<HRESULT(__stdcall*)(void*, UINT32)>(vtable[9])(get_abi(raw), 0xFFFFFFFF)));
+    RETURN_IF_FAILED((reinterpret_cast<HRESULT(__stdcall*)(void*, void*)>(vtable[7])(get_abi(raw), get_abi(guidReference))));
+    return S_OK;
+}
 
 HRESULT WindowUtilitiesSwitchToWindow(HWND hWnd)
 {

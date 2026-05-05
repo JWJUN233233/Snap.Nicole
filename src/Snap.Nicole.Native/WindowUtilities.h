@@ -1,5 +1,8 @@
 #include "framework.h"
 #include <ShlObj_core.h>
+#include <winrt/Microsoft.UI.Windowing.h>
+
+NICOLE_API HRESULT APIENTRY WindowUtilitiesAppWindowEnablePlacementRestoration(winrt::Microsoft::UI::WindowId windowId, GUID guid);
 
 NICOLE_API HRESULT APIENTRY WindowUtilitiesSwitchToWindow(HWND hWnd);
 
