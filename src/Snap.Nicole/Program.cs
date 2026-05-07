@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
+using Snap.Nicole.Services.Settings;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Navigation;
@@ -30,6 +31,7 @@ internal static class Program
         hostBuilder.ConfigureServices(static (context, services) =>
         {
             services
+                .AddJsonSettings<AppSettings>("AppSettings")
                 .AddXamlApplication<App>()
                 .AddXamlWindows(static builder =>
                 {
@@ -37,6 +39,7 @@ internal static class Program
                         .AddXamlWindow<MainWindow>()
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
                 })
+                .AddHostedService<AppSettingsSynchronizer>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
@@ -45,8 +48,7 @@ internal static class Program
                 .AddTransient<SettingsViewModel>();
         });
 
-        IHost host = hostBuilder.Build();
-        App.Host = host;
+        App.Host = hostBuilder.Build();
         App.IsHostInitialized = true;
 
         Application.Start(static ignored =>

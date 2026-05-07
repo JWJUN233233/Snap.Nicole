@@ -1,11 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Windows.Globalization;
+using OpenAI.FineTuning;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace Snap.Nicole.Resources;
 
 internal sealed class StringResourceProxy : ObservableObject
 {
+    public static IReadOnlyList<string> SupportedCultures { get; } = ["zh-CN", "en"];
+
     public static StringResourceProxy Default { get; } = new();
 
     public CultureInfo CurrentCulture

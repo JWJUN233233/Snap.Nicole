@@ -9,7 +9,6 @@ internal sealed partial class HomePage : Page
     public HomePage()
     {
         InitializeComponent();
-        Debug.Assert(App.IsHostInitialized);
-        Root.DataContext = App.Host.Services.GetRequiredService<HomeViewModel>();
+        DataContext = App.Host.Services.GetRequiredService<HomeViewModel>();
     }
 }

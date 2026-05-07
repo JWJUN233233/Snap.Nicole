@@ -23,6 +23,7 @@
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="Resources\SR.resx" />
+    <AdditionalFiles Include="Resources\SR.en.resx" />
   </ItemGroup>
 
   <ItemGroup>
