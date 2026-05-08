@@ -141,4 +141,25 @@
   <data name="UIXamlPagesSettingsPageLabelLanguage" xml:space="preserve">
     <value>语言</value>
   </data>
+  <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
+    <value>AI 对话</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelSend" xml:space="preserve">
+    <value>发送</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelPlaceholder" xml:space="preserve">
+    <value>输入消息...</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelOpenAIApiKey" xml:space="preserve">
+    <value>OpenAI API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelOpenAIBaseUrl" xml:space="preserve">
+    <value>OpenAI Base URL</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDefaultModel" xml:space="preserve">
+    <value>默认模型</value>
+  </data>
 </root>

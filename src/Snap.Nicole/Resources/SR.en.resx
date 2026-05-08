@@ -82,4 +82,25 @@
   <data name="UIXamlPagesSettingsPageLabelLanguage" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelSend" xml:space="preserve">
+    <value>Send</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelPlaceholder" xml:space="preserve">
+    <value>Type a message...</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelOpenAIApiKey" xml:space="preserve">
+    <value>OpenAI API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelOpenAIBaseUrl" xml:space="preserve">
+    <value>OpenAI Base URL</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDefaultModel" xml:space="preserve">
+    <value>Default Model</value>
+  </data>
 </root>

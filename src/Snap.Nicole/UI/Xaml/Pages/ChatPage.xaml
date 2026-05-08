@@ -1,0 +1,67 @@
+<Page
+    x:Class="Snap.Nicole.UI.Xaml.Pages.ChatPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
+    xmlns:snv="using:Snap.Nicole.ViewModels"
+    d:DataContext="{d:DesignInstance snv:ChatViewModel}"
+    mc:Ignorable="d">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title bar -->
+        <TextBlock
+            Grid.Row="0"
+            Margin="0,0,0,12"
+            Style="{StaticResource TitleTextBlockStyle}"
+            Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}" />
+
+        <!-- Chat messages display -->
+        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
+            <StackPanel x:Name="MessagesPanel" Spacing="8" />
+        </ScrollViewer>
+
+        <!-- Input area -->
+        <Grid
+            Grid.Row="2"
+            Margin="0,12,0,0"
+            ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="InputBox"
+                Grid.Column="0"
+                AcceptsReturn="True"
+                Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
+                IsSpellCheckEnabled="False"
+                MaxHeight="120"
+                PlaceholderText="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
+                Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <Button
+                x:Name="SendButton"
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Command="{x:Bind ViewModel.SendMessageCommand}"
+                Content="{snuxm:StringResource Name=UIXamlPagesChatPageLabelSend}" />
+
+            <Button
+                x:Name="ClearButton"
+                Grid.Column="2"
+                VerticalAlignment="Bottom"
+                Command="{x:Bind ViewModel.ClearChatCommand}"
+                Content="{snuxm:StringResource Name=UIXamlPagesChatPageLabelClear}" />
+        </Grid>
+    </Grid>
+</Page>

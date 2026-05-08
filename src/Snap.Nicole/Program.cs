@@ -9,6 +9,7 @@ using Snap.Nicole.Core.Threading;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Navigation;
 using Snap.Nicole.UI.Xaml.Windows;
+using Snap.Nicole.Services.AI;
 using Snap.Nicole.ViewModels;
 using Snap.Nicole.ViewModels.NotifyIcon;
 using System;
@@ -47,7 +48,9 @@ internal static class Program
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()
                 .AddTransient<HomeViewModel>()
-                .AddTransient<SettingsViewModel>();
+                .AddTransient<SettingsViewModel>()
+                .AddTransient<ChatViewModel>()
+                .AddSingleton<IChatService, OpenAIChatService>();
         });
 
         App.Host = hostBuilder.Build();

@@ -44,6 +44,51 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
         changeRegistration?.Dispose();
     }
 
+    public string OpenAIApiKey
+    {
+        get => monitor.CurrentValue.OpenAIApiKey ?? "";
+        set
+        {
+            if (string.Equals(monitor.CurrentValue.OpenAIApiKey, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            monitor.CurrentValue.OpenAIApiKey = value;
+            writer.Update();
+        }
+    }
+
+    public string OpenAIBaseUrl
+    {
+        get => monitor.CurrentValue.OpenAIBaseUrl ?? "";
+        set
+        {
+            if (string.Equals(monitor.CurrentValue.OpenAIBaseUrl, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            monitor.CurrentValue.OpenAIBaseUrl = value;
+            writer.Update();
+        }
+    }
+
+    public string DefaultModel
+    {
+        get => monitor.CurrentValue.DefaultModel;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value) || string.Equals(monitor.CurrentValue.DefaultModel, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            monitor.CurrentValue.DefaultModel = value;
+            writer.Update();
+        }
+    }
+
     private void OnSettingsChanged()
     {
         App.Current.Threading.SynchronizationContext.Post(static state =>
@@ -54,6 +99,9 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
             }
 
             self.OnPropertyChanged(nameof(Language));
+            self.OnPropertyChanged(nameof(OpenAIApiKey));
+            self.OnPropertyChanged(nameof(OpenAIBaseUrl));
+            self.OnPropertyChanged(nameof(DefaultModel));
         }, this);
     }
 }
