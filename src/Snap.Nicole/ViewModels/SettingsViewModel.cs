@@ -22,7 +22,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
         changeRegistration = monitor.OnChange((_) => OnSettingsChanged());
     }
 
-    public IReadOnlyList<SettingsOption<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsOption<string>(CultureInfo.GetCultureInfo(name).DisplayName, name))];
+    public IReadOnlyList<SettingsItem<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsItem<string>(CultureInfo.GetCultureInfo(name).NativeName, name))];
 
     public string Language
     {
@@ -35,7 +35,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
             }
 
             monitor.CurrentValue.Language = value;
-            writer.Update(monitor.CurrentValue);
+            writer.Update();
         }
     }
 
@@ -46,7 +46,7 @@ internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
 
     private void OnSettingsChanged()
     {
-        App.Current.SynchronizationContext.Post(static state =>
+        App.Current.Threading.SynchronizationContext.Post(static state =>
         {
             if (state is not SettingsViewModel self)
             {

@@ -39,7 +39,7 @@ internal static class Program
                         .AddXamlWindow<MainWindow>()
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
                 })
-                .AddHostedService<AppSettingsSynchronizer>()
+                .AddHostedService<AppSettingsChangeTracker>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()

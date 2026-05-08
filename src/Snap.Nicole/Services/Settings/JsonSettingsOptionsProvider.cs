@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class JsonOptionsProvider<TOptions> : IOptionsMonitor<TOptions>, IOptionsWriter<TOptions>, IDisposable
+internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TOptions>, IOptionsWriter<TOptions>, IDisposable
     where TOptions : class, new()
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -31,15 +31,20 @@ internal sealed class JsonOptionsProvider<TOptions> : IOptionsMonitor<TOptions>,
 
     private volatile bool disposed;
 
-    public JsonOptionsProvider(string settingsKey)
+    public JsonSettingsOptionsProvider(string fileNameWithoutExtension)
     {
         string directory = Path.Combine(AppContext.BaseDirectory, "Settings");
         Directory.CreateDirectory(directory);
 
-        fileName = $"{settingsKey}.json";
+        fileName = $"{fileNameWithoutExtension}.json";
         filePath = Path.Combine(directory, fileName);
 
-        LoadCore(out cachedValue);
+        if (!TryLoadCore(out TOptions? value))
+        {
+            value = new TOptions();
+        }
+
+        cachedValue = value;
 
         fileProvider = new(directory);
         StartWatching();
@@ -60,7 +65,7 @@ internal sealed class JsonOptionsProvider<TOptions> : IOptionsMonitor<TOptions>,
     {
         if (!string.IsNullOrEmpty(name))
         {
-            throw new NotSupportedException();
+            throw new NotSupportedException("Named options are not supported.");
         }
 
         return CurrentValue;
@@ -71,27 +76,11 @@ internal sealed class JsonOptionsProvider<TOptions> : IOptionsMonitor<TOptions>,
         return ChangeToken.OnChange(() => changeToken, state => state(CurrentValue, string.Empty), listener);
     }
 
-    public void Update(TOptions value)
-    {
-        ArgumentNullException.ThrowIfNull(value);
-
-        lock (syncRoot)
-        {
-            cachedValue = value;
-            SaveCore(value);
-            RaiseChangeTokenCore();
-        }
-    }
-
-    public void Reload()
+    public void Update()
     {
         lock (syncRoot)
         {
-            if (TryLoadCore(out TOptions? newValue))
-            {
-                cachedValue = newValue;
-                RaiseChangeTokenCore();
-            }
+            SaveCore(cachedValue);
         }
     }
 
@@ -110,7 +99,7 @@ internal sealed class JsonOptionsProvider<TOptions> : IOptionsMonitor<TOptions>,
 
     private static void OnFileChanged(object? state)
     {
-        if (state is not JsonOptionsProvider<TOptions> self)
+        if (state is not JsonSettingsOptionsProvider<TOptions> self)
         {
             return;
         }
@@ -120,28 +109,24 @@ internal sealed class JsonOptionsProvider<TOptions> : IOptionsMonitor<TOptions>,
             return;
         }
 
-        self.Reload();
+        lock (self.syncRoot)
+        {
+            if (self.TryLoadCore(out TOptions? newValue))
+            {
+                self.cachedValue = newValue;
+
+                ConfigurationReloadToken oldToken = self.changeToken;
+                self.changeToken = new();
+                oldToken.OnReload();
+            }
+        }
+
         self.StartWatching();
     }
 
     private void StartWatching()
     {
         watchRegistration = fileProvider.Watch(fileName).RegisterChangeCallback(OnFileChanged, this);
-    }
-
-    private void RaiseChangeTokenCore()
-    {
-        ConfigurationReloadToken oldToken = changeToken;
-        changeToken = new();
-        oldToken.OnReload();
-    }
-
-    private void LoadCore([NotNull] out TOptions? value)
-    {
-        if (!TryLoadCore(out value))
-        {
-            value = new TOptions();
-        }
     }
 
     private bool TryLoadCore([NotNullWhen(true)] out TOptions? value)

@@ -1,8 +1,8 @@
 namespace Snap.Nicole.ViewModels;
 
-internal sealed record SettingsOption<T>
+internal sealed record SettingsItem<T>
 {
-    public SettingsOption(string label, T value)
+    public SettingsItem(string label, T value)
     {
         Label = label;
         Value = value;

@@ -1,13 +1,12 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.Hosting;
+using Snap.Nicole.Core.Threading;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Windows;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Snap.Nicole;
 
@@ -15,8 +14,7 @@ public partial class App : Application
 {
     public App()
     {
-        SynchronizationContext = SynchronizationContext.Current!;
-        TaskScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+        Threading = new ApplicationThreading();
 
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
         InitializeComponent();
@@ -37,9 +35,7 @@ public partial class App : Application
         set;
     }
 
-    public SynchronizationContext SynchronizationContext { get; }
-
-    public TaskScheduler TaskScheduler { get; }
+    internal IApplicationThreading Threading { get; }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
@@ -53,6 +49,6 @@ public partial class App : Application
             IServiceProvider serviceProvider = Host.Services;
             serviceProvider.GetRequiredService<INotifyIcon>().Create();
             serviceProvider.GetRequiredService<IWindowLifeTime<MainWindow>>().Show();
-        }, TaskScheduler);
+        }, Threading.TaskScheduler);
     }
 }

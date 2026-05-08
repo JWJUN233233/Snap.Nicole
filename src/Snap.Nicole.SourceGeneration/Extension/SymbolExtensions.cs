@@ -14,7 +14,7 @@ internal static class SymbolExtensions
     public static string NormalizedFullyQualifiedName(this ISymbol symbol)
     {
         string fullyQualifiedName = symbol.GetFullyQualifiedName();
-        StringBuilder sb = new StringBuilder(fullyQualifiedName.Length);
+        StringBuilder sb = new(fullyQualifiedName.Length);
         foreach (char c in fullyQualifiedName)
         {
             sb.Append(InvalidFileNameChars.Contains(c) ? '_' : c);

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class AppSettingsSynchronizer(IServiceProvider serviceProvider) : IHostedService, IDisposable
+internal sealed class AppSettingsChangeTracker(IServiceProvider serviceProvider) : IHostedService, IDisposable
 {
     private readonly IOptionsMonitor<AppSettings> monitor = serviceProvider.GetRequiredService<IOptionsMonitor<AppSettings>>();
     private IDisposable? changeRegistration;
@@ -20,8 +20,8 @@ internal sealed class AppSettingsSynchronizer(IServiceProvider serviceProvider) 
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        Apply(monitor.CurrentValue);
-        changeRegistration = monitor.OnChange(Apply);
+        HandleChange(monitor.CurrentValue);
+        changeRegistration = monitor.OnChange(HandleChange);
         return Task.CompletedTask;
     }
 
@@ -30,14 +30,16 @@ internal sealed class AppSettingsSynchronizer(IServiceProvider serviceProvider) 
         return Task.CompletedTask;
     }
 
-    private void Apply(AppSettings settings)
+    private void HandleChange(AppSettings settings)
     {
-        App.Current.SynchronizationContext.Post(static state =>
+        App.Current.Threading.SynchronizationContext.Post(static state =>
         {
-            if (state is AppSettings current)
+            if (state is not AppSettings current)
             {
-                StringResourceProxy.Default.CurrentCulture = CultureInfo.GetCultureInfo(current.Language);
+                return;
             }
+
+            StringResourceProxy.Default.CurrentCulture = CultureInfo.GetCultureInfo(current.Language);
         }, settings);
     }
 }
