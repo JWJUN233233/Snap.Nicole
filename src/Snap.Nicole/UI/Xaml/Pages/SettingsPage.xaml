@@ -11,7 +11,7 @@
 
     <Grid Padding="24">
         <StackPanel Spacing="8">
-            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageHeaderTitle}" />
+            <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemSettingsContent}" />
 
             <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelLanguage}" />
             <ComboBox

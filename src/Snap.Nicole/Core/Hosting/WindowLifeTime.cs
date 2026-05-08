@@ -1,9 +1,14 @@
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Snap.Nicole.UI;
 using Snap.Nicole.UI.Xaml;
 using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using Windows.UI;
 
 namespace Snap.Nicole.Core.Hosting;
 
@@ -21,7 +26,22 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
             TWindow window = serviceProvider.GetRequiredService<TWindow>();
             Window = window;
 
-            subclass = new WindowSubclassLifeTime(window);
+            subclass = new(window);
+
+            AppWindow appWindow = window.AppWindow;
+
+            appWindow.Title = window.Title;
+            appWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "Logo.ico"));
+
+            if (window is IXamlWindowExtendsContentIntoTitleBar xamlWindow)
+            {
+                AppWindowTitleBar appWindowTitleBar = appWindow.TitleBar;
+                appWindowTitleBar.IconShowOptions = IconShowOptions.HideIconAndSystemMenu;
+                appWindowTitleBar.ExtendsContentIntoTitleBar = true;
+
+                UpdateTitleButtonColor(default!, default!);
+                xamlWindow.TitleBar.ActualThemeChanged += UpdateTitleButtonColor;
+            }
 
             window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window)))));
 
@@ -54,5 +74,36 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
 
         // 2. Clear window reference
         Window = null;
+    }
+
+    private void UpdateTitleButtonColor(FrameworkElement discardElement, object e)
+    {
+        if (Window is not IXamlWindowExtendsContentIntoTitleBar xamlWindow)
+        {
+            return;
+        }
+
+        AppWindowTitleBar appTitleBar = Window.AppWindow.TitleBar;
+
+        appTitleBar.ButtonBackgroundColor = Colors.Transparent;
+        appTitleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+
+        bool isDarkMode = ThemeHelper.IsDark(xamlWindow.TitleBar.ActualTheme);
+
+        Color systemBaseLowColor = SystemColors.BaseLowColor(isDarkMode);
+        appTitleBar.ButtonHoverBackgroundColor = systemBaseLowColor;
+
+        Color systemBaseMediumLowColor = SystemColors.BaseMediumLowColor(isDarkMode);
+        appTitleBar.ButtonPressedBackgroundColor = systemBaseMediumLowColor;
+
+        // The Foreground doesn't accept Alpha channel. So we translate it to gray.
+        byte light = (byte)((systemBaseMediumLowColor.R + systemBaseMediumLowColor.G + systemBaseMediumLowColor.B) / 3);
+        byte result = (byte)(systemBaseMediumLowColor.A / 255.0 * light);
+        appTitleBar.ButtonInactiveForegroundColor = Color.FromArgb(0xFF, result, result, result);
+
+        Color systemBaseHighColor = SystemColors.BaseHighColor(isDarkMode);
+        appTitleBar.ButtonForegroundColor = systemBaseHighColor;
+        appTitleBar.ButtonHoverForegroundColor = systemBaseHighColor;
+        appTitleBar.ButtonPressedForegroundColor = systemBaseHighColor;
     }
 }

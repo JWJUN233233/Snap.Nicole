@@ -15,6 +15,7 @@ using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using WinRT;
+using CommunityToolkit.Mvvm.Messaging;
 
 [assembly: DisableRuntimeMarshalling]
 
@@ -40,6 +41,7 @@ internal static class Program
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
                 })
                 .AddHostedService<AppSettingsChangeTracker>()
+                .AddSingleton<IMessenger, WeakReferenceMessenger>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
