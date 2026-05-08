@@ -1,107 +1,189 @@
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using OpenAI;
-using OpenAI.Chat;
+using Snap.Nicole.Core;
+using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
 using System;
-using System.Collections.Generic;
 using System.ClientModel;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Threading;
 
 namespace Snap.Nicole.Services.AI;
 
-internal sealed class OpenAIChatService : IChatService
+internal sealed class OpenAIChatService(IServiceProvider serviceProvider) : IChatService
 {
-    private readonly IOptionsMonitor<AppSettings> settings;
+    private readonly IOptionsMonitor<AppSettings> settings = serviceProvider.GetRequiredService<IOptionsMonitor<AppSettings>>();
 
-    public OpenAIChatService(IServiceProvider serviceProvider)
-    {
-        settings = serviceProvider.GetRequiredService<IOptionsMonitor<AppSettings>>();
-    }
-
-    public async IAsyncEnumerable<Models.ChatMessage> StreamCompletionAsync(
-        IReadOnlyList<Models.ChatMessage> messages,
-        Models.ChatRequestOptions options,
+    public async IAsyncEnumerable<ExtendedAgentResponseUpdate> StreamCompletionAsync(
+        IReadOnlyList<ExtendedAgentResponseUpdate> messages,
+        ChatCompletionOptions options,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         AppSettings current = settings.CurrentValue;
         if (string.IsNullOrWhiteSpace(current.OpenAIApiKey))
         {
-            yield return new Models.ChatMessage
+            yield return new()
             {
-                Role = Models.ChatRole.Assistant,
+                RoleKind = ChatRoleKind.Assistant,
                 Content = "Please configure your OpenAI API key in Settings.",
             };
+
             yield break;
         }
 
-        OpenAIClient client = CreateClient(current);
-        ChatClient chatClient = client.GetChatClient(options.Model);
-
+        AIAgent agent = CreateAgent(current, options);
         List<ChatMessage> messageList = [];
 
         if (!string.IsNullOrWhiteSpace(options.SystemPrompt))
         {
-            messageList.Add(ChatMessage.CreateSystemMessage(options.SystemPrompt));
+            messageList.Add(new ChatMessage(ChatRole.System, options.SystemPrompt));
         }
 
-        foreach (Models.ChatMessage msg in messages)
+        foreach (ExtendedAgentResponseUpdate msg in messages)
         {
-            switch (msg.Role)
+            string messageContent = GetMessageContent(msg);
+            switch (msg.RoleKind)
             {
-                case Models.ChatRole.System:
-                    messageList.Add(ChatMessage.CreateSystemMessage(msg.Content));
+                case ChatRoleKind.System:
+                    messageList.Add(new(ChatRole.System, messageContent));
                     break;
-                case Models.ChatRole.User:
-                    messageList.Add(ChatMessage.CreateUserMessage(msg.Content));
+                case ChatRoleKind.User:
+                    messageList.Add(new(ChatRole.User, messageContent));
                     break;
-                case Models.ChatRole.Assistant:
-                    messageList.Add(ChatMessage.CreateAssistantMessage(msg.Content));
+                case ChatRoleKind.Assistant:
+                    messageList.Add(new(ChatRole.Assistant, messageContent));
                     break;
-                case Models.ChatRole.Tool:
-                    if (!string.IsNullOrEmpty(msg.ToolCallId))
-                    {
-                        messageList.Add(ChatMessage.CreateToolMessage(msg.ToolCallId, msg.Content));
-                    }
+                case ChatRoleKind.Tool:
+                    messageList.Add(new(ChatRole.Tool, messageContent));
                     break;
             }
         }
-
-        ChatCompletionOptions openAIOptions = new()
-        {
-            Temperature = options.Temperature,
-        };
-
-        AsyncCollectionResult<StreamingChatCompletionUpdate> streamingResult = chatClient.CompleteChatStreamingAsync(messageList, openAIOptions, cancellationToken);
 
         string contentBuffer = "";
-        await foreach (StreamingChatCompletionUpdate update in streamingResult)
+        List<ExtendedAgentContentSegment> segments = [];
+        ExtendedAgentContentKind? previousKind = null;
+
+        AgentRunOptions runOptions = CreateOptions(options);
+
+        await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(messageList, options: runOptions, cancellationToken: cancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            foreach (ChatMessageContentPart part in update.ContentUpdate)
+
+            bool hasChanges = false;
+            foreach (AIContent aiContent in update.Contents)
             {
-                if (!string.IsNullOrEmpty(part.Text))
+                ExtendedAgentContentKind? kind = null;
+                string text = "";
+
+                switch (aiContent)
                 {
-                    contentBuffer += part.Text;
-                    yield return new Models.ChatMessage
+                    case TextContent textContent when !string.IsNullOrEmpty(textContent.Text):
+                        kind = ExtendedAgentContentKind.Text;
+                        text = textContent.Text;
+                        contentBuffer += text;
+                        break;
+                    case TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text):
+                        kind = ExtendedAgentContentKind.Reasoning;
+                        text = reasoningContent.Text;
+                        break;
+                    case FunctionCallContent functionCallContent:
+                        kind = ExtendedAgentContentKind.ToolCall;
+                        text = $"{functionCallContent.Name}: {JsonSerializer.Serialize(functionCallContent.Arguments)}";
+                        break;
+                    case FunctionResultContent functionResultContent:
+                        kind = ExtendedAgentContentKind.ToolResult;
+                        text = JsonSerializer.Serialize(functionResultContent.Result);
+                        break;
+                }
+
+                if (kind is null || string.IsNullOrEmpty(text))
+                {
+                    continue;
+                }
+
+                if (previousKind == kind && segments.Count > 0)
+                {
+                    ExtendedAgentContentSegment last = segments[^1];
+                    segments[^1] = new ExtendedAgentContentSegment
                     {
-                        Role = Models.ChatRole.Assistant,
-                        Content = contentBuffer,
+                        Kind = last.Kind,
+                        Content = last.Content + text,
                     };
                 }
+                else
+                {
+                    segments.Add(new ExtendedAgentContentSegment
+                    {
+                        Kind = kind.Value,
+                        Content = text,
+                    });
+                }
+
+                previousKind = kind;
+                hasChanges = true;
             }
+
+            if (!hasChanges)
+            {
+                continue;
+            }
+
+            yield return new()
+            {
+                RoleKind = ChatRoleKind.Assistant,
+                Content = contentBuffer,
+                Segments = [.. segments],
+            };
         }
     }
 
-    private static OpenAIClient CreateClient(AppSettings settings)
+    private static string GetMessageContent(ExtendedAgentResponseUpdate message)
     {
-        OpenAIClientOptions clientOptions = new();
-
-        if (!string.IsNullOrWhiteSpace(settings.OpenAIBaseUrl))
+        if (message.Segments.Count == 0)
         {
-            clientOptions.Endpoint = new Uri(settings.OpenAIBaseUrl);
+            return message.Content;
         }
 
-        return new OpenAIClient(new ApiKeyCredential(settings.OpenAIApiKey!), clientOptions);
+        return string.Concat(message.Segments.Select(static segment => segment.Content));
+    }
+
+    private static ChatClientAgent CreateAgent(AppSettings settings, ChatCompletionOptions options)
+    {
+        OpenAIClientOptions clientOptions = new()
+        {
+            Endpoint = settings.OpenAIBaseUrl.ToUri(),
+        };
+
+        OpenAIClient client = new(new ApiKeyCredential(settings.OpenAIApiKey!), clientOptions);
+
+        return OpenAI.Chat.OpenAIChatClientExtensions.AsAIAgent(client.GetChatClient(options.Model),
+            instructions: options.SystemPrompt,
+            tools: [AIFunctionFactory.Create(GetCurrentTime)]);
+    }
+
+    private static ChatClientAgentRunOptions CreateOptions(ChatCompletionOptions options)
+    {
+        return new(new()
+        {
+            Temperature = options.Temperature,
+            TopP = options.TopP,
+            ToolMode = ChatToolMode.Auto,
+            Reasoning = new()
+            {
+                Effort = options.ReasoningEffort,
+            }
+        });
+    }
+
+    [Description("Get the current local time.")]
+    private static string GetCurrentTime()
+    {
+        return DateTimeOffset.Now.ToString("O");
     }
 }

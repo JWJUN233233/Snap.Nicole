@@ -6,8 +6,8 @@ namespace Snap.Nicole.Services.AI;
 
 internal interface IChatService
 {
-    IAsyncEnumerable<ChatMessage> StreamCompletionAsync(
-        IReadOnlyList<ChatMessage> messages,
-        ChatRequestOptions options,
+    IAsyncEnumerable<ExtendedAgentResponseUpdate> StreamCompletionAsync(
+        IReadOnlyList<ExtendedAgentResponseUpdate> messages,
+        ChatCompletionOptions options,
         CancellationToken cancellationToken = default);
 }

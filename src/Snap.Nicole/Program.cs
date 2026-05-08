@@ -45,12 +45,12 @@ internal static class Program
                 .AddSingleton<IMessenger, WeakReferenceMessenger>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
+                .AddSingleton<IChatService, OpenAIChatService>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()
                 .AddTransient<HomeViewModel>()
                 .AddTransient<SettingsViewModel>()
-                .AddTransient<ChatViewModel>()
-                .AddSingleton<IChatService, OpenAIChatService>();
+                .AddTransient<ChatViewModel>();
         });
 
         App.Host = hostBuilder.Build();

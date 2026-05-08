@@ -14,11 +14,11 @@ namespace Snap.Nicole.UI.Xaml.Helpers;
 
 internal static partial class MarkdownHelper
 {
-    public static FrameworkElement CreateMessageBubble(ChatRole role, string content, string? modelId = null)
+    public static FrameworkElement CreateMessageBubble(ExtendedAgentResponseUpdate message)
     {
         StackPanel panel = new() { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Stretch };
 
-        string headerText = role == ChatRole.User ? "You" : (modelId ?? "AI");
+        string headerText = message.RoleKind == ChatRoleKind.User ? "You" : (message.ModelId ?? "AI");
         TextBlock header = new()
         {
             Text = headerText,
@@ -28,21 +28,27 @@ internal static partial class MarkdownHelper
         };
         panel.Children.Add(header);
 
-        if (role == ChatRole.User)
+        if (message.RoleKind == ChatRoleKind.User)
         {
             TextBlock textBlock = new()
             {
-                Text = content,
+                Text = message.Content,
                 TextWrapping = TextWrapping.Wrap,
                 FontSize = 14,
                 IsTextSelectionEnabled = true,
             };
             panel.Children.Add(textBlock);
         }
-        else
+        else if (message.Segments.Count > 0)
         {
-            RichTextBlock richText = ParseMarkdown(content);
-            panel.Children.Add(richText);
+            foreach (ExtendedAgentContentSegment segment in message.Segments)
+            {
+                panel.Children.Add(CreateSegment(segment));
+            }
+        }
+        else if (!string.IsNullOrWhiteSpace(message.Content))
+        {
+            panel.Children.Add(ParseMarkdown(message.Content));
         }
 
         Border border = new()
@@ -55,6 +61,44 @@ internal static partial class MarkdownHelper
         };
 
         return border;
+    }
+
+    private static FrameworkElement CreateSegment(ExtendedAgentContentSegment segment)
+    {
+        return segment.Kind switch
+        {
+            ExtendedAgentContentKind.Text => CreateSection("Answer", ParseMarkdown(segment.Content)),
+            ExtendedAgentContentKind.Reasoning => CreateSection("Thinking", ParseMarkdown(segment.Content)),
+            ExtendedAgentContentKind.ToolCall => CreateSection("Tool Call", CreatePlainTextBlock(segment.Content)),
+            ExtendedAgentContentKind.ToolResult => CreateSection("Tool Result", CreatePlainTextBlock(segment.Content)),
+            _ => CreatePlainTextBlock(segment.Content),
+        };
+    }
+
+    private static FrameworkElement CreateSection(string title, FrameworkElement content)
+    {
+        StackPanel panel = new() { Spacing = 2 };
+        panel.Children.Add(new TextBlock
+        {
+            Text = title,
+            FontSize = 12,
+            FontWeight = FontWeights.SemiBold,
+            Opacity = 0.7,
+        });
+        panel.Children.Add(content);
+        return panel;
+    }
+
+    private static TextBlock CreatePlainTextBlock(string text)
+    {
+        return new TextBlock
+        {
+            Text = text,
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 14,
+            IsTextSelectionEnabled = true,
+            FontFamily = new FontFamily("Cascadia Code, Consolas, Courier New"),
+        };
     }
 
     private static RichTextBlock ParseMarkdown(string markdown)
@@ -108,7 +152,6 @@ internal static partial class MarkdownHelper
                 continue;
             }
 
-            // Headers
             if (line.StartsWith("### "))
             {
                 AddHeading(richText, line[4..], 18);
@@ -121,13 +164,11 @@ internal static partial class MarkdownHelper
             {
                 AddHeading(richText, line[2..], 24);
             }
-            // Horizontal rule
             else if (Regex.IsMatch(line.Trim(), @"^[-*_]{3,}$"))
             {
                 Paragraph hrParagraph = new() { Margin = new Thickness(0, 4, 0, 4) };
                 richText.Blocks.Add(hrParagraph);
             }
-            // Table: detect lines with leading and trailing '|'
             else if (IsTableLine(line) && i + 1 < lines.Length && IsTableSeparator(lines[i + 1]))
             {
                 List<string> tableLines = [line, lines[i + 1]];
@@ -137,27 +178,23 @@ internal static partial class MarkdownHelper
                     tableLines.Add(lines[i]);
                     i++;
                 }
-                i--; // will be incremented by the for loop
+                i--;
                 AddTable(richText, tableLines);
             }
-            // Blockquote
             else if (line.StartsWith("> "))
             {
                 AddBlockquote(richText, line[2..]);
             }
-            // Unordered list
             else if (line.StartsWith("- ") || line.StartsWith("* "))
             {
                 AddListItem(richText, line[2..], "• ");
             }
-            // Ordered list
             else if (Regex.IsMatch(line, @"^\d+\.\s"))
             {
                 string num = Regex.Match(line, @"^(\d+)\.").Groups[1].Value;
                 string text = Regex.Replace(line, @"^\d+\.\s", "");
                 AddListItem(richText, text, $"{num}. ");
             }
-            // Paragraph
             else
             {
                 AddParagraph(richText, line);
@@ -255,7 +292,6 @@ internal static partial class MarkdownHelper
 
     private static List<string> ParseTableCells(string line)
     {
-        // Remove leading/trailing '|', then split by '|'
         string trimmed = line.Trim().Trim('|');
         return [.. trimmed.Split('|').Select(c => c.Trim())];
     }
@@ -264,7 +300,6 @@ internal static partial class MarkdownHelper
     {
         if (tableLines.Count < 2) return;
 
-        // First line = header, second line = separator, rest = body
         List<string> headerCells = ParseTableCells(tableLines[0]);
         int columnCount = headerCells.Count;
 
@@ -283,14 +318,11 @@ internal static partial class MarkdownHelper
             tableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
         }
 
-        // Header row
         AddTableRow(tableGrid, headerCells, 0, isHeader: true);
 
-        // Body rows (skip separator at index 1)
         for (int r = 2; r < tableLines.Count; r++)
         {
             List<string> cells = ParseTableCells(tableLines[r]);
-            // Pad if fewer cells than columns
             while (cells.Count < columnCount) cells.Add("");
             AddTableRow(tableGrid, cells, r - 1, isHeader: false);
         }
@@ -350,13 +382,11 @@ internal static partial class MarkdownHelper
 
     private static void AddInlineMarkdown(InlineCollection inlines, string text)
     {
-        // Pattern: ***bold+italic***, **bold**, *italic*, `code`, ![alt](url), [text](url)
         Regex pattern = InlineMarkdownPattern();
         int lastIndex = 0;
 
         foreach (Match match in pattern.Matches(text))
         {
-            // Add preceding plain text
             if (match.Index > lastIndex)
             {
                 inlines.Add(new Run { Text = text[lastIndex..match.Index] });
@@ -414,7 +444,6 @@ internal static partial class MarkdownHelper
                     inlines.Add(new Run { Text = $"[{match.Groups["linktext"].Value}]({match.Groups["linkurl"].Value})" });
                 }
             }
-            // Images: show as [Image: alt] link
             else if (match.Groups["imgalt"].Success)
             {
                 inlines.Add(new Run { Text = $"[Image: {match.Groups["imgalt"].Value}]", FontStyle = global::Windows.UI.Text.FontStyle.Italic });
@@ -423,7 +452,6 @@ internal static partial class MarkdownHelper
             lastIndex = match.Index + match.Length;
         }
 
-        // Remaining text
         if (lastIndex < text.Length)
         {
             inlines.Add(new Run { Text = text[lastIndex..] });

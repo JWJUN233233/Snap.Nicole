@@ -40,13 +40,12 @@ internal sealed partial class ChatPage : Page
     {
         MessagesPanel.Children.Clear();
 
-        foreach (ChatMessage message in ViewModel.Messages)
+        foreach (ExtendedAgentResponseUpdate message in ViewModel.Messages)
         {
-            FrameworkElement bubble = MarkdownHelper.CreateMessageBubble(message.Role, message.Content, message.ModelId);
+            FrameworkElement bubble = MarkdownHelper.CreateMessageBubble(message);
             MessagesPanel.Children.Add(bubble);
         }
 
-        // Scroll to bottom
         DispatcherQueue.TryEnqueue(() =>
         {
             ChatScrollViewer.ChangeView(null, ChatScrollViewer.ScrollableHeight, null);

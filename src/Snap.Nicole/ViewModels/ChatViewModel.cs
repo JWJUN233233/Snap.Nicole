@@ -23,7 +23,7 @@ internal sealed partial class ChatViewModel : ObservableObject
         settings = serviceProvider.GetRequiredService<IOptionsMonitor<AppSettings>>();
     }
 
-    public ObservableCollection<ChatMessage> Messages { get; } = [];
+    public ObservableCollection<ExtendedAgentResponseUpdate> Messages { get; } = [];
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -44,9 +44,9 @@ internal sealed partial class ChatViewModel : ObservableObject
             return;
         }
 
-        Messages.Add(new ChatMessage
+        Messages.Add(new ExtendedAgentResponseUpdate
         {
-            Role = ChatRole.User,
+            RoleKind = ChatRoleKind.User,
             Content = input,
         });
 
@@ -56,26 +56,26 @@ internal sealed partial class ChatViewModel : ObservableObject
 
         try
         {
-            ChatRequestOptions options = new()
+            ChatCompletionOptions options = new()
             {
                 Model = settings.CurrentValue.DefaultModel,
-                Temperature = 0.7f,
+                Temperature = 0.3f,
+                TopP = 0.95f,
             };
 
             string modelId = options.Model;
-            await foreach (ChatMessage response in chatService.StreamCompletionAsync(Messages, options, cts.Token))
+            await foreach (ExtendedAgentResponseUpdate response in chatService.StreamCompletionAsync(Messages, options, cts.Token))
             {
-                ChatMessage tagged = new()
+                ExtendedAgentResponseUpdate tagged = new()
                 {
-                    Role = response.Role,
+                    RoleKind = response.RoleKind,
                     Content = response.Content,
+                    Segments = response.Segments,
                     Timestamp = response.Timestamp,
-                    ToolCalls = response.ToolCalls,
-                    ToolCallId = response.ToolCallId,
                     ModelId = modelId,
                 };
 
-                if (Messages.Count > 0 && Messages[^1].Role == ChatRole.Assistant)
+                if (Messages.Count > 0 && Messages[^1].RoleKind == ChatRoleKind.Assistant)
                 {
                     Messages[^1] = tagged;
                 }
@@ -87,13 +87,12 @@ internal sealed partial class ChatViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            // User cancelled
         }
         catch (Exception ex)
         {
-            Messages.Add(new ChatMessage
+            Messages.Add(new ExtendedAgentResponseUpdate
             {
-                Role = ChatRole.Assistant,
+                RoleKind = ChatRoleKind.Assistant,
                 Content = $"Error: {ex.Message}",
             });
         }

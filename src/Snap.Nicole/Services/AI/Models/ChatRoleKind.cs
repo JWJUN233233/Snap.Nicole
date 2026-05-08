@@ -1,9 +1,9 @@
 namespace Snap.Nicole.Services.AI.Models;
 
-internal enum ChatRole
+internal enum ChatRoleKind
 {
     System,
-    User,
     Assistant,
+    User,
     Tool,
 }
