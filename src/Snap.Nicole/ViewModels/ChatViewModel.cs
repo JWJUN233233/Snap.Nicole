@@ -4,8 +4,9 @@ using Microsoft.Extensions.Options;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
-using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,17 +14,50 @@ namespace Snap.Nicole.ViewModels;
 
 internal sealed partial class ChatViewModel : ObservableObject
 {
-    private readonly IChatService chatService;
+    private readonly IAgentService chatService;
     private readonly IOptionsMonitor<AppSettings> settings;
-    private CancellationTokenSource? cts;
+    private readonly IOptionsWriter<AppSettings> writer;
+
+    private CancellationTokenSource? generationCts;
 
     public ChatViewModel(IServiceProvider serviceProvider)
     {
-        chatService = serviceProvider.GetRequiredService<IChatService>();
+        chatService = serviceProvider.GetRequiredService<IAgentService>();
         settings = serviceProvider.GetRequiredService<IOptionsMonitor<AppSettings>>();
+        writer = serviceProvider.GetRequiredService<IOptionsWriter<AppSettings>>();
+
+        settings.OnChange(OnSettingsChanged);
     }
 
     public ObservableCollection<ExtendedAgentResponseUpdate> Messages { get; } = [];
+
+    public IReadOnlyList<ModelProfile> ModelProfiles => settings.CurrentValue.ModelProfiles;
+
+    public ModelProfile? SelectedModelProfile
+    {
+        get
+        {
+            AppSettings current = settings.CurrentValue;
+            return current.ModelProfiles.FirstOrDefault(p => p.Id == current.SelectedModelProfileId)
+                ?? current.ModelProfiles.FirstOrDefault();
+        }
+        set
+        {
+            if (value is null)
+            {
+                return;
+            }
+
+            AppSettings current = settings.CurrentValue;
+            if (current.SelectedModelProfileId == value.Id)
+            {
+                return;
+            }
+
+            current.SelectedModelProfileId = value.Id;
+            writer.Update();
+        }
+    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -33,7 +67,7 @@ internal sealed partial class ChatViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
     public partial bool IsBusy { get; set; }
 
-    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText);
+    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText) && SelectedModelProfile is not null;
 
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
@@ -41,6 +75,12 @@ internal sealed partial class ChatViewModel : ObservableObject
         string input = InputText.Trim();
         if (string.IsNullOrEmpty(input))
         {
+            return;
+        }
+
+        ModelProfile? profile = SelectedModelProfile;
+        if (profile is null)
+        { 
             return;
         }
 
@@ -52,19 +92,21 @@ internal sealed partial class ChatViewModel : ObservableObject
 
         InputText = "";
         IsBusy = true;
-        cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        generationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
         try
         {
-            ChatCompletionOptions options = new()
+            ExtendedAgentOptions options = new()
             {
-                Model = settings.CurrentValue.DefaultModel,
+                Model = profile.ModelId,
+                Endpoint = profile.Endpoint,
+                ApiKey = profile.ApiKey,
                 Temperature = 0.3f,
                 TopP = 0.95f,
             };
 
             string modelId = options.Model;
-            await foreach (ExtendedAgentResponseUpdate response in chatService.StreamCompletionAsync(Messages, options, cts.Token))
+            await foreach (ExtendedAgentResponseUpdate response in chatService.RunStreamingAsync(Messages, options, generationCts.Token))
             {
                 ExtendedAgentResponseUpdate tagged = new()
                 {
@@ -98,8 +140,8 @@ internal sealed partial class ChatViewModel : ObservableObject
         }
         finally
         {
-            cts?.Dispose();
-            cts = null;
+            generationCts?.Dispose();
+            generationCts = null;
             IsBusy = false;
         }
     }
@@ -107,12 +149,26 @@ internal sealed partial class ChatViewModel : ObservableObject
     [RelayCommand]
     private void StopGeneration()
     {
-        cts?.Cancel();
+        generationCts?.Cancel();
     }
 
     [RelayCommand]
     private void ClearChat()
     {
         Messages.Clear();
+    }
+
+    private void OnSettingsChanged(AppSettings ignored)
+    {
+        App.Current.Threading.SynchronizationContext.Post(static state =>
+        {
+            if (state is not ChatViewModel self)
+            {
+                return;
+            }
+
+            self.OnPropertyChanged(nameof(ModelProfiles));
+            self.OnPropertyChanged(nameof(SelectedModelProfile));
+        }, this);
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Snap.Nicole.Core;
+﻿namespace Snap.Nicole.Core;
 
 internal static class StringExtensions
 {

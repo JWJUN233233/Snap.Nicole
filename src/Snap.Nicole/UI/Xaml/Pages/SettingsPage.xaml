@@ -4,12 +4,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:snux="using:Snap.Nicole.UI.Xaml"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snv="using:Snap.Nicole.ViewModels"
     d:DataContext="{d:DesignInstance snv:SettingsViewModel}"
     mc:Ignorable="d">
 
-    <Grid Padding="24">
+    <ScrollViewer Padding="24">
         <StackPanel Spacing="8">
             <TextBlock Style="{StaticResource TitleTextBlockStyle}" Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemSettingsContent}" />
 
@@ -20,18 +21,37 @@
                 SelectedValue="{Binding Language, Mode=TwoWay}"
                 SelectedValuePath="Value" />
 
-            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelOpenAIApiKey}" />
-            <PasswordBox
-                x:Name="OpenAIApiKeyBox"
-                PasswordChanged="OnOpenAIApiKeyPasswordChanged" />
+            <TextBlock
+                Margin="0,16,0,0"
+                Style="{StaticResource SubtitleTextBlockStyle}"
+                Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelProfiles}" />
 
-            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelOpenAIBaseUrl}" />
-            <TextBox
-                Text="{Binding OpenAIBaseUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <ListView
+                Height="150"
+                DisplayMemberPath="Name"
+                ItemsSource="{Binding ModelProfiles}"
+                SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" />
 
-            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDefaultModel}" />
-            <TextBox
-                Text="{Binding DefaultModel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" />
+            <TextBox Text="{Binding SelectedProfile.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" />
+            <TextBox Text="{Binding SelectedProfile.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}" />
+            <TextBox Text="{Binding SelectedProfile.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" />
+            <TextBox Text="{Binding SelectedProfile.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <StackPanel
+                Margin="0,8,0,0"
+                Orientation="Horizontal"
+                Spacing="8">
+                <Button Command="{Binding AddProfileCommand}" Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddProfile}" />
+                <Button Command="{Binding UpdateProfileCommand}" Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelUpdateProfile}" />
+                <Button Command="{Binding DeleteProfileCommand}" Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteProfile}" />
+            </StackPanel>
         </StackPanel>
-    </Grid>
+    </ScrollViewer>
 </Page>

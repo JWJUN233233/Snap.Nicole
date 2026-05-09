@@ -1,10 +1,9 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Snap.Nicole.Core.IO;
 using Snap.Nicole.UI;
 using Snap.Nicole.UI.Xaml;
-using System;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -31,7 +30,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
             AppWindow appWindow = window.AppWindow;
 
             appWindow.Title = window.Title;
-            appWindow.SetIcon(Path.Combine(AppContext.BaseDirectory, "Assets", "Logo.ico"));
+            appWindow.SetIcon(WellKnownLocations.AppIcon);
 
             if (window is IXamlWindowExtendsContentIntoTitleBar xamlWindow)
             {

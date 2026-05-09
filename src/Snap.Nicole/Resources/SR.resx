@@ -153,13 +153,34 @@
   <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
     <value>清空</value>
   </data>
-  <data name="UIXamlPagesSettingsPageLabelOpenAIApiKey" xml:space="preserve">
-    <value>OpenAI API Key</value>
+  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
+    <value>模型配置</value>
   </data>
-  <data name="UIXamlPagesSettingsPageLabelOpenAIBaseUrl" xml:space="preserve">
-    <value>OpenAI Base URL</value>
+  <data name="UIXamlPagesSettingsPageLabelModelProfiles" xml:space="preserve">
+    <value>模型配置</value>
   </data>
-  <data name="UIXamlPagesSettingsPageLabelDefaultModel" xml:space="preserve">
-    <value>默认模型</value>
+  <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
+    <value>配置名称</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileEndpoint" xml:space="preserve">
+    <value>端点 URL</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileApiKey" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
+    <value>模型 ID</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelAddProfile" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelUpdateProfile" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDeleteProfile" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
+    <value>请先在设置中配置 API Key。</value>
   </data>
 </root>

@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml;
 using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.UI.Xaml;
-using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -14,8 +13,8 @@ namespace Snap.Nicole.Core.Hosting;
 internal sealed class WindowSubclassLifeTime : IDisposable
 {
     private readonly Window window;
-    private NicoleNativeWindowSubclass? subclass;
     private GCHandle<WindowSubclassLifeTime> gcHandle;
+    private NicoleNativeWindowSubclass? subclass;
 
     private bool disposed;
 
@@ -54,19 +53,6 @@ internal sealed class WindowSubclassLifeTime : IDisposable
                         *result = BOOL.TRUE;
                         return BOOL.FALSE;
                     }
-
-                    break;
-                }
-
-            case WM_MOUSEWHEEL:
-                {
-                    //if (lifeTime.CurrentWindow is IXamlWindowMouseWheelHandler handler)
-                    //{
-                    //    WPARAM2MOUSEWHEEL pWParam2 = *(WPARAM2MOUSEWHEEL*)&wParam;
-                    //    LPARAM2MOUSEWHEEL pLParam2 = *(LPARAM2MOUSEWHEEL*)&lParam;
-                    //    PointerPointProperties data = new(pWParam2.High, (MODIFIERKEYS_FLAGS)pWParam2.Low, pLParam2.Low, pLParam2.High);
-                    //    handler.OnMouseWheel(in data);
-                    //}
 
                     break;
                 }

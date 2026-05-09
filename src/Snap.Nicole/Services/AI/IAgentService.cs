@@ -4,10 +4,10 @@ using System.Threading;
 
 namespace Snap.Nicole.Services.AI;
 
-internal interface IChatService
+internal interface IAgentService
 {
-    IAsyncEnumerable<ExtendedAgentResponseUpdate> StreamCompletionAsync(
+    IAsyncEnumerable<ExtendedAgentResponseUpdate> RunStreamingAsync(
         IReadOnlyList<ExtendedAgentResponseUpdate> messages,
-        ChatCompletionOptions options,
+        ExtendedAgentOptions options,
         CancellationToken cancellationToken = default);
 }

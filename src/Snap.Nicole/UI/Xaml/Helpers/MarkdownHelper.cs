@@ -5,7 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Snap.Nicole.Services.AI.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -67,10 +66,10 @@ internal static partial class MarkdownHelper
     {
         return segment.Kind switch
         {
-            ExtendedAgentContentKind.Text => CreateSection("Answer", ParseMarkdown(segment.Content)),
-            ExtendedAgentContentKind.Reasoning => CreateSection("Thinking", ParseMarkdown(segment.Content)),
-            ExtendedAgentContentKind.ToolCall => CreateSection("Tool Call", CreatePlainTextBlock(segment.Content)),
-            ExtendedAgentContentKind.ToolResult => CreateSection("Tool Result", CreatePlainTextBlock(segment.Content)),
+            ExtendedAIContentKind.Text => CreateSection("Answer", ParseMarkdown(segment.Content)),
+            ExtendedAIContentKind.TextReasoning => CreateSection("Thinking", ParseMarkdown(segment.Content)),
+            ExtendedAIContentKind.ToolCall => CreateSection("Tool Call", CreatePlainTextBlock(segment.Content)),
+            ExtendedAIContentKind.ToolResult => CreateSection("Tool Result", CreatePlainTextBlock(segment.Content)),
             _ => CreatePlainTextBlock(segment.Content),
         };
     }

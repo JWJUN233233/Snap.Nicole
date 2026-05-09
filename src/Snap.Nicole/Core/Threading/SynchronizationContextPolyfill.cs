@@ -1,5 +1,4 @@
 using Microsoft.UI.Dispatching;
-using System;
 using System.Threading;
 using WinRT;
 

@@ -1,4 +1,5 @@
 global using Microsoft.Extensions.DependencyInjection;
+global using System;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
@@ -12,7 +13,6 @@ using Snap.Nicole.UI.Xaml.Windows;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.ViewModels;
 using Snap.Nicole.ViewModels.NotifyIcon;
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using WinRT;
@@ -45,7 +45,7 @@ internal static class Program
                 .AddSingleton<IMessenger, WeakReferenceMessenger>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
-                .AddSingleton<IChatService, OpenAIChatService>()
+                .AddSingleton<IAgentService, OpenAIAgentService>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()
                 .AddTransient<HomeViewModel>()

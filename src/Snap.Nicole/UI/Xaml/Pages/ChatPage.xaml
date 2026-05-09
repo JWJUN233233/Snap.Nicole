@@ -12,6 +12,7 @@
     <Grid Padding="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
@@ -23,14 +24,23 @@
             Style="{StaticResource TitleTextBlockStyle}"
             Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}" />
 
+        <!-- Model selector -->
+        <ComboBox
+            Grid.Row="1"
+            Margin="0,0,0,12"
+            DisplayMemberPath="Name"
+            ItemsSource="{x:Bind ViewModel.ModelProfiles, Mode=OneWay}"
+            SelectedItem="{x:Bind ViewModel.SelectedModelProfile, Mode=TwoWay}"
+            Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProfile}" />
+
         <!-- Chat messages display -->
-        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
+        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="2">
             <StackPanel x:Name="MessagesPanel" Spacing="8" />
         </ScrollViewer>
 
         <!-- Input area -->
         <Grid
-            Grid.Row="2"
+            Grid.Row="3"
             Margin="0,12,0,0"
             ColumnSpacing="8">
             <Grid.ColumnDefinitions>
