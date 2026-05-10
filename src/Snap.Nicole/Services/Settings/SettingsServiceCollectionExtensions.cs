@@ -10,8 +10,10 @@ internal static class SettingsServiceCollectionExtensions
         public IServiceCollection AddJsonSettings<T>(string fileNameWithoutExtension)
             where T : class, new()
         {
-            services.TryAddSingleton<IOptionsMonitor<T>>(sp => new JsonSettingsOptionsProvider<T>(fileNameWithoutExtension));
-            services.TryAddSingleton(sp => (IOptionsWriter<T>)sp.GetRequiredService<IOptionsMonitor<T>>());
+            services.TryAddSingleton<IOptionsProvider<T>>(sp => new JsonSettingsOptionsProvider<T>(fileNameWithoutExtension));
+            services.TryAddSingleton(sp => (IOptionsMonitor<T>)sp.GetRequiredService<IOptionsProvider<T>>());
+            services.TryAddSingleton(sp => (IOptionsWriter<T>)sp.GetRequiredService<IOptionsProvider<T>>());
+
             return services;
         }
     }

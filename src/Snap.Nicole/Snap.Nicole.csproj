@@ -30,6 +30,7 @@
   <ItemGroup>
     <Content Include="Assets\Logo.ico" />
     <Content Include="Assets\Logo.png" />
+    <Content Include="Assets\MiSans-Regular.ttf" />
   </ItemGroup>
 
   <ItemGroup>

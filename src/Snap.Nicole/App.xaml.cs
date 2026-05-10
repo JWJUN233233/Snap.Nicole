@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Core.Threading;
+using Snap.Nicole.Native;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Windows;
 using System;
@@ -16,7 +18,10 @@ public partial class App : Application
     {
         Threading = new ApplicationThreading();
 
+        XamlUtilities.PatchFontAndScriptServicesGetDefaultFontNameString("ms-appx:///Assets/MiSans-Regular.ttf#MiSans");
+
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
+        DebugSettings.IsXamlResourceReferenceTracingEnabled = true;
         InitializeComponent();
     }
 

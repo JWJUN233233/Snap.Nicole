@@ -1,8 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using Snap.Nicole.Core;
 
 namespace Snap.Nicole.Services.AI.Models;
 
-internal sealed partial class ModelProfile : ObservableObject
+internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Guid>, ICopyFrom<ModelProfile>
 {
     [ObservableProperty]
     public partial Guid Id { get; set; } = Guid.NewGuid();
@@ -18,4 +19,14 @@ internal sealed partial class ModelProfile : ObservableObject
 
     [ObservableProperty]
     public partial string ModelId { get; set; } = string.Empty;
+
+    // TODO: AutoGen CopyFrom
+    public void CopyFrom(ModelProfile other)
+    {
+        Id = other.Id;
+        Name = other.Name;
+        Endpoint = other.Endpoint;
+        ApiKey = other.ApiKey;
+        ModelId = other.ModelId;
+    }
 }

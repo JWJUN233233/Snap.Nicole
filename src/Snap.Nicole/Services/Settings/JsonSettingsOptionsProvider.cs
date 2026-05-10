@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TOptions>, IOptionsWriter<TOptions>, IDisposable
+internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<TOptions>, IDisposable
     where TOptions : class, new()
 {
     private static readonly JsonSerializerOptions JsonOptions = new()

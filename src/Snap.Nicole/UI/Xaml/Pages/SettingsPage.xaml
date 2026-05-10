@@ -28,6 +28,8 @@
 
             <ListView
                 Height="150"
+                AllowDrop="True"
+                CanReorderItems="True"
                 DisplayMemberPath="Name"
                 ItemsSource="{Binding ModelProfiles}"
                 SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" />
@@ -49,7 +51,6 @@
                 Orientation="Horizontal"
                 Spacing="8">
                 <Button Command="{Binding AddProfileCommand}" Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddProfile}" />
-                <Button Command="{Binding UpdateProfileCommand}" Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelUpdateProfile}" />
                 <Button Command="{Binding DeleteProfileCommand}" Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteProfile}" />
             </StackPanel>
         </StackPanel>

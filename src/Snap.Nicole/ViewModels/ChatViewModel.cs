@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.Extensions.Options;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
@@ -15,29 +14,27 @@ namespace Snap.Nicole.ViewModels;
 internal sealed partial class ChatViewModel : ObservableObject
 {
     private readonly IAgentService chatService;
-    private readonly IOptionsMonitor<AppSettings> settings;
-    private readonly IOptionsWriter<AppSettings> writer;
+    private readonly IOptionsProvider<AppSettings> options;
 
     private CancellationTokenSource? generationCts;
 
     public ChatViewModel(IServiceProvider serviceProvider)
     {
         chatService = serviceProvider.GetRequiredService<IAgentService>();
-        settings = serviceProvider.GetRequiredService<IOptionsMonitor<AppSettings>>();
-        writer = serviceProvider.GetRequiredService<IOptionsWriter<AppSettings>>();
+        options = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>();
 
-        settings.OnChange(OnSettingsChanged);
+        options.OnChange(OnSettingsChanged);
     }
 
     public ObservableCollection<ExtendedAgentResponseUpdate> Messages { get; } = [];
 
-    public IReadOnlyList<ModelProfile> ModelProfiles => settings.CurrentValue.ModelProfiles;
+    public IReadOnlyList<ModelProfile> ModelProfiles => options.CurrentValue.ModelProfiles.AsReadOnly();
 
     public ModelProfile? SelectedModelProfile
     {
         get
         {
-            AppSettings current = settings.CurrentValue;
+            AppSettings current = options.CurrentValue;
             return current.ModelProfiles.FirstOrDefault(p => p.Id == current.SelectedModelProfileId)
                 ?? current.ModelProfiles.FirstOrDefault();
         }
@@ -48,14 +45,14 @@ internal sealed partial class ChatViewModel : ObservableObject
                 return;
             }
 
-            AppSettings current = settings.CurrentValue;
+            AppSettings current = options.CurrentValue;
             if (current.SelectedModelProfileId == value.Id)
             {
                 return;
             }
 
             current.SelectedModelProfileId = value.Id;
-            writer.Update();
+            options.Update();
         }
     }
 
@@ -158,7 +155,7 @@ internal sealed partial class ChatViewModel : ObservableObject
         Messages.Clear();
     }
 
-    private void OnSettingsChanged(AppSettings ignored)
+    private void OnSettingsChanged(AppSettings ignored, string? ignored2)
     {
         App.Current.Threading.SynchronizationContext.Post(static state =>
         {

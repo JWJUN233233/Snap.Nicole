@@ -17,28 +17,28 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Title bar -->
+        <!--  Title bar  -->
         <TextBlock
             Grid.Row="0"
             Margin="0,0,0,12"
             Style="{StaticResource TitleTextBlockStyle}"
             Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}" />
 
-        <!-- Model selector -->
+        <!--  Model selector  -->
         <ComboBox
             Grid.Row="1"
             Margin="0,0,0,12"
             DisplayMemberPath="Name"
+            Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProfile}"
             ItemsSource="{x:Bind ViewModel.ModelProfiles, Mode=OneWay}"
-            SelectedItem="{x:Bind ViewModel.SelectedModelProfile, Mode=TwoWay}"
-            Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProfile}" />
+            SelectedItem="{x:Bind ViewModel.SelectedModelProfile, Mode=TwoWay}" />
 
-        <!-- Chat messages display -->
+        <!--  Chat messages display  -->
         <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="2">
             <StackPanel x:Name="MessagesPanel" Spacing="8" />
         </ScrollViewer>
 
-        <!-- Input area -->
+        <!--  Input area  -->
         <Grid
             Grid.Row="3"
             Margin="0,12,0,0"
@@ -52,10 +52,10 @@
             <TextBox
                 x:Name="InputBox"
                 Grid.Column="0"
+                MaxHeight="120"
                 AcceptsReturn="True"
                 Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
                 IsSpellCheckEnabled="False"
-                MaxHeight="120"
                 PlaceholderText="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
                 Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 

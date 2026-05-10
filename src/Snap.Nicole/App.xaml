@@ -8,8 +8,16 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!--  Other merged dictionaries here  -->
+                <ResourceDictionary Source="ms-appx:///UI/Xaml/Themes/TransitionCollections.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <!--  Other app resources here  -->
+
+            <!--  Page Transparent Background  -->
+            <StaticResource x:Key="ApplicationPageBackgroundThemeBrush" ResourceKey="ControlFillColorTransparentBrush" />
+
+            <!--  Modify Window title bar color  -->
+            <StaticResource x:Key="WindowCaptionBackground" ResourceKey="ControlFillColorTransparentBrush" />
+            <StaticResource x:Key="WindowCaptionBackgroundDisabled" ResourceKey="ControlFillColorTransparentBrush" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

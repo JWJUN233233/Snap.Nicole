@@ -28,25 +28,28 @@
             Grid.Row="0"
             IsBackButtonVisible="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"
             IsPaneToggleButtonVisible="True">
-            <mxi:Interaction.Behaviors>
-                <snuxb:TitleBarBehavior />
-            </mxi:Interaction.Behaviors>
             <TitleBar.Resources>
+                <x:Double x:Key="TitleBarLeftPaddingWidth">40</x:Double>
                 <x:Double x:Key="TitleBarCompactHeight">44</x:Double>
                 <x:Double x:Key="TitleBarExpandedHeight">44</x:Double>
                 <x:Double x:Key="TitleBarMinDragRegionWidth">0</x:Double>
             </TitleBar.Resources>
+            <mxi:Interaction.Behaviors>
+                <snuxb:TitleBarBehavior />
+            </mxi:Interaction.Behaviors>
         </TitleBar>
 
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
+            CompactPaneLength="45"
             IsBackButtonVisible="Collapsed"
             IsPaneOpen="True"
             IsPaneToggleButtonVisible="False"
             IsSettingsVisible="True"
             ItemInvoked="OnNavigationItemInvoked"
-            Loaded="OnLoaded">
+            Loaded="OnLoaded"
+            OpenPaneLength="205">
             <NavigationView.MenuItems>
                 <NavigationViewItem
                     snux:NavigationExtensions.NavigateTo="snuxp:HomePage"
@@ -57,7 +60,7 @@
                     Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}"
                     Icon="{snuxm:FontIcon Glyph=&#xE76E;}" />
             </NavigationView.MenuItems>
-            <Frame x:Name="ContentFrame" />
+            <Frame x:Name="ContentFrame" Transitions="{ThemeResource NavigationThemeTransitions}" />
         </NavigationView>
     </Grid>
 
