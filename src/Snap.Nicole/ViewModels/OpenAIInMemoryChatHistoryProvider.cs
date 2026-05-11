@@ -14,12 +14,6 @@ namespace Snap.Nicole.ViewModels;
 
 internal sealed class OpenAIInMemoryChatHistoryProvider : ChatHistoryProvider
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-    };
-
     public OpenAIInMemoryChatHistoryProvider()
         : base(null, null, StoreInputResponseMessageFilter)
     {
@@ -44,30 +38,39 @@ internal sealed class OpenAIInMemoryChatHistoryProvider : ChatHistoryProvider
     protected override async ValueTask<IEnumerable<ChatMessage>> ProvideChatHistoryAsync(InvokingContext context, CancellationToken cancellationToken = default)
     {
         State state = sessionState.GetOrInitializeState(context.Session);
-        Debug.WriteLine($"Before ProvideChatHistoryAsync:\nRequest\n{JsonSerializer.Serialize(context.RequestMessages, JsonOptions)}\nMessages\n{JsonSerializer.Serialize(state.Messages, JsonOptions)}");
         return state.Messages;
     }
 
     protected override async ValueTask StoreChatHistoryAsync(InvokedContext context, CancellationToken cancellationToken = default)
     {
         State state = sessionState.GetOrInitializeState(context.Session);
-        Debug.WriteLine($"Before StoreChatHistoryAsync:\nRequest\n{JsonSerializer.Serialize(context.RequestMessages, JsonOptions)}\nResponse\n{JsonSerializer.Serialize(context.ResponseMessages, JsonOptions)}\nMessages\n{JsonSerializer.Serialize(state.Messages, JsonOptions)}");
-        List<ChatMessage> allNewMessages = [.. context.RequestMessages.Concat(context.ResponseMessages ?? [])];
-        List<OpenAI.Chat.ChatMessage> openAIChatMessages = [.. OpenAI.Chat.MicrosoftExtensionsAIChatExtensions.AsOpenAIChatMessages(allNewMessages)];
 
-        for (int i = 0; i < allNewMessages.Count; i++)
+        List<ChatMessage> responseMessages = context.ResponseMessages is null ? [] : [.. context.ResponseMessages];
+        if (responseMessages.Count > 0)
         {
-            ChatMessage chatMessage = allNewMessages[i];
-            if (chatMessage.Contents.Any(content => content is TextReasoningContent))
+            // Raw representations should be the same count as response chat messages
+            IReadOnlyList<OpenAI.Chat.ChatMessage> rawRepresentations = [.. OpenAI.Chat.MicrosoftExtensionsAIChatExtensions.AsOpenAIChatMessages(responseMessages)];
+
+            for (int i = 0; i < responseMessages.Count; i++)
             {
-                OpenAI.Chat.ChatMessage openAIChatMessage = openAIChatMessages[i];
-                openAIChatMessage.Patch.Set("reasoning_content"u8, ((TextReasoningContent)chatMessage.Contents.Single(content => content is TextReasoningContent)).Text);
+                ChatMessage responseMessage = responseMessages[i];
+                foreach (AIContent content in responseMessage.Contents)
+                {
+                    if (content is TextReasoningContent reasoningContent)
+                    {
+                        OpenAI.Chat.ChatMessage rawRepresentation = rawRepresentations[i];
+                        rawRepresentation.Patch.Set("$.reasoning_content"u8, reasoningContent.Text);
+                        responseMessage.RawRepresentation = rawRepresentation;
+
+                        // There should only be one reasoning content per message
+                        break;
+                    }
+                }
             }
 
-            allNewMessages[i].RawRepresentation = chatMessage;
         }
 
-        state.Messages.AddRange(allNewMessages);
+        state.Messages.AddRange(context.RequestMessages.Concat(responseMessages));
     }
 
     private static IEnumerable<ChatMessage> StoreInputResponseMessageFilter(IEnumerable<ChatMessage> responses)
