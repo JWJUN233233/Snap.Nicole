@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
@@ -17,6 +19,7 @@ internal sealed partial class ChatViewModel : ObservableObject
     private readonly IOptionsProvider<AppSettings> options;
 
     private CancellationTokenSource? generationCts;
+    private AgentSession? session;
 
     public ChatViewModel(IServiceProvider serviceProvider)
     {
@@ -53,6 +56,7 @@ internal sealed partial class ChatViewModel : ObservableObject
 
             current.SelectedModelProfileId = value.Id;
             options.Update();
+            session = null;
         }
     }
 
@@ -77,15 +81,28 @@ internal sealed partial class ChatViewModel : ObservableObject
 
         ModelProfile? profile = SelectedModelProfile;
         if (profile is null)
-        { 
+        {
             return;
         }
 
-        Messages.Add(new ExtendedAgentResponseUpdate
+        ExtendedAgentOptions requestOptions = new()
+        {
+            Model = profile.ModelId,
+            Endpoint = profile.Endpoint,
+            ApiKey = profile.ApiKey,
+            Temperature = 0.3f,
+            TopP = 0.95f,
+        };
+
+        session ??= chatService.CreateSession(requestOptions);
+
+        ExtendedAgentResponseUpdate userMessage = new()
         {
             RoleKind = ChatRoleKind.User,
             Content = input,
-        });
+        };
+
+        Messages.Add(userMessage);
 
         InputText = "";
         IsBusy = true;
@@ -93,17 +110,8 @@ internal sealed partial class ChatViewModel : ObservableObject
 
         try
         {
-            ExtendedAgentOptions options = new()
-            {
-                Model = profile.ModelId,
-                Endpoint = profile.Endpoint,
-                ApiKey = profile.ApiKey,
-                Temperature = 0.3f,
-                TopP = 0.95f,
-            };
-
-            string modelId = options.Model;
-            await foreach (ExtendedAgentResponseUpdate response in chatService.RunStreamingAsync(Messages, options, generationCts.Token))
+            string modelId = requestOptions.Model;
+            await foreach (ExtendedAgentResponseUpdate response in chatService.RunStreamingAsync(userMessage, requestOptions, session, generationCts.Token))
             {
                 ExtendedAgentResponseUpdate tagged = new()
                 {
@@ -153,6 +161,7 @@ internal sealed partial class ChatViewModel : ObservableObject
     private void ClearChat()
     {
         Messages.Clear();
+        session = null;
     }
 
     private void OnSettingsChanged(AppSettings ignored, string? ignored2)

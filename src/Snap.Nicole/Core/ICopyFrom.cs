@@ -1,6 +1,6 @@
-﻿namespace Snap.Nicole.Core;
+namespace Snap.Nicole.Core;
 
-public interface ICopyFrom<T>
+internal interface ICopyFrom<T>
 {
     void CopyFrom(T source);
 }

@@ -1,9 +1,7 @@
-﻿using Microsoft.UI;
+using Microsoft.UI;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.Native.UI.Shell;
-using System;
 using System.Runtime.InteropServices;
-using Windows.Graphics.Printing.Workflow;
 using WinRT;
 using WinRT.Interop;
 

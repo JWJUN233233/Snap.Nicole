@@ -21,6 +21,7 @@
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <SatelliteResourceLanguages>zh-CN;en-US</SatelliteResourceLanguages>
+	<NoWarn>$(NoWarn);MAAI001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="Resources\SR.resx" />

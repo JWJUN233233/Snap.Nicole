@@ -1,8 +1,10 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
 using Snap.Nicole.Core;
+using Snap.Nicole.ViewModels;
 using System.ClientModel;
 using System.Collections.Generic;
 
@@ -38,7 +40,7 @@ internal sealed class ExtendedAgentOptions
         });
     }
 
-    public ChatClientAgent AsAIAgent(IList<AITool>? tools = default)
+    public ChatClientAgent AsAIAgent(IList<AITool>? tools = default, ILoggerFactory? loggerFactory = default)
     {
         OpenAIClient client = new(new ApiKeyCredential(ApiKey!), new OpenAIClientOptions()
         {
@@ -52,6 +54,8 @@ internal sealed class ExtendedAgentOptions
                 Instructions = SystemPrompt,
                 Tools = tools,
             },
-        });
+            ChatHistoryProvider = new OpenAIInMemoryChatHistoryProvider(),
+            RequirePerServiceCallChatHistoryPersistence = true,
+        }, loggerFactory: loggerFactory);
     }
 }
