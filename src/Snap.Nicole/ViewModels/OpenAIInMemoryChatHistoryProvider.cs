@@ -25,16 +25,6 @@ internal sealed class OpenAIInMemoryChatHistoryProvider : ChatHistoryProvider
 
     public override IReadOnlyList<string> StateKeys => stateKeys ??= [sessionState.StateKey];
 
-    protected override async ValueTask<IEnumerable<ChatMessage>> InvokingCoreAsync(InvokingContext context, CancellationToken cancellationToken = default)
-    {
-        return await base.InvokingCoreAsync(context, cancellationToken);
-    }
-
-    protected override async ValueTask InvokedCoreAsync(InvokedContext context, CancellationToken cancellationToken = default)
-    {
-        await base.InvokedCoreAsync(context, cancellationToken);
-    }
-
     protected override async ValueTask<IEnumerable<ChatMessage>> ProvideChatHistoryAsync(InvokingContext context, CancellationToken cancellationToken = default)
     {
         State state = sessionState.GetOrInitializeState(context.Session);
