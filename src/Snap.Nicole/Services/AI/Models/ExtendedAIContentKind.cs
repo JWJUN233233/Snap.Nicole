@@ -1,5 +1,6 @@
 namespace Snap.Nicole.Services.AI.Models;
 
+[Obsolete]
 internal enum ExtendedAIContentKind
 {
     Data,

@@ -1,5 +1,6 @@
 namespace Snap.Nicole.Services.AI.Models;
 
+[Obsolete]
 internal sealed class ExtendedAgentContentSegment
 {
     public ExtendedAIContentKind Kind { get; init; }

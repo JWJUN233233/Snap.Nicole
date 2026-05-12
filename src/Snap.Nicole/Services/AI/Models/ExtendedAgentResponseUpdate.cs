@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Models;
 
+[Obsolete]
 internal sealed class ExtendedAgentResponseUpdate
 {
     [JsonConstructor]

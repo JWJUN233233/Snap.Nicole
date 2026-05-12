@@ -1,8 +1,6 @@
 namespace Snap.Nicole.Services.AI.Models;
 
-/// <summary>
-/// Kind for the <see cref="Microsoft.Extensions.AI.ChatRole"/>
-/// </summary>
+[Obsolete]
 internal enum ChatRoleKind
 {
     System,

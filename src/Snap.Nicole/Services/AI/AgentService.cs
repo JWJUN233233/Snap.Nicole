@@ -3,10 +3,12 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
+using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.AI;
 
@@ -122,6 +124,11 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 Segments = [.. segments],
             };
         }
+    }
+
+    public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collections, ExtendedAgentOptions options, CancellationToken cancellationToken = default)
+    {
+
     }
 
     private static List<ChatMessage> BuildInputMessages(ExtendedAgentResponseUpdate update)
