@@ -7,7 +7,6 @@ using Snap.Nicole.Core;
 using Snap.Nicole.ViewModels;
 using System.ClientModel;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Snap.Nicole.Services.AI.Models;
 

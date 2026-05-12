@@ -10,7 +10,7 @@ using System.Threading;
 
 namespace Snap.Nicole.Services.AI;
 
-internal sealed class OpenAIAgentService(IServiceProvider serviceProvider) : IAgentService
+internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentService
 {
     private readonly ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 

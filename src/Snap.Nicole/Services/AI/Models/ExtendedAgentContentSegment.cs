@@ -8,12 +8,3 @@ internal sealed class ExtendedAgentContentSegment
 
     public ToolCallMetadata? Metadata { get; init; }
 }
-
-internal sealed class ToolCallMetadata
-{
-    public string CallId { get; init; } = "";
-
-    public string Name { get; init; } = "";
-
-    public string? Arguments { get; init; }
-}

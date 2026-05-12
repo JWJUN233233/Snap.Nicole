@@ -45,7 +45,7 @@ internal static class Program
                 .AddSingleton<IMessenger, WeakReferenceMessenger>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
-                .AddSingleton<IAgentService, OpenAIAgentService>()
+                .AddSingleton<IAgentService, AgentService>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()
                 .AddTransient<HomeViewModel>()
