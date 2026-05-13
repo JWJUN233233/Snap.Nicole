@@ -33,7 +33,8 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             return;
         }
 
-        ChatClientAgent agent = options.AsAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], loggerFactory);
+        // [AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)]
+        ChatClientAgent agent = options.AsAIAgent(null, loggerFactory);
         ObservableChatMessage? responseMessage = null;
         bool responseAdded = false;
 
@@ -144,8 +145,22 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 Result = functionResultContent.Result,
                 RawRepresentation = functionResultContent.RawRepresentation,
             },
+            UsageContent usageContent => CreateObservableUsageContent(usageContent),
             _ => null,
         };
+    }
+
+    private static ObservableUsageContent? CreateObservableUsageContent(UsageContent usageContent)
+    {
+        ObservableUsageContent observableContent = new()
+        {
+            Details = usageContent.Details,
+            RawRepresentation = usageContent.RawRepresentation,
+        };
+
+        return string.IsNullOrWhiteSpace(observableContent.Text)
+            ? null
+            : observableContent;
     }
 
     private static void AppendContent(ObservableAIContentCollection contents, ObservableAIContent content)
@@ -175,6 +190,10 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             case ObservableFunctionResultContent lastFunctionResult when content is ObservableFunctionResultContent newFunctionResult && lastFunctionResult.CallId == newFunctionResult.CallId:
                 lastFunctionResult.Result = newFunctionResult.Result;
                 lastFunctionResult.RawRepresentation = newFunctionResult.RawRepresentation ?? lastFunctionResult.RawRepresentation;
+                return;
+            case ObservableUsageContent lastUsage when content is ObservableUsageContent newUsage:
+                lastUsage.Details = newUsage.Details;
+                lastUsage.RawRepresentation = newUsage.RawRepresentation ?? lastUsage.RawRepresentation;
                 return;
             default:
                 contents.Add(content);

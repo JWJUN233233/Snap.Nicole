@@ -9,15 +9,11 @@
 
     <UserControl.Resources>
         <DataTemplate x:Key="TextContentTemplate">
-            <snuxc:ChatMarkdownSegmentView
-                Markdown="{Binding Text}"
-                Title="Answer" />
+            <snuxc:ChatMarkdownSegmentView Title="Answer" Markdown="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="ReasoningContentTemplate">
-            <snuxc:ChatMarkdownSegmentView
-                Markdown="{Binding Text}"
-                Title="Thinking" />
+            <snuxc:ChatMarkdownSegmentView Title="Thinking" Markdown="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="FunctionCallContentTemplate">
@@ -26,6 +22,10 @@
 
         <DataTemplate x:Key="FunctionResultContentTemplate">
             <snuxc:ChatFunctionResultSegmentView FunctionResult="{Binding}" />
+        </DataTemplate>
+
+        <DataTemplate x:Key="UsageContentTemplate">
+            <snuxc:ChatPlainTextSegmentView Title="Usage" Text="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="FallbackContentTemplate">
@@ -38,7 +38,8 @@
             FunctionCallTemplate="{StaticResource FunctionCallContentTemplate}"
             FunctionResultTemplate="{StaticResource FunctionResultContentTemplate}"
             ReasoningTemplate="{StaticResource ReasoningContentTemplate}"
-            TextTemplate="{StaticResource TextContentTemplate}" />
+            TextTemplate="{StaticResource TextContentTemplate}"
+            UsageTemplate="{StaticResource UsageContentTemplate}" />
     </UserControl.Resources>
 
     <Border
@@ -47,9 +48,7 @@
         HorizontalAlignment="Stretch"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="0,0,0,1">
-        <StackPanel
-            HorizontalAlignment="Stretch"
-            Spacing="4">
+        <StackPanel HorizontalAlignment="Stretch" Spacing="4">
             <TextBlock
                 x:Name="HeaderTextBlock"
                 FontSize="12"
@@ -62,9 +61,7 @@
                 IsTextSelectionEnabled="True"
                 TextWrapping="Wrap" />
 
-            <ItemsControl
-                x:Name="ContentItemsControl"
-                ItemTemplateSelector="{StaticResource ChatContentTemplateSelector}">
+            <ItemsControl x:Name="ContentItemsControl" ItemTemplateSelector="{StaticResource ChatContentTemplateSelector}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Spacing="4" />
