@@ -4,10 +4,11 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
+using Snap.Nicole.Services.AI.Observables;
 using Snap.Nicole.Services.Settings;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,7 +30,7 @@ internal sealed partial class ChatViewModel : ObservableObject
         options.OnChange(OnSettingsChanged);
     }
 
-    public ObservableCollection<ExtendedAgentResponseUpdate> Messages { get; } = [];
+    public ObservableChatMessageCollection Messages { get; } = [];
 
     public IReadOnlyList<ModelProfile> ModelProfiles => options.CurrentValue.ModelProfiles.AsReadOnly();
 
@@ -96,15 +97,13 @@ internal sealed partial class ChatViewModel : ObservableObject
             OmitReasoningEffortWhenThinkingDisabled = true,
         };
 
-        session ??= chatService.CreateSession(requestOptions);
+        session ??= ChatClientAgentSessionCreate();
 
-        ExtendedAgentResponseUpdate userMessage = new()
+        ChatMessage userMessage = new(ChatRole.User, input)
         {
-            RoleKind = ChatRoleKind.User,
-            Content = input,
+            CreatedAt = DateTimeOffset.Now,
+            AuthorName = "You",
         };
-
-        Messages.Add(userMessage);
 
         InputText = "";
         IsBusy = true;
@@ -112,38 +111,10 @@ internal sealed partial class ChatViewModel : ObservableObject
 
         try
         {
-            string modelId = requestOptions.Model;
-            await foreach (ExtendedAgentResponseUpdate response in chatService.RunStreamingAsync(userMessage, requestOptions, session, generationCts.Token))
-            {
-                ExtendedAgentResponseUpdate tagged = new()
-                {
-                    RoleKind = response.RoleKind,
-                    Content = response.Content,
-                    Segments = response.Segments,
-                    Timestamp = response.Timestamp,
-                    ModelId = modelId,
-                };
-
-                if (Messages.Count > 0 && Messages[^1].RoleKind == ChatRoleKind.Assistant)
-                {
-                    Messages[^1] = tagged;
-                }
-                else
-                {
-                    Messages.Add(tagged);
-                }
-            }
+            await chatService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, generationCts.Token);
         }
         catch (OperationCanceledException)
         {
-        }
-        catch (Exception ex)
-        {
-            Messages.Add(new ExtendedAgentResponseUpdate
-            {
-                RoleKind = ChatRoleKind.Assistant,
-                Content = $"Error: {ex.Message}",
-            });
         }
         finally
         {
@@ -179,4 +150,7 @@ internal sealed partial class ChatViewModel : ObservableObject
             self.OnPropertyChanged(nameof(SelectedModelProfile));
         }, this);
     }
+
+    [UnsafeAccessor(UnsafeAccessorKind.Constructor)]
+    private static extern ChatClientAgentSession ChatClientAgentSessionCreate();
 }

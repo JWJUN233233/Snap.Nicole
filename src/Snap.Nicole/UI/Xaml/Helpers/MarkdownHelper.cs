@@ -4,7 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Snap.Nicole.Services.AI.Models;
+using Snap.Nicole.UI.Xaml.Controls;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -13,94 +13,7 @@ namespace Snap.Nicole.UI.Xaml.Helpers;
 
 internal static partial class MarkdownHelper
 {
-    public static FrameworkElement CreateMessageBubble(ExtendedAgentResponseUpdate message)
-    {
-        StackPanel panel = new() { Spacing = 4, HorizontalAlignment = HorizontalAlignment.Stretch };
-
-        string headerText = message.RoleKind == ChatRoleKind.User ? "You" : (message.ModelId ?? "AI");
-        TextBlock header = new()
-        {
-            Text = headerText,
-            FontWeight = FontWeights.SemiBold,
-            FontSize = 12,
-            Opacity = 0.6,
-        };
-        panel.Children.Add(header);
-
-        if (message.RoleKind == ChatRoleKind.User)
-        {
-            TextBlock textBlock = new()
-            {
-                Text = message.Content,
-                TextWrapping = TextWrapping.Wrap,
-                FontSize = 14,
-                IsTextSelectionEnabled = true,
-            };
-            panel.Children.Add(textBlock);
-        }
-        else if (message.Segments.Count > 0)
-        {
-            foreach (ExtendedAgentContentSegment segment in message.Segments)
-            {
-                panel.Children.Add(CreateSegment(segment));
-            }
-        }
-        else if (!string.IsNullOrWhiteSpace(message.Content))
-        {
-            panel.Children.Add(ParseMarkdown(message.Content));
-        }
-
-        Border border = new()
-        {
-            Child = panel,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            Padding = new Thickness(0, 0, 0, 8),
-            BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
-            BorderThickness = new Thickness(0, 0, 0, 1),
-        };
-
-        return border;
-    }
-
-    private static FrameworkElement CreateSegment(ExtendedAgentContentSegment segment)
-    {
-        return segment.Kind switch
-        {
-            ExtendedAIContentKind.Text => CreateSection("Answer", ParseMarkdown(segment.Content)),
-            ExtendedAIContentKind.TextReasoning => CreateSection("Thinking", ParseMarkdown(segment.Content)),
-            ExtendedAIContentKind.ToolCall => CreateSection("Tool Call", CreatePlainTextBlock(segment.Content)),
-            ExtendedAIContentKind.ToolResult => CreateSection("Tool Result", CreatePlainTextBlock(segment.Content)),
-            _ => CreatePlainTextBlock(segment.Content),
-        };
-    }
-
-    private static FrameworkElement CreateSection(string title, FrameworkElement content)
-    {
-        StackPanel panel = new() { Spacing = 2 };
-        panel.Children.Add(new TextBlock
-        {
-            Text = title,
-            FontSize = 12,
-            FontWeight = FontWeights.SemiBold,
-            Opacity = 0.7,
-        });
-        panel.Children.Add(content);
-        return panel;
-    }
-
-    private static TextBlock CreatePlainTextBlock(string text)
-    {
-        return new TextBlock
-        {
-            Text = text,
-            TextWrapping = TextWrapping.Wrap,
-            FontSize = 14,
-            IsTextSelectionEnabled = true,
-            FontFamily = new FontFamily("Cascadia Code, Consolas, Courier New"),
-        };
-    }
-
-    private static RichTextBlock ParseMarkdown(string markdown)
+    public static RichTextBlock CreateMarkdownBlock(string? markdown)
     {
         RichTextBlock richText = new()
         {
@@ -137,6 +50,7 @@ internal static partial class MarkdownHelper
                     inCodeBlock = true;
                     codeLanguage = line.TrimStart()[3..].Trim();
                 }
+
                 continue;
             }
 
@@ -165,18 +79,19 @@ internal static partial class MarkdownHelper
             }
             else if (Regex.IsMatch(line.Trim(), @"^[-*_]{3,}$"))
             {
-                Paragraph hrParagraph = new() { Margin = new Thickness(0, 4, 0, 4) };
-                richText.Blocks.Add(hrParagraph);
+                AddHorizontalRule(richText);
             }
             else if (IsTableLine(line) && i + 1 < lines.Length && IsTableSeparator(lines[i + 1]))
             {
                 List<string> tableLines = [line, lines[i + 1]];
                 i += 2;
+
                 while (i < lines.Length && IsTableLine(lines[i]))
                 {
                     tableLines.Add(lines[i]);
                     i++;
                 }
+
                 i--;
                 AddTable(richText, tableLines);
             }
@@ -186,7 +101,7 @@ internal static partial class MarkdownHelper
             }
             else if (line.StartsWith("- ") || line.StartsWith("* "))
             {
-                AddListItem(richText, line[2..], "• ");
+                AddListItem(richText, line[2..], "- ");
             }
             else if (Regex.IsMatch(line, @"^\d+\.\s"))
             {
@@ -215,14 +130,29 @@ internal static partial class MarkdownHelper
         richText.Blocks.Add(paragraph);
     }
 
+    private static void AddHorizontalRule(RichTextBlock richText)
+    {
+        Paragraph paragraph = new() { Margin = new Thickness(0, 4, 0, 4) };
+        paragraph.Inlines.Add(new InlineUIContainer
+        {
+            Child = new Border
+            {
+                Height = 1,
+                MinWidth = 120,
+                Background = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
+            },
+        });
+        richText.Blocks.Add(paragraph);
+    }
+
     private static void AddBlockquote(RichTextBlock richText, string text)
     {
         Paragraph paragraph = new()
         {
             Margin = new Thickness(12, 2, 0, 2),
-            Foreground = (Brush)Application.Current.Resources["TextFillColorSecondaryBrush"],
+            Foreground = GetThemeBrush("TextFillColorSecondaryBrush", "SystemControlForegroundBaseMediumBrush"),
         };
-        paragraph.Inlines.Add(new Run { Text = "│  " });
+        paragraph.Inlines.Add(new Run { Text = "> " });
         AddInlineMarkdown(paragraph.Inlines, text);
         richText.Blocks.Add(paragraph);
     }
@@ -244,37 +174,15 @@ internal static partial class MarkdownHelper
 
     private static void AddCodeBlock(RichTextBlock richText, string code, string language)
     {
-        ScrollViewer scrollViewer = new()
-        {
-            HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
-            HorizontalScrollMode = ScrollMode.Auto,
-            MaxHeight = 400,
-            Margin = new Thickness(0, 4, 0, 4),
-        };
-
-        TextBlock codeText = new()
-        {
-            Text = code,
-            FontFamily = new FontFamily("Cascadia Code, Consolas, Courier New"),
-            FontSize = 13,
-            IsTextSelectionEnabled = true,
-            TextWrapping = TextWrapping.NoWrap,
-        };
-
-        Border codeBorder = new()
-        {
-            Child = scrollViewer,
-            Background = GetThemeBrush("CardBackgroundFillColorSecondaryBrush", "SystemControlBackgroundChromeMediumLowBrush"),
-            CornerRadius = new CornerRadius(6),
-            Padding = new Thickness(12),
-            BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
-            BorderThickness = new Thickness(1),
-        };
-
-        scrollViewer.Content = codeText;
-
         Paragraph container = new();
-        container.Inlines.Add(new InlineUIContainer { Child = codeBorder });
+        container.Inlines.Add(new InlineUIContainer
+        {
+            Child = new MarkdownCodeBlockView
+            {
+                Code = code,
+                Language = language,
+            },
+        });
         richText.Blocks.Add(container);
     }
 
@@ -297,89 +205,38 @@ internal static partial class MarkdownHelper
 
     private static void AddTable(RichTextBlock richText, List<string> tableLines)
     {
-        if (tableLines.Count < 2) return;
+        if (tableLines.Count < 2)
+        {
+            return;
+        }
 
         List<string> headerCells = ParseTableCells(tableLines[0]);
         int columnCount = headerCells.Count;
-
-        Grid tableGrid = new()
-        {
-            Margin = new Thickness(0, 6, 0, 6),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-            BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(4),
-            Background = GetThemeBrush("CardBackgroundFillColorSecondaryBrush", "SystemControlBackgroundChromeMediumLowBrush"),
-        };
-
-        for (int c = 0; c < columnCount; c++)
-        {
-            tableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Auto) });
-        }
-
-        AddTableRow(tableGrid, headerCells, 0, isHeader: true);
+        List<IReadOnlyList<string>> rows = [headerCells];
 
         for (int r = 2; r < tableLines.Count; r++)
         {
             List<string> cells = ParseTableCells(tableLines[r]);
-            while (cells.Count < columnCount) cells.Add("");
-            AddTableRow(tableGrid, cells, r - 1, isHeader: false);
+            while (cells.Count < columnCount)
+            {
+                cells.Add("");
+            }
+
+            rows.Add(cells);
         }
 
         Paragraph container = new();
-        container.Inlines.Add(new InlineUIContainer { Child = tableGrid });
+        container.Inlines.Add(new InlineUIContainer
+        {
+            Child = new MarkdownTableView
+            {
+                Rows = rows,
+            },
+        });
         richText.Blocks.Add(container);
     }
 
-    private static void AddTableRow(Grid grid, List<string> cells, int rowIndex, bool isHeader)
-    {
-        grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-
-        for (int c = 0; c < cells.Count; c++)
-        {
-            RichTextBlock cellRich = new()
-            {
-                TextWrapping = TextWrapping.Wrap,
-                FontSize = 13,
-                IsTextSelectionEnabled = true,
-            };
-            Paragraph richParagraph = new() { Margin = new Thickness(0) };
-            AddInlineMarkdown(richParagraph.Inlines, cells[c]);
-            if (isHeader) richParagraph.FontWeight = FontWeights.SemiBold;
-            cellRich.Blocks.Add(richParagraph);
-
-            Border cellBorder = new()
-            {
-                Child = cellRich,
-                Padding = new Thickness(8, 4, 8, 4),
-                BorderBrush = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
-                BorderThickness = c < cells.Count - 1
-                    ? new Thickness(0, 0, 1, 0)
-                    : new Thickness(0),
-            };
-
-            Grid.SetRow(cellBorder, rowIndex);
-            Grid.SetColumn(cellBorder, c);
-            grid.Children.Add(cellBorder);
-        }
-
-        if (isHeader)
-        {
-            foreach (UIElement child in grid.Children)
-            {
-                if (child is Border b && Grid.GetRow(b) == 0)
-                {
-                    b.BorderThickness = new Thickness(
-                        b.BorderThickness.Left,
-                        b.BorderThickness.Top,
-                        b.BorderThickness.Right,
-                        1);
-                }
-            }
-        }
-    }
-
-    private static void AddInlineMarkdown(InlineCollection inlines, string text)
+    internal static void AddInlineMarkdown(InlineCollection inlines, string text)
     {
         Regex pattern = InlineMarkdownPattern();
         int lastIndex = 0;
@@ -407,27 +264,13 @@ internal static partial class MarkdownHelper
             }
             else if (match.Groups["code"].Success)
             {
-                Run codeRun = new()
+                inlines.Add(new InlineUIContainer
                 {
-                    Text = match.Groups["code"].Value,
-                    FontFamily = new FontFamily("Cascadia Code, Consolas, Courier New"),
-                    FontSize = 12.5,
-                };
-                InlineUIContainer container = new();
-                Border border = new()
-                {
-                    Child = new TextBlock
+                    Child = new MarkdownInlineCodeView
                     {
-                        Inlines = { codeRun },
-                        FontFamily = new FontFamily("Cascadia Code, Consolas, Courier New"),
-                        FontSize = 12.5,
+                        Text = match.Groups["code"].Value,
                     },
-                    Background = GetThemeBrush("CardBackgroundFillColorSecondaryBrush", "SystemControlBackgroundChromeMediumLowBrush"),
-                    CornerRadius = new CornerRadius(3),
-                    Padding = new Thickness(4, 1, 4, 1),
-                };
-                container.Child = border;
-                inlines.Add(container);
+                });
             }
             else if (match.Groups["linktext"].Success)
             {
@@ -457,15 +300,22 @@ internal static partial class MarkdownHelper
         }
     }
 
-    private static Brush GetThemeBrush(string lightKey, string fallback)
+    internal static Brush GetThemeBrush(string resourceKey, string fallbackResourceKey)
     {
         try
         {
-            return (Brush)Application.Current.Resources[lightKey];
+            return (Brush)Application.Current.Resources[resourceKey];
         }
         catch
         {
-            return new SolidColorBrush(Colors.LightGray);
+            try
+            {
+                return (Brush)Application.Current.Resources[fallbackResourceKey];
+            }
+            catch
+            {
+                return new SolidColorBrush(Colors.LightGray);
+            }
         }
     }
 

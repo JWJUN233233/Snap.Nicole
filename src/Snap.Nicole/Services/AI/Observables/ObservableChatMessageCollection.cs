@@ -19,4 +19,9 @@ internal sealed class ObservableChatMessageCollection : ObservableCollection<Obs
         : base(list)
     {
     }
+
+    public static void Add(ObservableChatMessageCollection collection, ObservableChatMessage message)
+    {
+        collection.Add(message);
+    }
 }

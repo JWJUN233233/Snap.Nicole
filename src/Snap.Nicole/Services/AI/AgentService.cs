@@ -1,12 +1,11 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,135 +15,170 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 {
     private readonly ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-    public AgentSession CreateSession(ExtendedAgentOptions options)
+    public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
-        return options.AsAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], loggerFactory).CreateSessionAsync().AsTask().GetAwaiter().GetResult();
-    }
+        ObservableChatMessage inputMessage = CreateObservableChatMessage(message);
+        await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
 
-    public async IAsyncEnumerable<ExtendedAgentResponseUpdate> RunStreamingAsync(
-        ExtendedAgentResponseUpdate message,
-        ExtendedAgentOptions options,
-        AgentSession session,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
-            yield return new(ChatRoleKind.Assistant, SR.UIXamlPagesChatPageMessageConfigureApiKey);
-            yield break;
+            ObservableChatMessage configurationMessage = new()
+            {
+                Role = ChatRole.Assistant,
+                CreatedAt = DateTimeOffset.Now,
+            };
+            configurationMessage.Contents.Add(new ObservableTextContent { Text = SR.UIXamlPagesChatPageMessageConfigureApiKey });
+
+            await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
+            return;
         }
 
         ChatClientAgent agent = options.AsAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], loggerFactory);
-        List<ChatMessage> inputMessages = BuildInputMessages(message);
+        ObservableChatMessage? responseMessage = null;
+        bool responseAdded = false;
 
-        string contentBuffer = "";
-        string reasoningBuffer = "";
-        List<ExtendedAgentContentSegment> segments = [];
-        ExtendedAIContentKind? previousKind = null;
-
-        await foreach (AgentResponseUpdate update in agent.RunStreamingAsync(inputMessages, session, options: options.AsAgentRunOptions(), cancellationToken: cancellationToken))
+        try
         {
-            bool hasChanges = false;
-            foreach (AIContent aiContent in update.Contents)
+            await foreach (AgentResponseUpdate update in agent.RunStreamingAsync([message], session, options: options.AsAgentRunOptions(), cancellationToken: cancellationToken))
             {
-                ExtendedAIContentKind? kind = null;
-                string text = "";
-                ToolCallMetadata? metadata = null;
-
-                switch (aiContent)
+                List<ObservableAIContent> observableContents = [];
+                foreach (AIContent content in update.Contents)
                 {
-                    case TextContent textContent when !string.IsNullOrEmpty(textContent.Text):
-                        kind = ExtendedAIContentKind.Text;
-                        text = textContent.Text;
-                        contentBuffer += text;
-                        break;
-                    case TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text):
-                        kind = ExtendedAIContentKind.TextReasoning;
-                        text = reasoningContent.Text;
-                        reasoningBuffer += text;
-                        break;
-                    case FunctionCallContent functionCallContent:
-                        kind = ExtendedAIContentKind.ToolCall;
-                        text = $"{functionCallContent.Name}: {JsonSerializer.Serialize(functionCallContent.Arguments)}";
-                        metadata = new()
-                        {
-                            CallId = functionCallContent.CallId,
-                            Name = functionCallContent.Name,
-                            Arguments = JsonSerializer.Serialize(functionCallContent.Arguments),
-                        };
-                        break;
-                    case FunctionResultContent functionResultContent:
-                        kind = ExtendedAIContentKind.ToolResult;
-                        text = JsonSerializer.Serialize(functionResultContent.Result);
-                        metadata = new()
-                        {
-                            CallId = functionResultContent.CallId,
-                        };
-                        break;
+                    ObservableAIContent? observableContent = CreateObservableContent(content);
+                    if (observableContent is not null)
+                    {
+                        observableContents.Add(observableContent);
+                    }
                 }
 
-                if (kind is null || string.IsNullOrEmpty(text))
+                if (observableContents.Count == 0)
                 {
                     continue;
                 }
 
-                if (previousKind == kind && segments.Count > 0)
+                await taskScheduler.Run(() =>
                 {
-                    ExtendedAgentContentSegment last = segments[^1];
-                    segments[^1] = new ExtendedAgentContentSegment
+                    responseMessage ??= new ObservableChatMessage
                     {
-                        Kind = last.Kind,
-                        Content = last.Content + text,
-                        Metadata = last.Metadata ?? metadata,
+                        Role = ChatRole.Assistant,
+                        AuthorName = options.Model,
+                        CreatedAt = DateTimeOffset.Now,
                     };
-                }
-                else
-                {
-                    segments.Add(new ExtendedAgentContentSegment
+
+                    if (!responseAdded)
                     {
-                        Kind = kind.Value,
-                        Content = text,
-                        Metadata = metadata,
-                    });
-                }
+                        collection.Add(responseMessage);
+                        responseAdded = true;
+                    }
 
-                previousKind = kind;
-                hasChanges = true;
+                    foreach (ObservableAIContent observableContent in observableContents)
+                    {
+                        AppendContent(responseMessage.Contents, observableContent);
+                    }
+                }, cancellationToken);
             }
-
-            if (!hasChanges)
-            {
-                continue;
-            }
-
-            yield return new()
-            {
-                RoleKind = ChatRoleKind.Assistant,
-                Content = contentBuffer,
-                ReasoningContent = reasoningBuffer,
-                Segments = [.. segments],
-            };
         }
-    }
-
-    public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
-    {
-
-    }
-
-    private static List<ChatMessage> BuildInputMessages(ExtendedAgentResponseUpdate update)
-    {
-        List<ChatMessage> chatMessages = [];
-
-        switch (update.RoleKind)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            case ChatRoleKind.System:
-                chatMessages.Add(new(ChatRole.System, update.Content));
-                break;
-            case ChatRoleKind.User:
-                chatMessages.Add(new(ChatRole.User, update.Content));
-                break;
+        }
+        catch (Exception ex)
+        {
+            ObservableChatMessage errorMessage = new()
+            {
+                Role = ChatRole.Assistant,
+                CreatedAt = DateTimeOffset.Now,
+            };
+            errorMessage.Contents.Add(new ObservableTextContent { Text = $"Error: {ex.Message}" });
+
+            await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);
+        }
+    }
+
+    private static ObservableChatMessage CreateObservableChatMessage(ChatMessage chatMessage)
+    {
+        ObservableChatMessage observableMessage = new()
+        {
+            AuthorName = chatMessage.AuthorName,
+            CreatedAt = chatMessage.CreatedAt,
+            Role = chatMessage.Role,
+            MessageId = chatMessage.MessageId,
+            RawRepresentation = chatMessage.RawRepresentation,
+        };
+
+        foreach (AIContent content in chatMessage.Contents)
+        {
+            ObservableAIContent? observableContent = CreateObservableContent(content);
+            if (observableContent is not null)
+            {
+                observableMessage.Contents.Add(observableContent);
+            }
         }
 
-        return chatMessages;
+        return observableMessage;
+    }
+
+    private static ObservableAIContent? CreateObservableContent(AIContent content)
+    {
+        return content switch
+        {
+            TextContent textContent when !string.IsNullOrEmpty(textContent.Text) => new ObservableTextContent
+            {
+                Text = textContent.Text,
+                RawRepresentation = textContent.RawRepresentation,
+            },
+            TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text) => new ObservableTextReasoningContent
+            {
+                Text = reasoningContent.Text,
+                RawRepresentation = reasoningContent.RawRepresentation,
+            },
+            FunctionCallContent functionCallContent => new ObservableFunctionCallContent
+            {
+                CallId = functionCallContent.CallId,
+                Name = functionCallContent.Name,
+                Arguments = functionCallContent.Arguments,
+                RawRepresentation = functionCallContent.RawRepresentation,
+            },
+            FunctionResultContent functionResultContent => new ObservableFunctionResultContent
+            {
+                CallId = functionResultContent.CallId,
+                Result = functionResultContent.Result,
+                RawRepresentation = functionResultContent.RawRepresentation,
+            },
+            _ => null,
+        };
+    }
+
+    private static void AppendContent(ObservableAIContentCollection contents, ObservableAIContent content)
+    {
+        if (contents.Count == 0)
+        {
+            contents.Add(content);
+            return;
+        }
+
+        ObservableAIContent last = contents[^1];
+        switch (last)
+        {
+            case ObservableTextContent lastText when content is ObservableTextContent newText:
+                lastText.Text += newText.Text;
+                lastText.RawRepresentation = newText.RawRepresentation ?? lastText.RawRepresentation;
+                return;
+            case ObservableTextReasoningContent lastReasoning when content is ObservableTextReasoningContent newReasoning:
+                lastReasoning.Text += newReasoning.Text;
+                lastReasoning.RawRepresentation = newReasoning.RawRepresentation ?? lastReasoning.RawRepresentation;
+                return;
+            case ObservableFunctionCallContent lastFunctionCall when content is ObservableFunctionCallContent newFunctionCall && lastFunctionCall.CallId == newFunctionCall.CallId:
+                lastFunctionCall.Name = newFunctionCall.Name;
+                lastFunctionCall.Arguments = newFunctionCall.Arguments;
+                lastFunctionCall.RawRepresentation = newFunctionCall.RawRepresentation ?? lastFunctionCall.RawRepresentation;
+                return;
+            case ObservableFunctionResultContent lastFunctionResult when content is ObservableFunctionResultContent newFunctionResult && lastFunctionResult.CallId == newFunctionResult.CallId:
+                lastFunctionResult.Result = newFunctionResult.Result;
+                lastFunctionResult.RawRepresentation = newFunctionResult.RawRepresentation ?? lastFunctionResult.RawRepresentation;
+                return;
+            default:
+                contents.Add(content);
+                return;
+        }
     }
 }

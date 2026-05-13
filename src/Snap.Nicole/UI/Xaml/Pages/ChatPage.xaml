@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snv="using:Snap.Nicole.ViewModels"
     d:DataContext="{d:DesignInstance snv:ChatViewModel}"
@@ -17,14 +18,12 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--  Title bar  -->
         <TextBlock
             Grid.Row="0"
             Margin="0,0,0,12"
             Style="{StaticResource TitleTextBlockStyle}"
             Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}" />
 
-        <!--  Model selector  -->
         <ComboBox
             Grid.Row="1"
             Margin="0,0,0,12"
@@ -33,12 +32,19 @@
             ItemsSource="{x:Bind ViewModel.ModelProfiles, Mode=OneWay}"
             SelectedItem="{x:Bind ViewModel.SelectedModelProfile, Mode=TwoWay}" />
 
-        <!--  Chat messages display  -->
         <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="2">
-            <StackPanel x:Name="MessagesPanel" Spacing="8" />
+            <ItemsControl
+                x:Name="MessagesItemsControl"
+                ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
+                ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <snuxc:ChatMessageView Message="{Binding}" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </ScrollViewer>
 
-        <!--  Input area  -->
         <Grid
             Grid.Row="3"
             Margin="0,12,0,0"
@@ -54,7 +60,6 @@
                 Grid.Column="0"
                 MaxHeight="120"
                 AcceptsReturn="True"
-                Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
                 IsSpellCheckEnabled="False"
                 PlaceholderText="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
                 Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />

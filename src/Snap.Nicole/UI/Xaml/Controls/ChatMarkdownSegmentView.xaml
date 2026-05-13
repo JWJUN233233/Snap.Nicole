@@ -1,0 +1,17 @@
+<UserControl
+    x:Class="Snap.Nicole.UI.Xaml.Controls.ChatMarkdownSegmentView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
+    x:Name="Root">
+
+    <StackPanel Spacing="2">
+        <TextBlock
+            x:Name="TitleTextBlock"
+            FontSize="12"
+            FontWeight="SemiBold"
+            Opacity="0.7"
+            Text="{Binding Title, ElementName=Root}" />
+        <snuxc:MarkdownTextBlock Markdown="{Binding Markdown, ElementName=Root}" />
+    </StackPanel>
+</UserControl>

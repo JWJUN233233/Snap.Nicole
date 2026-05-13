@@ -2,11 +2,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using Snap.Nicole.Services.AI.Models;
-using Snap.Nicole.UI.Xaml.Helpers;
+using Snap.Nicole.Services.AI.Observables;
 using Snap.Nicole.ViewModels;
 using System;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using VirtualKey = Windows.System.VirtualKey;
 
 namespace Snap.Nicole.UI.Xaml.Pages;
@@ -20,6 +20,7 @@ internal sealed partial class ChatPage : Page
         DataContext = ViewModel;
 
         ViewModel.Messages.CollectionChanged += OnMessagesCollectionChanged;
+        SubscribeMessages(ViewModel.Messages);
         InputBox.KeyDown += OnInputBoxKeyDown;
     }
 
@@ -28,28 +29,105 @@ internal sealed partial class ChatPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        RebuildMessages();
+        ScrollToBottom();
     }
 
     private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        RebuildMessages();
-    }
-
-    private void RebuildMessages()
-    {
-        MessagesPanel.Children.Clear();
-
-        foreach (ExtendedAgentResponseUpdate message in ViewModel.Messages)
+        if (e.OldItems is not null)
         {
-            FrameworkElement bubble = MarkdownHelper.CreateMessageBubble(message);
-            MessagesPanel.Children.Add(bubble);
+            foreach (ObservableChatMessage message in e.OldItems)
+            {
+                UnsubscribeMessage(message);
+            }
         }
 
+        if (e.NewItems is not null)
+        {
+            foreach (ObservableChatMessage message in e.NewItems)
+            {
+                SubscribeMessage(message);
+            }
+        }
+
+        ScrollToBottom();
+    }
+
+    private void OnMessageContentsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (ObservableAIContent content in e.OldItems)
+            {
+                content.PropertyChanged -= OnContentPropertyChanged;
+            }
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (ObservableAIContent content in e.NewItems)
+            {
+                content.PropertyChanged += OnContentPropertyChanged;
+            }
+        }
+
+        ScrollToBottom();
+    }
+
+    private void OnMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ScrollToBottom();
+    }
+
+    private void OnContentPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ScrollToBottom();
+    }
+
+    private void ScrollToBottom()
+    {
         DispatcherQueue.TryEnqueue(() =>
         {
             ChatScrollViewer.ChangeView(null, ChatScrollViewer.ScrollableHeight, null);
         });
+    }
+
+    private void SubscribeMessages(ObservableChatMessageCollection messages)
+    {
+        foreach (ObservableChatMessage message in messages)
+        {
+            SubscribeMessage(message);
+        }
+    }
+
+    private void SubscribeMessage(ObservableChatMessage message)
+    {
+        message.PropertyChanged += OnMessagePropertyChanged;
+        message.Contents.CollectionChanged += OnMessageContentsCollectionChanged;
+        SubscribeContents(message.Contents);
+    }
+
+    private void UnsubscribeMessage(ObservableChatMessage message)
+    {
+        message.PropertyChanged -= OnMessagePropertyChanged;
+        message.Contents.CollectionChanged -= OnMessageContentsCollectionChanged;
+        UnsubscribeContents(message.Contents);
+    }
+
+    private void SubscribeContents(ObservableAIContentCollection contents)
+    {
+        foreach (ObservableAIContent content in contents)
+        {
+            content.PropertyChanged += OnContentPropertyChanged;
+        }
+    }
+
+    private void UnsubscribeContents(ObservableAIContentCollection contents)
+    {
+        foreach (ObservableAIContent content in contents)
+        {
+            content.PropertyChanged -= OnContentPropertyChanged;
+        }
     }
 
     private void OnInputBoxKeyDown(object sender, KeyRoutedEventArgs e)
