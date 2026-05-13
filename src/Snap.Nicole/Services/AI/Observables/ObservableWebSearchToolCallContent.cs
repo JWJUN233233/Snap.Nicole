@@ -1,10 +1,10 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.ObjectModel;
-using System.Threading;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableWebSearchToolCallContent(SynchronizationContext synchronizationContext)
-    : ObservableToolCallContent(synchronizationContext)
+internal sealed partial class ObservableWebSearchToolCallContent : ObservableToolCallContent
 {
-    public ObservableCollection<string>? Queries { get; set; }
+    [ObservableProperty]
+    public partial ObservableCollection<string>? Queries { get; set; }
 }

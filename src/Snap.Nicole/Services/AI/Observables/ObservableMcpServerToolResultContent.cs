@@ -1,9 +1,9 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableMcpServerToolResultContent(SynchronizationContext synchronizationContext)
-    : ObservableToolResultContent(synchronizationContext)
+internal sealed partial class ObservableMcpServerToolResultContent : ObservableToolResultContent
 {
-    public ObservableAIContentCollection? Outputs { get; set; }
+    [ObservableProperty]
+    public partial ObservableAIContentCollection? Outputs { get; set; }
 }

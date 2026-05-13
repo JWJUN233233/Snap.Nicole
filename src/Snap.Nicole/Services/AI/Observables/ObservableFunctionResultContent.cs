@@ -1,11 +1,12 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableFunctionResultContent(SynchronizationContext synchronizationContext)
-    : ObservableToolResultContent(synchronizationContext)
+internal sealed partial class ObservableFunctionResultContent : ObservableToolResultContent
 {
-    public object? Result { get; set; }
+    [ObservableProperty]
+    public partial object? Result { get; set; }
 
-    public Exception? Exception { get; set; }
+    [ObservableProperty]
+    public partial Exception? Exception { get; set; }
 }

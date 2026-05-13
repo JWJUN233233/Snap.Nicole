@@ -1,16 +1,19 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableFunctionCallContent(SynchronizationContext synchronizationContext)
-    : ObservableToolCallContent(synchronizationContext)
+internal sealed partial class ObservableFunctionCallContent : ObservableToolCallContent
 {
-    public string Name { get; set; }
+    [ObservableProperty]
+    public partial string Name { get; set; }
 
-    public IDictionary<string, object?>? Arguments { get; set; }
+    [ObservableProperty]
+    public partial IDictionary<string, object?>? Arguments { get; set; }
 
-    public Exception? Exception { get; set; }
+    [ObservableProperty]
+    public partial Exception? Exception { get; set; }
 
-    public bool InformationalOnly { get; set; }
+    [ObservableProperty]
+    public partial bool InformationalOnly { get; set; }
 }

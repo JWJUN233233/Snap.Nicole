@@ -92,6 +92,8 @@ internal sealed partial class ChatViewModel : ObservableObject
             ApiKey = profile.ApiKey,
             Temperature = 0.3f,
             TopP = 0.95f,
+            ThinkingEnabled = true,
+            OmitReasoningEffortWhenThinkingDisabled = true,
         };
 
         session ??= chatService.CreateSession(requestOptions);

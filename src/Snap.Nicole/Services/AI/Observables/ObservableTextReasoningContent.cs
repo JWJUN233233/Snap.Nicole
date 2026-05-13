@@ -1,9 +1,9 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableTextReasoningContent(SynchronizationContext synchronizationContext)
-    : ObservableAIContent(synchronizationContext)
+internal sealed class ObservableTextReasoningContent : ObservableAIContent
 {
-    public string Text { get; set; }
+    [ObservableProperty]
+    public partial string Text { get; set; }
 }

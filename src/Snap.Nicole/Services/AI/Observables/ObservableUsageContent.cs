@@ -1,10 +1,10 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.AI;
-using System.Threading;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableUsageContent(SynchronizationContext synchronizationContext)
-    : ObservableAIContent(synchronizationContext)
+internal sealed class ObservableUsageContent : ObservableAIContent
 {
-    public UsageDetails Details { get; set; }
+    [ObservableProperty]
+    public partial UsageDetails Details { get; set; }
 }

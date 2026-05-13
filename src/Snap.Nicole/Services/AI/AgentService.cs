@@ -126,7 +126,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
     }
 
-    public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, CancellationToken cancellationToken = default)
+    public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
 
     }

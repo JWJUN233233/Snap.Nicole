@@ -1,9 +1,9 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal class ObservableInputRequestContent(SynchronizationContext synchronizationContext)
-    : ObservableAIContent(synchronizationContext)
+internal partial class ObservableInputRequestContent : ObservableAIContent
 {
-    public string RequestId { get; set; }
+    [ObservableProperty]
+    public partial string RequestId { get; set; }
 }

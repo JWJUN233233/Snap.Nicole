@@ -1,11 +1,12 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableUriContent(SynchronizationContext synchronizationContext)
-    : ObservableAIContent(synchronizationContext)
+internal sealed partial class ObservableUriContent : ObservableAIContent
 {
-    public Uri Uri { get; set; }
+    [ObservableProperty]
+    public partial Uri Uri { get; set; }
 
-    public string MediaType { get; set; }
+    [ObservableProperty]
+    public partial string MediaType { get; set; }
 }

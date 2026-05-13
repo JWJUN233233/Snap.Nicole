@@ -1,13 +1,15 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableErrorContent(SynchronizationContext synchronizationContext)
-    : ObservableAIContent(synchronizationContext)
+internal sealed partial class ObservableErrorContent : ObservableAIContent
 {
-    public string Message { get; set; }
+    [ObservableProperty]
+    public partial string Message { get; set; }
 
-    public string? ErrorCode { get; set; }
+    [ObservableProperty]
+    public partial string? ErrorCode { get; set; }
 
-    public string? Details { get; set; }
+    [ObservableProperty]
+    public partial string? Details { get; set; }
 }

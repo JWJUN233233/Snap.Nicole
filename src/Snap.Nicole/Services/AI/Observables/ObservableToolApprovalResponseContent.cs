@@ -1,13 +1,15 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableToolApprovalResponseContent(SynchronizationContext synchronizationContext)
-    : ObservableInputResponseContent(synchronizationContext)
+internal sealed partial class ObservableToolApprovalResponseContent : ObservableInputResponseContent
 {
-    public bool Approved { get; set; }
+    [ObservableProperty]
+    public partial bool Approved { get; set; }
 
-    public ObservableToolCallContent ToolCall { get; set; }
+    [ObservableProperty]
+    public partial ObservableToolCallContent ToolCall { get; set; }
 
-    public string? Reason { get; set; }
+    [ObservableProperty]
+    public partial string? Reason { get; set; }
 }

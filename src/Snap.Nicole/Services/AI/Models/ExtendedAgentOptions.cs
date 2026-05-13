@@ -24,20 +24,30 @@ internal sealed class ExtendedAgentOptions
 
     public ReasoningEffort? ReasoningEffort { get; init; }
 
+    public bool? ThinkingEnabled { get; init; }
+
+    public bool OmitReasoningEffortWhenThinkingDisabled { get; init; }
+
     public string? SystemPrompt { get; init; }
 
     public ChatClientAgentRunOptions AsAgentRunOptions()
     {
-        return new(new()
+        ChatOptions chatOptions = new()
         {
             Temperature = Temperature,
             TopP = TopP,
             ToolMode = ChatToolMode.Auto,
-            Reasoning = new()
+        };
+
+        if (!OmitReasoningEffortWhenThinkingDisabled)
+        {
+            chatOptions.Reasoning = new()
             {
                 Effort = ReasoningEffort,
-            }
-        });
+            };
+        }
+
+        return new(chatOptions);
     }
 
     public ChatClientAgent AsAIAgent(IList<AITool>? tools = default, ILoggerFactory? loggerFactory = default)
@@ -47,10 +57,24 @@ internal sealed class ExtendedAgentOptions
             Endpoint = Endpoint.ToUri(),
         });
 
-        return client.GetChatClient(Model).AsAIAgent(new ChatClientAgentOptions
+        string? thinkingEnabled = ThinkingEnabled.HasValue
+            ? ThinkingEnabled.Value ? "enabled" : "disabled"
+            : null;
+
+        return client.GetChatClient(Model).AsIChatClient().AsAIAgent(new ChatClientAgentOptions
         {
             ChatOptions = new()
             {
+                RawRepresentationFactory = client =>
+                {
+                    ChatCompletionOptions options = new();
+                    if (!string.IsNullOrEmpty(thinkingEnabled))
+                    {
+                        options.Patch.Set("$.thinking.type"u8, thinkingEnabled);
+                    }
+
+                    return options;
+                },
                 Instructions = SystemPrompt,
                 Tools = tools,
             },

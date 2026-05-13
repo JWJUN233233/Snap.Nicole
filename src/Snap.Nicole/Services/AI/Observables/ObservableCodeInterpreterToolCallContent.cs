@@ -1,9 +1,9 @@
-using System.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-internal sealed class ObservableCodeInterpreterToolCallContent(SynchronizationContext synchronizationContext)
-    : ObservableToolCallContent(synchronizationContext)
+internal sealed partial class ObservableCodeInterpreterToolCallContent : ObservableToolCallContent
 {
-    public ObservableAIContentCollection? Inputs { get; set; }
+    [ObservableProperty]
+    public partial ObservableAIContentCollection? Inputs { get; set; }
 }
