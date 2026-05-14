@@ -56,19 +56,27 @@ internal sealed record TypeInfo
         //
         // Note that specifically for record declarations, we also need to explicitly add the open
         // and close brace tokens, otherwise member declarations will not be formatted correctly.
-        return (Kind, IsRecord) switch
+        TypeDeclarationSyntax declaration = (Kind, IsRecord) switch
         {
-            (TypeKind.Struct, false) => StructDeclaration(MinimallyQualifiedName),
-            (TypeKind.Struct, true) => RecordDeclaration(RecordKeyword, MinimallyQualifiedName)
+            (TypeKind.Struct, false) => StructDeclaration(Name),
+            (TypeKind.Struct, true) => RecordDeclaration(RecordKeyword, Name)
                 .WithClassOrStructKeyword(StructKeyword)
                 .WithOpenBraceToken(Token(SyntaxKind.OpenBraceToken))
                 .WithCloseBraceToken(Token(SyntaxKind.CloseBraceToken)),
-            (TypeKind.Interface, _) => InterfaceDeclaration(MinimallyQualifiedName),
-            (TypeKind.Class, true) => RecordDeclaration(RecordKeyword, MinimallyQualifiedName)
+            (TypeKind.Interface, _) => InterfaceDeclaration(Name),
+            (TypeKind.Class, true) => RecordDeclaration(RecordKeyword, Name)
                 .WithOpenBraceToken(Token(SyntaxKind.OpenBraceToken))
                 .WithCloseBraceToken(Token(SyntaxKind.CloseBraceToken)),
-            _ => ClassDeclaration(MinimallyQualifiedName)
+            _ => ClassDeclaration(Name)
         };
+
+        if (!TypeArguments.IsEmpty)
+        {
+            declaration = declaration.WithTypeParameterList(TypeParameterList(SeparatedList(
+                TypeArguments.SelectAsArray(static typeArgument => TypeParameter(typeArgument.MinimallyQualifiedName)))));
+        }
+
+        return declaration;
     }
 
     public TypeSyntax GetTypeSyntax(bool includeTypeArguments = true)

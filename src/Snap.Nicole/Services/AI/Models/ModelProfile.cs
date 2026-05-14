@@ -3,6 +3,7 @@ using Snap.Nicole.Core;
 
 namespace Snap.Nicole.Services.AI.Models;
 
+[GeneratedCopyFrom]
 internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Guid>, ICopyFrom<ModelProfile>
 {
     [ObservableProperty]
@@ -19,14 +20,4 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
 
     [ObservableProperty]
     public partial string ModelId { get; set; } = string.Empty;
-
-    // TODO: AutoGen CopyFrom
-    public void CopyFrom(ModelProfile other)
-    {
-        Id = other.Id;
-        Name = other.Name;
-        Endpoint = other.Endpoint;
-        ApiKey = other.ApiKey;
-        ModelId = other.ModelId;
-    }
 }
