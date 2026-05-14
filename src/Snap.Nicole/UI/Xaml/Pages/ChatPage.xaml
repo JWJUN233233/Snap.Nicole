@@ -42,6 +42,11 @@
                         <snuxc:ChatMessageView Message="{Binding}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Spacing="8" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
             </ItemsControl>
         </ScrollViewer>
 

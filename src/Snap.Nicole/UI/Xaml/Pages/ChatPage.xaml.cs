@@ -1,10 +1,8 @@
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Snap.Nicole.Services.AI.Observables;
 using Snap.Nicole.ViewModels;
-using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using VirtualKey = Windows.System.VirtualKey;

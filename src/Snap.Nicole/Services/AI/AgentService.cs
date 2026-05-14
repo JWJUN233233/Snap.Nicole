@@ -111,7 +111,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             ObservableAIContent? observableContent = CreateObservableContent(content);
             if (observableContent is not null)
             {
-                observableMessage.Contents.Add(observableContent);
+                AppendContent(observableMessage.Contents, observableContent);
             }
         }
 
@@ -172,6 +172,12 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
 
         ObservableAIContent last = contents[^1];
+        if (last is ObservableTextReasoningContent lastReasoningContent &&
+            content is not ObservableTextReasoningContent)
+        {
+            lastReasoningContent.IsCompleted = true;
+        }
+
         switch (last)
         {
             case ObservableTextContent lastText when content is ObservableTextContent newText:

@@ -29,7 +29,6 @@ internal sealed class ExtendedAgentOptions
     public bool OmitReasoningEffortWhenThinkingDisabled { get; init; }
 
     public string? SystemPrompt { get; init; } = """
-        You are Claude Code, Anthropic's official CLI for Claude.
         You are an interactive agent that helps users with software engineering tasks.
         """;
 

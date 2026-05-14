@@ -6,4 +6,7 @@ internal sealed partial class ObservableTextReasoningContent : ObservableAIConte
 {
     [ObservableProperty]
     public partial string Text { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsCompleted { get; set; }
 }

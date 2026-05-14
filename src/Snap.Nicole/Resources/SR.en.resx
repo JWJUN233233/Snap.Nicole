@@ -124,4 +124,10 @@
   <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
     <value>Please configure your API key in Settings.</value>
   </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
+    <value>Thought</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
+    <value>Thinking</value>
+  </data>
 </root>

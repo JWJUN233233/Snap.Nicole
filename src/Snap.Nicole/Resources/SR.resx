@@ -183,4 +183,10 @@
   <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
     <value>请先在设置中配置 API Key。</value>
   </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
+    <value>已思考</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
+    <value>思考中</value>
+  </data>
 </root>

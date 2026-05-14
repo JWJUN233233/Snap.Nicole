@@ -8,12 +8,22 @@
     mc:Ignorable="d">
 
     <UserControl.Resources>
+        <snuxc:ReasoningContentTitleConverter x:Key="ReasoningContentTitleConverter" />
+
         <DataTemplate x:Key="TextContentTemplate">
-            <snuxc:ChatMarkdownSegmentView Title="Answer" Markdown="{Binding Text}" />
+            <snuxc:ChatMarkdownSegmentView Markdown="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="ReasoningContentTemplate">
-            <snuxc:ChatMarkdownSegmentView Title="Thinking" Markdown="{Binding Text}" />
+            <Border
+                Padding="8"
+                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{ThemeResource ControlCornerRadius}">
+                <snuxc:ChatMarkdownSegmentView Title="{Binding IsCompleted, Converter={StaticResource ReasoningContentTitleConverter}}" Markdown="{Binding Text}" />
+            </Border>
+
         </DataTemplate>
 
         <DataTemplate x:Key="FunctionCallContentTemplate">
@@ -44,16 +54,18 @@
 
     <Border
         x:Name="MessageBorder"
-        Padding="0,0,0,8"
+        Padding="8"
         HorizontalAlignment="Stretch"
+        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-        BorderThickness="0,0,0,1">
+        BorderThickness="1"
+        CornerRadius="{ThemeResource ControlCornerRadius}">
         <StackPanel HorizontalAlignment="Stretch" Spacing="4">
             <TextBlock
                 x:Name="HeaderTextBlock"
                 FontSize="12"
                 FontWeight="SemiBold"
-                Opacity="0.6" />
+                Opacity="0.7" />
 
             <TextBlock
                 x:Name="UserMessageTextBlock"
