@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
@@ -20,6 +20,13 @@ internal sealed partial class SettingsViewModel : ObservableObject
 
     // TODO: Potentially cache this list
     public IReadOnlyList<SettingsItem<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsItem<string>(CultureInfo.GetCultureInfo(name).NativeName, name))];
+
+    public IReadOnlyList<SettingsItem<ModelProviderType>> ModelProviderTypes { get; } =
+    [
+        new("OpenAI Chat Completion", ModelProviderType.OpenAIChatCompletion),
+        new("OpenAI Responses", ModelProviderType.OpenAIResponses),
+        new("Anthropic", ModelProviderType.Anthropic),
+    ];
 
     [RelayCommand]
     private void AddProfile()

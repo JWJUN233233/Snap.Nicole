@@ -1,4 +1,4 @@
-using Microsoft.UI.Xaml.Controls;
+﻿using Microsoft.UI.Xaml.Controls;
 using System;
 
 namespace Snap.Nicole.UI.Xaml.Navigation;

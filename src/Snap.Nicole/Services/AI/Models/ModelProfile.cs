@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Snap.Nicole.Core;
+using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Models;
 
@@ -11,6 +12,10 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
 
     [ObservableProperty]
     public partial string Name { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [JsonConverter(typeof(JsonStringEnumConverter<ModelProviderType>))]
+    public partial ModelProviderType ProviderType { get; set; } = ModelProviderType.OpenAIChatCompletion;
 
     [ObservableProperty]
     public partial string Endpoint { get; set; } = string.Empty;

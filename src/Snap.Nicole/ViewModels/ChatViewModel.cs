@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
@@ -61,6 +61,7 @@ internal sealed partial class ChatViewModel : ObservableObject
 
         ExtendedAgentOptions requestOptions = new()
         {
+            ProviderType = profile.ProviderType,
             Model = profile.ModelId,
             Endpoint = profile.Endpoint,
             ApiKey = profile.ApiKey,

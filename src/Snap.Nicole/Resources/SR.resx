@@ -162,6 +162,9 @@
   <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
     <value>配置名称</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileProviderType" xml:space="preserve">
+    <value>提供商类型</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelProfileEndpoint" xml:space="preserve">
     <value>端点 URL</value>
   </data>

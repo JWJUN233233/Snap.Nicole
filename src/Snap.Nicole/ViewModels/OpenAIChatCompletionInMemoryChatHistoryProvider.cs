@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels;
 
-internal sealed class OpenAIInMemoryChatHistoryProvider : ChatHistoryProvider
+internal sealed class OpenAIChatCompletionInMemoryChatHistoryProvider : ChatHistoryProvider
 {
-    public OpenAIInMemoryChatHistoryProvider()
+    public OpenAIChatCompletionInMemoryChatHistoryProvider()
         : base(null, null, StoreInputResponseMessageFilter)
     {
         sessionState = new ProviderSessionState<State>((_ => new()), GetType().Name, null);

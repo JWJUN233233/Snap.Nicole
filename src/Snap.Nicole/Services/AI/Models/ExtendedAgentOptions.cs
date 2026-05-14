@@ -1,10 +1,14 @@
+using Anthropic;
+using Anthropic.Core;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Chat;
+using OpenAI.Responses;
 using Snap.Nicole.Core;
 using Snap.Nicole.ViewModels;
+using System;
 using System.ClientModel;
 using System.Collections.Generic;
 
@@ -12,6 +16,8 @@ namespace Snap.Nicole.Services.AI.Models;
 
 internal sealed class ExtendedAgentOptions
 {
+    public ModelProviderType ProviderType { get; init; } = ModelProviderType.OpenAIChatCompletion;
+
     public string Model { get; init; } = string.Empty;
 
     public string? Endpoint { get; init; }
@@ -36,6 +42,7 @@ internal sealed class ExtendedAgentOptions
     {
         ChatOptions chatOptions = new()
         {
+            ModelId = Model,
             Temperature = Temperature,
             TopP = TopP,
             ToolMode = ChatToolMode.Auto,
@@ -54,16 +61,24 @@ internal sealed class ExtendedAgentOptions
 
     public ChatClientAgent AsAIAgent(IList<AITool>? tools = default, ILoggerFactory? loggerFactory = default)
     {
-        OpenAIClient client = new(new ApiKeyCredential(ApiKey!), new OpenAIClientOptions()
+        return ProviderType switch
         {
-            Endpoint = Endpoint.ToUri(),
-        });
+            ModelProviderType.OpenAIChatCompletion => CreateOpenAIChatCompletionAgent(tools, loggerFactory),
+            ModelProviderType.OpenAIResponses => CreateOpenAIResponsesAgent(tools, loggerFactory),
+            ModelProviderType.Anthropic => CreateAnthropicAgent(tools, loggerFactory),
+            _ => throw new NotSupportedException($"Unsupported model provider type: {ProviderType}"),
+        };
+    }
+
+    private ChatClientAgent CreateOpenAIChatCompletionAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
+    {
+        OpenAIClient client = CreateOpenAIClient();
 
         string? thinkingEnabled = ThinkingEnabled.HasValue
             ? ThinkingEnabled.Value ? "enabled" : "disabled"
             : null;
 
-        return client.GetChatClient(Model).AsIChatClient().AsAIAgent(new ChatClientAgentOptions
+        return client.GetChatClient(Model).AsAIAgent(new ChatClientAgentOptions
         {
             ChatOptions = new()
             {
@@ -80,8 +95,49 @@ internal sealed class ExtendedAgentOptions
                 Instructions = SystemPrompt,
                 Tools = tools,
             },
-            ChatHistoryProvider = new OpenAIInMemoryChatHistoryProvider(),
+            ChatHistoryProvider = new OpenAIChatCompletionInMemoryChatHistoryProvider(),
             RequirePerServiceCallChatHistoryPersistence = true,
         }, loggerFactory: loggerFactory);
+    }
+
+    private ChatClientAgent CreateOpenAIResponsesAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
+    {
+        ResponsesClient client = CreateOpenAIClient().GetResponsesClient();
+
+        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: Model, loggerFactory: loggerFactory);
+    }
+
+    private ChatClientAgent CreateAnthropicAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
+    {
+        AnthropicClient client = new(new ClientOptions
+        {
+            ApiKey = ApiKey,
+            BaseUrl = string.IsNullOrWhiteSpace(Endpoint) ? EnvironmentUrl.Production : Endpoint,
+        });
+
+        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), loggerFactory: loggerFactory);
+    }
+
+    private OpenAIClient CreateOpenAIClient()
+    {
+        return new(new ApiKeyCredential(ApiKey!), new OpenAIClientOptions()
+        {
+            Endpoint = Endpoint.ToUri(),
+        });
+    }
+
+    private ChatClientAgentOptions CreateAgentOptions(IList<AITool>? tools, ChatHistoryProvider chatHistoryProvider)
+    {
+        return new()
+        {
+            ChatOptions = new()
+            {
+                ModelId = Model,
+                Instructions = SystemPrompt,
+                Tools = tools,
+            },
+            ChatHistoryProvider = chatHistoryProvider,
+            RequirePerServiceCallChatHistoryPersistence = true,
+        };
     }
 }

@@ -103,6 +103,9 @@
   <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
     <value>Profile Name</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileProviderType" xml:space="preserve">
+    <value>Provider Type</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelProfileEndpoint" xml:space="preserve">
     <value>Endpoint URL</value>
   </data>

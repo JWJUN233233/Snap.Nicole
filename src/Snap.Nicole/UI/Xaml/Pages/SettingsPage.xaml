@@ -98,6 +98,13 @@
                             CornerRadius="{Binding Source={ThemeResource ControlCornerRadius}, Converter={StaticResource RightCornerRadiusFilterConverter}}">
                             <StackPanel Spacing="16">
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" Text="{Binding Settings.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ComboBox
+                                    MinWidth="240"
+                                    DisplayMemberPath="Label"
+                                    Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}"
+                                    ItemsSource="{Binding ModelProviderTypes}"
+                                    SelectedValue="{Binding Settings.ModelProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
+                                    SelectedValuePath="Value" />
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}" Text="{Binding Settings.ModelProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" Text="{Binding Settings.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />

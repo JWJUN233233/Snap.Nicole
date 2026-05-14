@@ -22,7 +22,7 @@
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <SatelliteResourceLanguages>zh-CN;en-US</SatelliteResourceLanguages>
-	<NoWarn>$(NoWarn);MAAI001,SCME0001,MEAI001</NoWarn>
+	<NoWarn>$(NoWarn);MAAI001,SCME0001,MEAI001,OPENAI001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="Resources\SR.resx" />
@@ -51,6 +51,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="CommunityToolkit.WinUI.Behaviors" Version="8.3.260402-preview2" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <PackageReference Include="Microsoft.Agents.AI.Anthropic" Version="1.6.0-preview.260512.1" />
     <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.6.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
     <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.8" />
