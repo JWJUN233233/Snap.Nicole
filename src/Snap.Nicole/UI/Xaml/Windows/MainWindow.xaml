@@ -37,6 +37,9 @@
             <mxi:Interaction.Behaviors>
                 <snuxb:TitleBarBehavior />
             </mxi:Interaction.Behaviors>
+            <TitleBar.Content>
+                <Border Width="44" Height="44" />
+            </TitleBar.Content>
         </TitleBar>
 
         <NavigationView

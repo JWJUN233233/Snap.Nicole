@@ -34,6 +34,9 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
 
             if (window is IXamlWindowExtendsContentIntoTitleBar xamlWindow)
             {
+                window.ExtendsContentIntoTitleBar = true;
+                window.SetTitleBar(xamlWindow.TitleBar);
+
                 AppWindowTitleBar appWindowTitleBar = appWindow.TitleBar;
                 appWindowTitleBar.IconShowOptions = IconShowOptions.HideIconAndSystemMenu;
                 appWindowTitleBar.ExtendsContentIntoTitleBar = true;

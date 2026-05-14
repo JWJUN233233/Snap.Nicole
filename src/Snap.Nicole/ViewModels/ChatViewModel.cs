@@ -6,8 +6,7 @@ using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using Snap.Nicole.Services.Settings;
-using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +16,7 @@ namespace Snap.Nicole.ViewModels;
 internal sealed partial class ChatViewModel : ObservableObject
 {
     private readonly IAgentService chatService;
-    private readonly IOptionsProvider<AppSettings> options;
+    private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
 
     private CancellationTokenSource? generationCts;
     private AgentSession? session;
@@ -25,41 +24,15 @@ internal sealed partial class ChatViewModel : ObservableObject
     public ChatViewModel(IServiceProvider serviceProvider)
     {
         chatService = serviceProvider.GetRequiredService<IAgentService>();
-        options = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>();
+        Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
-        options.OnChange(OnSettingsChanged);
+        Settings.PropertyChanged += OnSettingsPropertyChanged;
+        SubscribeModelProfiles(Settings.ModelProfiles);
     }
+
+    public AppSettings Settings { get; }
 
     public ObservableChatMessageCollection Messages { get; } = [];
-
-    public IReadOnlyList<ModelProfile> ModelProfiles => options.CurrentValue.ModelProfiles.AsReadOnly();
-
-    public ModelProfile? SelectedModelProfile
-    {
-        get
-        {
-            AppSettings current = options.CurrentValue;
-            return current.ModelProfiles.FirstOrDefault(p => p.Id == current.SelectedModelProfileId)
-                ?? current.ModelProfiles.FirstOrDefault();
-        }
-        set
-        {
-            if (value is null)
-            {
-                return;
-            }
-
-            AppSettings current = options.CurrentValue;
-            if (current.SelectedModelProfileId == value.Id)
-            {
-                return;
-            }
-
-            current.SelectedModelProfileId = value.Id;
-            options.Update();
-            session = null;
-        }
-    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -69,7 +42,7 @@ internal sealed partial class ChatViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
     public partial bool IsBusy { get; set; }
 
-    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText) && SelectedModelProfile is not null;
+    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText) && Settings.ModelProfiles.CurrentItem is not null;
 
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
@@ -80,7 +53,7 @@ internal sealed partial class ChatViewModel : ObservableObject
             return;
         }
 
-        ModelProfile? profile = SelectedModelProfile;
+        ModelProfile? profile = Settings.ModelProfiles.CurrentItem;
         if (profile is null)
         {
             return;
@@ -137,18 +110,38 @@ internal sealed partial class ChatViewModel : ObservableObject
         session = null;
     }
 
-    private void OnSettingsChanged(AppSettings ignored, string? ignored2)
+    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        App.Current.Threading.SynchronizationContext.Post(static state =>
+        if (e.PropertyName is nameof(AppSettings.ModelProfiles))
         {
-            if (state is not ChatViewModel self)
-            {
-                return;
-            }
+            SubscribeModelProfiles(Settings.ModelProfiles);
+        }
+    }
 
-            self.OnPropertyChanged(nameof(ModelProfiles));
-            self.OnPropertyChanged(nameof(SelectedModelProfile));
-        }, this);
+    private void OnModelProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ObservableSettingsCollection<ModelProfile, Guid>.CurrentItem)
+            or nameof(ObservableSettingsCollection<ModelProfile, Guid>.CurrentItemId))
+        {
+            session = null;
+            SendMessageCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private void SubscribeModelProfiles(ObservableSettingsCollection<ModelProfile, Guid> profiles)
+    {
+        if (ReferenceEquals(modelProfiles, profiles))
+        {
+            return;
+        }
+
+        if (modelProfiles is not null)
+        {
+            ((INotifyPropertyChanged)modelProfiles).PropertyChanged -= OnModelProfilesPropertyChanged;
+        }
+
+        modelProfiles = profiles;
+        ((INotifyPropertyChanged)modelProfiles).PropertyChanged += OnModelProfilesPropertyChanged;
     }
 
     [UnsafeAccessor(UnsafeAccessorKind.Constructor)]

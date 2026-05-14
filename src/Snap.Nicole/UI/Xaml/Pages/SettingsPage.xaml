@@ -18,7 +18,7 @@
             <ComboBox
                 DisplayMemberPath="Label"
                 ItemsSource="{Binding Languages}"
-                SelectedValue="{Binding Language, Mode=TwoWay}"
+                SelectedValue="{Binding Settings.Language, Mode=TwoWay}"
                 SelectedValuePath="Value" />
 
             <TextBlock
@@ -31,20 +31,20 @@
                 AllowDrop="True"
                 CanReorderItems="True"
                 DisplayMemberPath="Name"
-                ItemsSource="{Binding ModelProfiles}"
-                SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" />
+                ItemsSource="{Binding Settings.ModelProfiles}"
+                SelectedItem="{Binding Settings.ModelProfiles.CurrentItem, Mode=TwoWay}" />
 
             <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" />
-            <TextBox Text="{Binding SelectedProfile.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Text="{Binding Settings.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" />
-            <TextBox Text="{Binding SelectedProfile.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Text="{Binding Settings.ModelProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}" />
-            <TextBox Text="{Binding SelectedProfile.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Text="{Binding Settings.ModelProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" />
-            <TextBox Text="{Binding SelectedProfile.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBox Text="{Binding Settings.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <StackPanel
                 Margin="0,8,0,0"

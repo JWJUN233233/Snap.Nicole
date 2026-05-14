@@ -19,7 +19,7 @@ internal sealed partial class ChatPage : Page
 
         ViewModel.Messages.CollectionChanged += OnMessagesCollectionChanged;
         SubscribeMessages(ViewModel.Messages);
-        InputBox.KeyDown += OnInputBoxKeyDown;
+        InputBox.PreviewKeyDown += OnInputBoxPreviewKeyDown;
     }
 
     internal ChatViewModel ViewModel { get; }
@@ -128,16 +128,38 @@ internal sealed partial class ChatPage : Page
         }
     }
 
-    private void OnInputBoxKeyDown(object sender, KeyRoutedEventArgs e)
+    private void OnInputBoxPreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == VirtualKey.Enter)
+        if (e.Key != VirtualKey.Enter)
         {
-            bool isShiftDown = (global::Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Shift) & global::Windows.UI.Core.CoreVirtualKeyStates.Down) == global::Windows.UI.Core.CoreVirtualKeyStates.Down;
-            if (!isShiftDown)
-            {
-                ViewModel.SendMessageCommand.Execute(null);
-                e.Handled = true;
-            }
+            return;
         }
+
+        if (IsKeyDown(VirtualKey.Shift) || IsKeyDown(VirtualKey.Control))
+        {
+            InsertInputBoxLineBreak();
+            e.Handled = true;
+            return;
+        }
+
+        ViewModel.SendMessageCommand.Execute(null);
+        e.Handled = true;
+    }
+
+    private void InsertInputBoxLineBreak()
+    {
+        string text = InputBox.Text ?? string.Empty;
+        int selectionStart = InputBox.SelectionStart;
+        int selectionLength = InputBox.SelectionLength;
+        string newLine = Environment.NewLine;
+
+        InputBox.Text = text[..selectionStart] + newLine + text[(selectionStart + selectionLength)..];
+        InputBox.SelectionStart = selectionStart + newLine.Length;
+        InputBox.SelectionLength = 0;
+    }
+
+    private static bool IsKeyDown(VirtualKey key)
+    {
+        return (global::Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key) & global::Windows.UI.Core.CoreVirtualKeyStates.Down) == global::Windows.UI.Core.CoreVirtualKeyStates.Down;
     }
 }

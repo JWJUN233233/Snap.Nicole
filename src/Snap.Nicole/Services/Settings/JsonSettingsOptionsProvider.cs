@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Primitives;
-using System;
+using Snap.Nicole.Core;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
@@ -11,7 +12,7 @@ using System.Threading;
 namespace Snap.Nicole.Services.Settings;
 
 internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<TOptions>, IDisposable
-    where TOptions : class, new()
+    where TOptions : class, INotifyPropertyChanged, ICopyFrom<TOptions>, new()
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -24,11 +25,13 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
     private readonly string fileName;
 
     private readonly PhysicalFileProvider fileProvider;
+    private readonly List<INotifyPropertyChanged> observedChangeSources = [];
     private IDisposable? watchRegistration;
 
     private ConfigurationReloadToken changeToken = new();
     private TOptions cachedValue = new();
 
+    private bool suppressObservedChanges;
     private volatile bool disposed;
 
     public JsonSettingsOptionsProvider(string fileNameWithoutExtension)
@@ -45,6 +48,8 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
         }
 
         cachedValue = value;
+        cachedValue.PropertyChanged += OnRootPropertyChanged;
+        RefreshObservedChangeSources();
 
         fileProvider = new(directory);
         StartWatching();
@@ -76,14 +81,6 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
         return ChangeToken.OnChange(() => changeToken, state => state(CurrentValue, string.Empty), listener);
     }
 
-    public void Update()
-    {
-        lock (syncRoot)
-        {
-            SaveCore(cachedValue);
-        }
-    }
-
     public void Dispose()
     {
         if (disposed)
@@ -93,8 +90,14 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
 
         disposed = true;
 
-        watchRegistration?.Dispose();
-        fileProvider.Dispose();
+        lock (syncRoot)
+        {
+            watchRegistration?.Dispose();
+            fileProvider.Dispose();
+        }
+
+        cachedValue.PropertyChanged -= OnRootPropertyChanged;
+        ClearObservedChangeSources();
     }
 
     private static void OnFileChanged(object? state)
@@ -109,24 +112,47 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
             return;
         }
 
-        lock (self.syncRoot)
+        try
         {
-            if (self.TryLoadCore(out TOptions? newValue))
-            {
-                self.cachedValue = newValue;
+            TOptions? newValue;
+            bool loaded;
 
-                ConfigurationReloadToken oldToken = self.changeToken;
-                self.changeToken = new();
-                oldToken.OnReload();
+            lock (self.syncRoot)
+            {
+                loaded = self.TryLoadCore(out newValue);
+            }
+
+            if (loaded)
+            {
+                self.ApplyExternalChangeOnApplicationThread(newValue);
             }
         }
-
-        self.StartWatching();
+        finally
+        {
+            self.StartWatching();
+        }
     }
 
     private void StartWatching()
     {
-        watchRegistration = fileProvider.Watch(fileName).RegisterChangeCallback(OnFileChanged, this);
+        if (disposed)
+        {
+            return;
+        }
+
+        IDisposable registration = fileProvider.Watch(fileName).RegisterChangeCallback(OnFileChanged, this);
+
+        lock (syncRoot)
+        {
+            if (disposed)
+            {
+                registration.Dispose();
+                return;
+            }
+
+            watchRegistration?.Dispose();
+            watchRegistration = registration;
+        }
     }
 
     private bool TryLoadCore([NotNullWhen(true)] out TOptions? value)
@@ -161,6 +187,131 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
         return false;
     }
 
+    private void ApplyExternalChangeOnApplicationThread(TOptions value)
+    {
+        try
+        {
+            App.Current.Threading.SynchronizationContext.Post(static state =>
+            {
+                if (state is ExternalChangeState change)
+                {
+                    change.Provider.ApplyExternalChange(change.Value);
+                }
+            }, new ExternalChangeState(this, value));
+        }
+        catch (InvalidOperationException)
+        {
+            ApplyExternalChange(value);
+        }
+    }
+
+    private void ApplyExternalChange(TOptions value)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        suppressObservedChanges = true;
+        try
+        {
+            cachedValue.CopyFrom(value);
+            RefreshObservedChangeSources();
+        }
+        finally
+        {
+            suppressObservedChanges = false;
+        }
+
+        SignalChange();
+    }
+
+    private void OnRootPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (suppressObservedChanges)
+        {
+            return;
+        }
+
+        RefreshObservedChangeSources();
+
+        PersistObservedChange();
+    }
+
+    private void OnObservedChangeSourcePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (suppressObservedChanges)
+        {
+            return;
+        }
+
+        PersistObservedChange();
+    }
+
+    private void PersistObservedChange()
+    {
+        if (disposed || suppressObservedChanges)
+        {
+            return;
+        }
+
+        lock (syncRoot)
+        {
+            if (disposed || suppressObservedChanges)
+            {
+                return;
+            }
+
+            SaveCore(cachedValue);
+        }
+
+        SignalChange();
+    }
+
+    private void SignalChange()
+    {
+        ConfigurationReloadToken oldToken;
+
+        lock (syncRoot)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            oldToken = changeToken;
+            changeToken = new();
+        }
+
+        oldToken.OnReload();
+    }
+
+    private void RefreshObservedChangeSources()
+    {
+        ClearObservedChangeSources();
+
+        if (cachedValue is not IOptionsChangeSourceProvider sourceProvider)
+        {
+            return;
+        }
+
+        foreach (INotifyPropertyChanged source in sourceProvider.GetChangeSources())
+        {
+            source.PropertyChanged += OnObservedChangeSourcePropertyChanged;
+            observedChangeSources.Add(source);
+        }
+    }
+
+    private void ClearObservedChangeSources()
+    {
+        foreach (INotifyPropertyChanged source in observedChangeSources)
+        {
+            source.PropertyChanged -= OnObservedChangeSourcePropertyChanged;
+        }
+
+        observedChangeSources.Clear();
+    }
+
     private void SaveCore(TOptions value)
     {
         string tempFile = $"{filePath}.tmp";
@@ -172,4 +323,6 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
 
         File.Move(tempFile, filePath, true);
     }
+
+    private sealed record ExternalChangeState(JsonSettingsOptionsProvider<TOptions> Provider, TOptions Value);
 }

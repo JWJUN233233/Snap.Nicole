@@ -41,7 +41,6 @@ internal static class Program
                         .AddXamlWindow<MainWindow>()
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
                 })
-                .AddHostedService<AppSettingsChangeTracker>()
                 .AddSingleton<IMessenger, WeakReferenceMessenger>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
