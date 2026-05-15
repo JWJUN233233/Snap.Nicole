@@ -5,7 +5,7 @@
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:snux="using:Snap.Nicole.UI.Xaml"
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snv="using:Snap.Nicole.ViewModels"
     d:DataContext="{d:DesignInstance snv:SettingsViewModel}"
@@ -21,7 +21,7 @@
                     <TextBlock
                         Margin="1,0,0,0"
                         Style="{ThemeResource BaseTextBlockStyle}"
-                        Text="外观" />
+                        Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAppearance}" />
                     <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelLanguage}">
                         <ComboBox
                             MinWidth="160"
@@ -106,7 +106,12 @@
                                     SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
                                     SelectedValuePath="Value" />
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <PasswordBox
+                                    snuxc:PasswordBoxExtensions.Password="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionProfileApiKey}"
+                                    Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}"
+                                    PasswordChar="&#x2022;"
+                                    PasswordRevealMode="Peek" />
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                         </Border>

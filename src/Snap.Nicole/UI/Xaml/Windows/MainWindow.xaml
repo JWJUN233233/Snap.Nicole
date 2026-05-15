@@ -5,8 +5,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mxi="using:Microsoft.Xaml.Interactivity"
-    xmlns:snux="using:Snap.Nicole.UI.Xaml"
     xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snuxp="using:Snap.Nicole.UI.Xaml.Pages"
     Title="Snap.Nicole"
@@ -55,11 +55,11 @@
             OpenPaneLength="205">
             <NavigationView.MenuItems>
                 <NavigationViewItem
-                    snux:NavigationExtensions.NavigateTo="snuxp:HomePage"
+                    snuxc:NavigationExtensions.NavigateTo="snuxp:HomePage"
                     Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemHomePageContent}"
                     Icon="{snuxm:FontIcon Glyph=&#xE80F;}" />
                 <NavigationViewItem
-                    snux:NavigationExtensions.NavigateTo="snuxp:ChatPage"
+                    snuxc:NavigationExtensions.NavigateTo="snuxp:ChatPage"
                     Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}"
                     Icon="{snuxm:FontIcon Glyph=&#xE76E;}" />
             </NavigationView.MenuItems>

@@ -7,7 +7,7 @@ using Snap.Nicole.UI.Xaml.Helpers;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Snap.Nicole.UI.Xaml.Controls;
+namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
 internal sealed partial class MarkdownTableView : UserControl
 {

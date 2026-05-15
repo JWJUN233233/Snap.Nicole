@@ -82,6 +82,9 @@
   <data name="UIXamlPagesSettingsPageLabelLanguage" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
   <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
     <value>Chat</value>
   </data>
@@ -111,6 +114,9 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileApiKey" xml:space="preserve">
     <value>API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionProfileApiKey" xml:space="preserve">
+    <value>You can only view the original API Key when first entering it, or after clearing and entering it again.</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
     <value>Model ID</value>

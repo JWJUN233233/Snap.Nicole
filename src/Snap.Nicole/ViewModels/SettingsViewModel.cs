@@ -19,9 +19,9 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
 
     public IReadOnlyList<SettingsItem<EnumBox<ModelProviderType>>> ModelProviderTypes { get; } =
     [
-        new("OpenAI Chat Completion API | {Endpoint}/chat/completions", EnumBox.Of(ModelProviderType.OpenAIChatCompletion)),
-        new("OpenAI Responses API | {Endpoint}/responses", EnumBox.Of(ModelProviderType.OpenAIResponses)),
-        new("Anthropic Messages API | {Endpoint}/v1/messages", EnumBox.Of(ModelProviderType.Anthropic)),
+        new("OpenAI Chat Completion | ~/chat/completions", EnumBox.Of(ModelProviderType.OpenAIChatCompletion)),
+        new("OpenAI Responses | ~/responses", EnumBox.Of(ModelProviderType.OpenAIResponses)),
+        new("Anthropic Messages | ~/v1/messages", EnumBox.Of(ModelProviderType.Anthropic)),
     ];
 
     [RelayCommand]

@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
+    xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snv="using:Snap.Nicole.ViewModels"
     d:DataContext="{d:DesignInstance snv:ChatViewModel}"
@@ -32,7 +32,7 @@
                 ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <snuxc:ChatMessageView Message="{Binding}" />
+                        <snuxcc:ChatMessageView Message="{Binding}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
                 <ItemsControl.ItemsPanel>

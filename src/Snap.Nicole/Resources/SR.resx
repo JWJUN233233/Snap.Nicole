@@ -141,6 +141,9 @@
   <data name="UIXamlPagesSettingsPageLabelLanguage" xml:space="preserve">
     <value>语言</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelAppearance" xml:space="preserve">
+    <value>外观</value>
+  </data>
   <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
     <value>AI 对话</value>
   </data>
@@ -170,6 +173,9 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileApiKey" xml:space="preserve">
     <value>API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionProfileApiKey" xml:space="preserve">
+    <value>你仅能在首次输入或清空并重新输入时查看 API Key 的原文</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
     <value>模型 ID</value>

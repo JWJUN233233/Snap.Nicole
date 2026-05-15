@@ -8,7 +8,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
 
-namespace Snap.Nicole.UI.Xaml.Controls;
+namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
 internal sealed partial class ChatMessageView : UserControl
 {

@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Snap.Nicole.Services.AI.Observables;
 
-namespace Snap.Nicole.UI.Xaml.Controls;
+namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
 internal sealed class ChatContentTemplateSelector : DataTemplateSelector
 {

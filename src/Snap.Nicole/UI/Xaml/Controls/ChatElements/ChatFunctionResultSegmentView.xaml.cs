@@ -4,7 +4,7 @@ using Snap.Nicole.Services.AI.Observables;
 using System.ComponentModel;
 using System.Text.Json;
 
-namespace Snap.Nicole.UI.Xaml.Controls;
+namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
 internal sealed partial class ChatFunctionResultSegmentView : UserControl
 {

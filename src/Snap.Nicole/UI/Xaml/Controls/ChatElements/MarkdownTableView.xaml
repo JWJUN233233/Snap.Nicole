@@ -1,12 +1,10 @@
 <UserControl
-    x:Class="Snap.Nicole.UI.Xaml.Controls.MarkdownTableView"
+    x:Class="Snap.Nicole.UI.Xaml.Controls.ChatElements.MarkdownTableView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Margin="0,6,0,6">
 
-    <ScrollViewer
-        HorizontalScrollBarVisibility="Auto"
-        HorizontalScrollMode="Auto">
+    <ScrollViewer HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Auto">
         <Border
             Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"

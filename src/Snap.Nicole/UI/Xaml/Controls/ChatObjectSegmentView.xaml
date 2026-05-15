@@ -1,8 +1,0 @@
-<UserControl
-    x:Class="Snap.Nicole.UI.Xaml.Controls.ChatObjectSegmentView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls">
-
-    <snuxc:ChatPlainTextSegmentView x:Name="Segment" />
-</UserControl>

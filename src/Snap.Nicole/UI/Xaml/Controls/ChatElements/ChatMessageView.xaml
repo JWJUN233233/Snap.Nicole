@@ -1,18 +1,18 @@
 <UserControl
-    x:Class="Snap.Nicole.UI.Xaml.Controls.ChatMessageView"
+    x:Class="Snap.Nicole.UI.Xaml.Controls.ChatElements.ChatMessageView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
+    xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <snuxc:ReasoningContentTitleConverter x:Key="ReasoningContentTitleConverter" />
+        <snuxcc:ReasoningContentTitleConverter x:Key="ReasoningContentTitleConverter" />
 
         <DataTemplate x:Key="TextContentTemplate">
-            <snuxc:ChatMarkdownSegmentView Markdown="{Binding Text}" />
+            <snuxcc:ChatMarkdownSegmentView Markdown="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="ReasoningContentTemplate">
@@ -22,28 +22,27 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="{ThemeResource ControlCornerRadius}">
-                <snuxc:ChatMarkdownSegmentView Title="{Binding IsCompleted, Converter={StaticResource ReasoningContentTitleConverter}}" Markdown="{Binding Text}" />
+                <snuxcc:ChatMarkdownSegmentView Title="{Binding IsCompleted, Converter={StaticResource ReasoningContentTitleConverter}}" Markdown="{Binding Text}" />
             </Border>
-
         </DataTemplate>
 
         <DataTemplate x:Key="FunctionCallContentTemplate">
-            <snuxc:ChatFunctionCallSegmentView FunctionCall="{Binding}" />
+            <snuxcc:ChatFunctionCallSegmentView FunctionCall="{Binding}" />
         </DataTemplate>
 
         <DataTemplate x:Key="FunctionResultContentTemplate">
-            <snuxc:ChatFunctionResultSegmentView FunctionResult="{Binding}" />
+            <snuxcc:ChatFunctionResultSegmentView FunctionResult="{Binding}" />
         </DataTemplate>
 
         <DataTemplate x:Key="UsageContentTemplate">
-            <snuxc:ChatPlainTextSegmentView Title="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelUsage}" Text="{Binding Text}" />
+            <snuxcc:ChatPlainTextSegmentView Title="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelUsage}" Text="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="FallbackContentTemplate">
-            <snuxc:ChatObjectSegmentView Value="{Binding}" />
+            <snuxcc:ChatObjectSegmentView Value="{Binding}" />
         </DataTemplate>
 
-        <snuxc:ChatContentTemplateSelector
+        <snuxcc:ChatContentTemplateSelector
             x:Key="ChatContentTemplateSelector"
             FallbackTemplate="{StaticResource FallbackContentTemplate}"
             FunctionCallTemplate="{StaticResource FunctionCallContentTemplate}"
