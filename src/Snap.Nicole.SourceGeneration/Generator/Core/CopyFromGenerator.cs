@@ -21,7 +21,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
     {
         IncrementalValuesProvider<CopyFromGeneratorContext> provider = context.SyntaxProvider
             .ForAttributeWithMetadataName(
-                WellKnownMetadataNames.GeneratedCopyFromAttribute,
+                WellKnownMetadataNames.GeneratedCopyFromAttributeT,
                 static (node, token) => node is TypeDeclarationSyntax,
                 CopyFromGeneratorContext.Create)
             .Where(static context => context is not null)
@@ -45,13 +45,30 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
     private static void Generate(SourceProductionContext production, CopyFromGeneratorContext context)
     {
         CompilationUnitSyntax syntax = context.Hierarchy
-            .GetCompilationUnit([GenerateCopyFromMethod(context)])
+            .GetCompilationUnit([.. GenerateCopyFromMethods(context)], GenerateCopyFromBaseList(context))
             .NormalizeWhitespace();
 
         production.AddSource(context.Hierarchy.FileNameHint, syntax.ToFullStringWithHeader());
     }
 
-    private static MethodDeclarationSyntax GenerateCopyFromMethod(CopyFromGeneratorContext context)
+    private static BaseListSyntax GenerateCopyFromBaseList(CopyFromGeneratorContext context)
+    {
+        return BaseList(SeparatedList(context.Sources.Select(static source => (BaseTypeSyntax)SimpleBaseType(QualifiedName(
+            ParseName("global::Snap.Nicole.Core"),
+            GenericName(Identifier("ICopyFrom"))
+                .WithTypeArgumentList(TypeArgumentList(SingletonSeparatedList(
+                    ParseTypeName(source.SourceTypeFullyQualifiedNameWithNullabilityAnnotations)))))))));
+    }
+
+    private static IEnumerable<MethodDeclarationSyntax> GenerateCopyFromMethods(CopyFromGeneratorContext context)
+    {
+        foreach (CopyFromSourceInfo source in context.Sources)
+        {
+            yield return GenerateCopyFromMethod(source);
+        }
+    }
+
+    private static MethodDeclarationSyntax GenerateCopyFromMethod(CopyFromSourceInfo source)
     {
         SyntaxToken sourceParameter = Identifier("source");
         IdentifierNameSyntax sourceParameterName = IdentifierName(sourceParameter);
@@ -59,7 +76,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
         ImmutableArray<StatementSyntax>.Builder statements = ImmutableArray.CreateBuilder<StatementSyntax>();
         statements.Add(ExpressionStatement(ArgumentNullExceptionThrowIfNull(sourceParameterName)));
 
-        foreach (CopyFromPropertyInfo property in context.Properties)
+        foreach (CopyFromPropertyInfo property in source.Properties)
         {
             statements.Add(ExpressionStatement(SimpleAssignmentExpression(
                 SimpleMemberAccessExpression(ThisExpression(), IdentifierName(property.TargetName)),
@@ -69,7 +86,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
         return MethodDeclaration(VoidType, Identifier("CopyFrom"))
             .WithModifiers(PublicTokenList)
             .WithParameterList(ParameterList(SingletonSeparatedList(
-                Parameter(ParseTypeName(context.SourceTypeFullyQualifiedNameWithNullabilityAnnotations), sourceParameter))))
+                Parameter(ParseTypeName(source.SourceTypeFullyQualifiedNameWithNullabilityAnnotations), sourceParameter))))
             .WithBody(Block(List(statements)));
     }
 
@@ -77,9 +94,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
     {
         public required HierarchyInfo Hierarchy { get; init; }
 
-        public required string SourceTypeFullyQualifiedNameWithNullabilityAnnotations { get; init; }
-
-        public required EquatableArray<CopyFromPropertyInfo> Properties { get; init; }
+        public required EquatableArray<CopyFromSourceInfo> Sources { get; init; }
 
         public static CopyFromGeneratorContext? Create(GeneratorAttributeSyntaxContext context, CancellationToken token)
         {
@@ -93,45 +108,54 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
                 return null;
             }
 
-            INamedTypeSymbol? implementedInterface = GetImplementedCopyFromInterface(typeSymbol, token);
-            if (implementedInterface is null)
+            EquatableArray<CopyFromSourceInfo> sources = GetSources(typeSymbol, context.Attributes, context.SemanticModel.Compilation, token);
+            if (sources.IsEmpty)
             {
                 return null;
             }
 
-            ITypeSymbol sourceType = implementedInterface.TypeArguments[0];
-
             return new()
             {
                 Hierarchy = HierarchyInfo.Create(typeSymbol),
-                SourceTypeFullyQualifiedNameWithNullabilityAnnotations = sourceType.GetFullyQualifiedNameWithNullabilityAnnotations(),
-                Properties = GetProperties(typeSymbol, sourceType, context.SemanticModel.Compilation, token),
+                Sources = sources,
             };
         }
 
-        private static INamedTypeSymbol? GetImplementedCopyFromInterface(INamedTypeSymbol typeSymbol, CancellationToken token)
+        private static EquatableArray<CopyFromSourceInfo> GetSources(INamedTypeSymbol targetType, ImmutableArray<AttributeData> attributes, Compilation compilation, CancellationToken token)
         {
-            foreach (INamedTypeSymbol interfaceType in typeSymbol.AllInterfaces)
+            HashSet<string> sourceTypeNames = new(StringComparer.Ordinal);
+            ImmutableArray<CopyFromSourceInfo>.Builder builder = ImmutableArray.CreateBuilder<CopyFromSourceInfo>();
+
+            foreach (AttributeData attribute in attributes)
             {
                 token.ThrowIfCancellationRequested();
 
-                if (interfaceType.OriginalDefinition.HasFullyQualifiedMetadataName(WellKnownMetadataNames.CopyFromInterfaceT))
+                if (attribute.AttributeClass is not { TypeArguments.Length: 1 } attributeClass ||
+                    !attributeClass.HasFullyQualifiedMetadataName(WellKnownMetadataNames.GeneratedCopyFromAttributeT))
                 {
-                    return interfaceType;
+                    continue;
                 }
+
+                ITypeSymbol sourceType = attributeClass.TypeArguments[0];
+                string sourceTypeFullyQualifiedNameWithNullabilityAnnotations = sourceType.GetFullyQualifiedNameWithNullabilityAnnotations();
+                if (!sourceTypeNames.Add(sourceTypeFullyQualifiedNameWithNullabilityAnnotations))
+                {
+                    continue;
+                }
+
+                builder.Add(new()
+                {
+                    SourceTypeFullyQualifiedNameWithNullabilityAnnotations = sourceTypeFullyQualifiedNameWithNullabilityAnnotations,
+                    Properties = GetProperties(targetType, sourceType, compilation, token),
+                });
             }
 
-            return null;
+            return builder.ToImmutable();
         }
 
-        private static EquatableArray<CopyFromPropertyInfo> GetProperties(
-            INamedTypeSymbol targetType,
-            ITypeSymbol sourceType,
-            Compilation compilation,
-            CancellationToken token)
+        private static EquatableArray<CopyFromPropertyInfo> GetProperties(INamedTypeSymbol targetType, ITypeSymbol sourceType, Compilation compilation, CancellationToken token)
         {
-            bool isSelfCopy = SymbolEqualityComparer.Default.Equals(targetType, sourceType);
-            Dictionary<string, IPropertySymbol> sourceProperties = GetSourceProperties(sourceType, targetType.ContainingAssembly, isSelfCopy, token);
+            Dictionary<string, IPropertySymbol> sourceProperties = GetSourceProperties(sourceType, token);
             ImmutableArray<CopyFromPropertyInfo>.Builder builder = ImmutableArray.CreateBuilder<CopyFromPropertyInfo>();
 
             foreach (IPropertySymbol targetProperty in targetType.GetMembers().OfType<IPropertySymbol>())
@@ -163,11 +187,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
             return builder.ToImmutable();
         }
 
-        private static Dictionary<string, IPropertySymbol> GetSourceProperties(
-            ITypeSymbol sourceType,
-            IAssemblySymbol targetAssembly,
-            bool isSelfCopy,
-            CancellationToken token)
+        private static Dictionary<string, IPropertySymbol> GetSourceProperties(ITypeSymbol sourceType, CancellationToken token)
         {
             Dictionary<string, IPropertySymbol> result = new(StringComparer.Ordinal);
 
@@ -175,7 +195,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
             {
                 token.ThrowIfCancellationRequested();
 
-                if (!CanReadSourceProperty(property, targetAssembly, isSelfCopy))
+                if (!CanReadSourceProperty(property))
                 {
                     continue;
                 }
@@ -196,13 +216,20 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
                 && property.SetMethod is { IsInitOnly: false };
         }
 
-        private static bool CanReadSourceProperty(IPropertySymbol property, IAssemblySymbol targetAssembly, bool isSelfCopy)
+        private static bool CanReadSourceProperty(IPropertySymbol property)
         {
             return !property.IsStatic
                 && !property.IsIndexer
                 && property.GetMethod is not null
-                && (isSelfCopy || property.GetMethod.CanBeAccessedFrom(targetAssembly));
+                && property.GetMethod.DeclaredAccessibility is Accessibility.Public;
         }
+    }
+
+    private sealed record CopyFromSourceInfo
+    {
+        public required string SourceTypeFullyQualifiedNameWithNullabilityAnnotations { get; init; }
+
+        public required EquatableArray<CopyFromPropertyInfo> Properties { get; init; }
     }
 
     private sealed record CopyFromPropertyInfo
