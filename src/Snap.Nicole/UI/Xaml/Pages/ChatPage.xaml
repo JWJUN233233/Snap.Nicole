@@ -28,9 +28,9 @@
             Grid.Row="1"
             Margin="0,0,0,12"
             DisplayMemberPath="Name"
-            Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProfile}"
-            ItemsSource="{x:Bind ViewModel.Settings.ModelProfiles, Mode=OneWay}"
-            SelectedItem="{x:Bind ViewModel.Settings.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+            Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProviderProfile}"
+            ItemsSource="{x:Bind ViewModel.Settings.ModelProviderProfiles, Mode=OneWay}"
+            SelectedItem="{x:Bind ViewModel.Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
 
         <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="2">
             <ItemsControl

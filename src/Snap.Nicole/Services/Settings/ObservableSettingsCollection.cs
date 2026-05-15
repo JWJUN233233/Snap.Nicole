@@ -1,11 +1,9 @@
 using Snap.Nicole.Core;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
-using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.Settings;
 
@@ -17,14 +15,12 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
     private TItem? currentItem;
     private TId? currentItemId;
 
-    [JsonIgnore]
     public TItem? CurrentItem
     {
-        get => currentItemId is TId id ? CoerceCurrentItem(id) : CoerceCurrentItem(currentItem);
+        get => CoerceCurrentItem();
         set => SetCurrentItem(value);
     }
 
-    [JsonIgnore]
     public TId? CurrentItemId
     {
         get => currentItemId;
@@ -154,7 +150,7 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
 
     private void EnsureCurrentItem()
     {
-        SetCurrentItemCore(currentItemId is TId id ? CoerceCurrentItem(id) : CoerceCurrentItem(currentItem));
+        SetCurrentItemCore(CoerceCurrentItem());
     }
 
     private void SetCurrentItem(TItem? value)
@@ -164,15 +160,14 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
 
     private void SetCurrentItemId(TId? value)
     {
-        if (value is TId id)
-        {
-            TItem? item = CoerceCurrentItem(id);
-            SetCurrentItemCore(item, item is null ? value : item.Id);
-        }
-        else
+        if (!value.HasValue)
         {
             SetCurrentItemCore(this.FirstOrDefault(), null);
+            return;
         }
+
+        TItem? item = CoerceCurrentItem(value.Value);
+        SetCurrentItemCore(item, item?.Id ?? value);
     }
 
     private void SetCurrentItemCore(TItem? value)
@@ -209,6 +204,11 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
         return this.FirstOrDefault();
     }
 
+    private TItem? CoerceCurrentItem()
+    {
+        return currentItemId.HasValue ? CoerceCurrentItem(currentItemId.Value) : CoerceCurrentItem(currentItem);
+    }
+
     private TItem? CoerceCurrentItem(TId id)
     {
         TItem? item = this.FirstOrDefault(item => EqualityComparer<TId>.Default.Equals(item.Id, id));
@@ -222,7 +222,6 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
 
     private static bool IdEquals(TId? x, TId? y)
     {
-        return x.HasValue == y.HasValue
-            && (!x.HasValue || EqualityComparer<TId>.Default.Equals(x.Value, y!.Value));
+        return EqualityComparer<TId?>.Default.Equals(x, y);
     }
 }

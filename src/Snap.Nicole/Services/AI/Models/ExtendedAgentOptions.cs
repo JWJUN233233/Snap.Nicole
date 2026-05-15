@@ -8,7 +8,6 @@ using OpenAI.Chat;
 using OpenAI.Responses;
 using Snap.Nicole.Core;
 using Snap.Nicole.ViewModels;
-using System;
 using System.ClientModel;
 using System.Collections.Generic;
 
@@ -16,14 +15,17 @@ namespace Snap.Nicole.Services.AI.Models;
 
 internal sealed class ExtendedAgentOptions
 {
+    // ModelProviderProfile
     public ModelProviderType ProviderType { get; init; } = ModelProviderType.OpenAIChatCompletion;
-
-    public string Model { get; init; } = string.Empty;
 
     public string? Endpoint { get; init; }
 
     public string? ApiKey { get; init; }
 
+    public string ModelId { get; init; } = string.Empty;
+
+    // Extended options
+    // TODO: Create a separate class for these options and configure them in UI
     public float Temperature { get; init; } = 0.3f;
 
     public float TopP { get; init; } = 0.95f;
@@ -42,7 +44,7 @@ internal sealed class ExtendedAgentOptions
     {
         ChatOptions chatOptions = new()
         {
-            ModelId = Model,
+            ModelId = ModelId,
             Temperature = Temperature,
             TopP = TopP,
             ToolMode = ChatToolMode.Auto,
@@ -59,7 +61,7 @@ internal sealed class ExtendedAgentOptions
         return new(chatOptions);
     }
 
-    public ChatClientAgent AsAIAgent(IList<AITool>? tools = default, ILoggerFactory? loggerFactory = default)
+    public ChatClientAgent CreateAIAgent(IList<AITool>? tools = default, ILoggerFactory? loggerFactory = default)
     {
         return ProviderType switch
         {
@@ -72,13 +74,12 @@ internal sealed class ExtendedAgentOptions
 
     private ChatClientAgent CreateOpenAIChatCompletionAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
     {
-        OpenAIClient client = CreateOpenAIClient();
-
         string? thinkingEnabled = ThinkingEnabled.HasValue
             ? ThinkingEnabled.Value ? "enabled" : "disabled"
             : null;
 
-        return client.GetChatClient(Model).AsAIAgent(new ChatClientAgentOptions
+        ChatClient client = CreateOpenAIClient().GetChatClient(ModelId);
+        return client.AsAIAgent(new ChatClientAgentOptions
         {
             ChatOptions = new()
             {
@@ -87,6 +88,7 @@ internal sealed class ExtendedAgentOptions
                     ChatCompletionOptions options = new();
                     if (!string.IsNullOrEmpty(thinkingEnabled))
                     {
+                        // "thinking": { "type": "enabled" } | "thinking": { "type": "disabled" }
                         options.Patch.Set("$.thinking.type"u8, thinkingEnabled);
                     }
 
@@ -103,8 +105,7 @@ internal sealed class ExtendedAgentOptions
     private ChatClientAgent CreateOpenAIResponsesAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
     {
         ResponsesClient client = CreateOpenAIClient().GetResponsesClient();
-
-        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: Model, loggerFactory: loggerFactory);
+        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: ModelId, loggerFactory: loggerFactory);
     }
 
     private ChatClientAgent CreateAnthropicAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
@@ -132,7 +133,7 @@ internal sealed class ExtendedAgentOptions
         {
             ChatOptions = new()
             {
-                ModelId = Model,
+                ModelId = ModelId,
                 Instructions = SystemPrompt,
                 Tools = tools,
             },

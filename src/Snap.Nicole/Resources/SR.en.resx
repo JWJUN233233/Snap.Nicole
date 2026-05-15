@@ -94,11 +94,11 @@
   <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
     <value>Clear</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
-    <value>Model Profile</value>
+  <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
+    <value>Model Provider Profile</value>
   </data>
-  <data name="UIXamlPagesSettingsPageLabelModelProfiles" xml:space="preserve">
-    <value>Model Profiles</value>
+  <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
+    <value>Model Provider Profiles</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
     <value>Profile Name</value>

@@ -16,7 +16,7 @@ namespace Snap.Nicole.ViewModels;
 internal sealed partial class ChatViewModel : ObservableObject
 {
     private readonly IAgentService chatService;
-    private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
+    private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
 
     private CancellationTokenSource? generationCts;
     private AgentSession? session;
@@ -27,7 +27,7 @@ internal sealed partial class ChatViewModel : ObservableObject
         Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
         Settings.PropertyChanged += OnSettingsPropertyChanged;
-        SubscribeModelProfiles(Settings.ModelProfiles);
+        SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
     }
 
     public AppSettings Settings { get; }
@@ -42,7 +42,7 @@ internal sealed partial class ChatViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
     public partial bool IsBusy { get; set; }
 
-    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText) && Settings.ModelProfiles.CurrentItem is not null;
+    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText) && Settings.ModelProviderProfiles.CurrentItem is not null;
 
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
@@ -53,18 +53,18 @@ internal sealed partial class ChatViewModel : ObservableObject
             return;
         }
 
-        ModelProfile? profile = Settings.ModelProfiles.CurrentItem;
-        if (profile is null)
+        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.CurrentItem;
+        if (providerProfile is null)
         {
             return;
         }
 
         ExtendedAgentOptions requestOptions = new()
         {
-            ProviderType = profile.ProviderType.Value,
-            Model = profile.ModelId,
-            Endpoint = profile.Endpoint,
-            ApiKey = profile.ApiKey,
+            ProviderType = providerProfile.ProviderType.Value,
+            ModelId = providerProfile.ModelId,
+            Endpoint = providerProfile.Endpoint,
+            ApiKey = providerProfile.ApiKey,
             Temperature = 0.3f,
             TopP = 0.95f,
             ThinkingEnabled = true,
@@ -113,36 +113,36 @@ internal sealed partial class ChatViewModel : ObservableObject
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(AppSettings.ModelProfiles))
+        if (e.PropertyName is nameof(AppSettings.ModelProviderProfiles))
         {
-            SubscribeModelProfiles(Settings.ModelProfiles);
+            SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
         }
     }
 
-    private void OnModelProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void OnModelProviderProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(ObservableSettingsCollection<ModelProfile, Guid>.CurrentItem)
-            or nameof(ObservableSettingsCollection<ModelProfile, Guid>.CurrentItemId))
+        if (e.PropertyName is nameof(ObservableSettingsCollection<ModelProviderProfile, Guid>.CurrentItem)
+            or nameof(ObservableSettingsCollection<ModelProviderProfile, Guid>.CurrentItemId))
         {
             session = null;
             SendMessageCommand.NotifyCanExecuteChanged();
         }
     }
 
-    private void SubscribeModelProfiles(ObservableSettingsCollection<ModelProfile, Guid> profiles)
+    private void SubscribeModelProviderProfiles(ObservableSettingsCollection<ModelProviderProfile, Guid> providerProfiles)
     {
-        if (ReferenceEquals(modelProfiles, profiles))
+        if (ReferenceEquals(modelProviderProfiles, providerProfiles))
         {
             return;
         }
 
-        if (modelProfiles is not null)
+        if (modelProviderProfiles is not null)
         {
-            ((INotifyPropertyChanged)modelProfiles).PropertyChanged -= OnModelProfilesPropertyChanged;
+            ((INotifyPropertyChanged)modelProviderProfiles).PropertyChanged -= OnModelProviderProfilesPropertyChanged;
         }
 
-        modelProfiles = profiles;
-        ((INotifyPropertyChanged)modelProfiles).PropertyChanged += OnModelProfilesPropertyChanged;
+        modelProviderProfiles = providerProfiles;
+        ((INotifyPropertyChanged)modelProviderProfiles).PropertyChanged += OnModelProviderProfilesPropertyChanged;
     }
 
     [UnsafeAccessor(UnsafeAccessorKind.Constructor)]

@@ -1,11 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Snap.Nicole.Core;
-using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Models;
 
-[GeneratedCopyFrom<ModelProfile>]
-internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Guid>
+[GeneratedCopyFrom<ModelProviderProfile>]
+internal sealed partial class ModelProviderProfile : ObservableObject, IIdentifiable<Guid>
 {
     [ObservableProperty]
     public partial Guid Id { get; set; } = Guid.NewGuid();

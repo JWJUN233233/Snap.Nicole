@@ -41,7 +41,7 @@
                     <TextBlock
                         Margin="1,0,0,0"
                         Style="{ThemeResource BaseTextBlockStyle}"
-                        Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelProfiles}" />
+                        Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelProviderProfiles}" />
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -84,8 +84,8 @@
                                     AllowDrop="True"
                                     CanReorderItems="True"
                                     DisplayMemberPath="Name"
-                                    ItemsSource="{Binding Settings.ModelProfiles}"
-                                    SelectedItem="{Binding Settings.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                    ItemsSource="{Binding Settings.ModelProviderProfiles}"
+                                    SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
                             </Grid>
                         </Border>
 
@@ -97,17 +97,17 @@
                             BorderThickness="0,1,1,1"
                             CornerRadius="{Binding Source={ThemeResource ControlCornerRadius}, Converter={StaticResource RightCornerRadiusFilterConverter}}">
                             <StackPanel Spacing="16">
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" Text="{Binding Settings.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <ComboBox
                                     MinWidth="240"
                                     DisplayMemberPath="Label"
                                     Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}"
                                     ItemsSource="{Binding ModelProviderTypes}"
-                                    SelectedValue="{Binding Settings.ModelProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
+                                    SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
                                     SelectedValuePath="Value" />
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}" Text="{Binding Settings.ModelProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" Text="{Binding Settings.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
                         </Border>
                     </Grid>

@@ -8,7 +8,7 @@ using System.Globalization;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IOptionsChangeSourceProvider
+internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IOptionsObservableChildrenProvider
 {
     public string Language
     {
@@ -22,12 +22,12 @@ internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IO
         }
     } = StringResourceProxy.SupportedCultures[0];
 
-    public ObservableSettingsCollection<ModelProfile, Guid> ModelProfiles { get; set => SetProperty(ref field, value ?? []); } = [];
+    public ObservableSettingsCollection<ModelProviderProfile, Guid> ModelProviderProfiles { get; set => SetProperty(ref field, value ?? []); } = [];
 
-    public Guid? SelectedModelProfileId
+    public Guid? SelectedModelProviderProfileId
     {
-        get => ModelProfiles.CurrentItemId;
-        set => ModelProfiles.CurrentItemId = value;
+        get => ModelProviderProfiles.CurrentItemId;
+        set => ModelProviderProfiles.CurrentItemId = value;
     }
 
     public void CopyFrom(AppSettings source)
@@ -35,12 +35,12 @@ internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IO
         ArgumentNullException.ThrowIfNull(source);
 
         Language = source.Language;
-        ModelProfiles.CopyFrom(source.ModelProfiles);
-        SelectedModelProfileId = source.SelectedModelProfileId;
+        ModelProviderProfiles.CopyFrom(source.ModelProviderProfiles);
+        SelectedModelProviderProfileId = source.SelectedModelProviderProfileId;
     }
 
-    public IEnumerable<INotifyPropertyChanged> GetChangeSources()
+    public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()
     {
-        yield return ModelProfiles;
+        yield return ModelProviderProfiles;
     }
 }

@@ -34,7 +34,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
 
         // [AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)]
-        ChatClientAgent agent = options.AsAIAgent(null, loggerFactory);
+        ChatClientAgent agent = options.CreateAIAgent(null, loggerFactory);
         ObservableChatMessage? responseMessage = null;
         bool responseAdded = false;
 
@@ -62,7 +62,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                     responseMessage ??= new ObservableChatMessage
                     {
                         Role = ChatRole.Assistant,
-                        AuthorName = options.Model,
+                        AuthorName = options.ModelId,
                         CreatedAt = DateTimeOffset.Now,
                     };
 

@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 using Snap.Nicole.Core;
 using System.ComponentModel;
 
@@ -13,7 +12,6 @@ internal static class SettingsServiceCollectionExtensions
             where T : class, INotifyPropertyChanged, ICopyFrom<T>, new()
         {
             services.TryAddSingleton<IOptionsProvider<T>>(sp => new JsonSettingsOptionsProvider<T>(fileNameWithoutExtension));
-            services.TryAddSingleton(sp => (IOptionsMonitor<T>)sp.GetRequiredService<IOptionsProvider<T>>());
 
             return services;
         }

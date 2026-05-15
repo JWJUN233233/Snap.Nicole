@@ -27,20 +27,20 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
     [RelayCommand]
     private void AddProfile()
     {
-        ModelProfile profile = new();
+        ModelProviderProfile providerProfile = new();
 
-        Settings.ModelProfiles.Add(profile);
-        Settings.ModelProfiles.CurrentItem = profile;
+        Settings.ModelProviderProfiles.Add(providerProfile);
+        Settings.ModelProviderProfiles.CurrentItem = providerProfile;
     }
 
     [RelayCommand]
     private void DeleteProfile()
     {
-        if (Settings.ModelProfiles.CurrentItem is not { } selected)
+        if (Settings.ModelProviderProfiles.CurrentItem is not { } selected)
         {
             return;
         }
 
-        Settings.ModelProfiles.Remove(selected);
+        Settings.ModelProviderProfiles.Remove(selected);
     }
 }

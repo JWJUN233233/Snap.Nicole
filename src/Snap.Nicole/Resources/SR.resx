@@ -153,10 +153,10 @@
   <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
     <value>清空</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
+  <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
     <value>模型配置</value>
   </data>
-  <data name="UIXamlPagesSettingsPageLabelModelProfiles" xml:space="preserve">
+  <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
     <value>模型配置</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
