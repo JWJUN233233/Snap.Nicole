@@ -1,5 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Snap.Nicole.Core;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
@@ -9,23 +10,18 @@ using System.Linq;
 
 namespace Snap.Nicole.ViewModels;
 
-internal sealed partial class SettingsViewModel : ObservableObject
+internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider) : ObservableObject
 {
-    public SettingsViewModel(IServiceProvider serviceProvider)
-    {
-        Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
-    }
-
-    public AppSettings Settings { get; }
+    public AppSettings Settings { get; } = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
     // TODO: Potentially cache this list
     public IReadOnlyList<SettingsItem<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsItem<string>(CultureInfo.GetCultureInfo(name).NativeName, name))];
 
-    public IReadOnlyList<SettingsItem<ModelProviderType>> ModelProviderTypes { get; } =
+    public IReadOnlyList<SettingsItem<EnumBox<ModelProviderType>>> ModelProviderTypes { get; } =
     [
-        new("OpenAI Chat Completion", ModelProviderType.OpenAIChatCompletion),
-        new("OpenAI Responses", ModelProviderType.OpenAIResponses),
-        new("Anthropic", ModelProviderType.Anthropic),
+        new("OpenAI Chat Completion API | {Endpoint}/chat/completions", EnumBox.Of(ModelProviderType.OpenAIChatCompletion)),
+        new("OpenAI Responses API | {Endpoint}/responses", EnumBox.Of(ModelProviderType.OpenAIResponses)),
+        new("Anthropic Messages API | {Endpoint}/v1/messages", EnumBox.Of(ModelProviderType.Anthropic)),
     ];
 
     [RelayCommand]

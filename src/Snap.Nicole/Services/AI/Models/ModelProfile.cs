@@ -14,8 +14,7 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
     public partial string Name { get; set; } = string.Empty;
 
     [ObservableProperty]
-    [JsonConverter(typeof(JsonStringEnumConverter<ModelProviderType>))]
-    public partial ModelProviderType ProviderType { get; set; } = ModelProviderType.OpenAIChatCompletion;
+    public partial EnumBox<ModelProviderType> ProviderType { get; set; } = EnumBox.Of(ModelProviderType.OpenAIChatCompletion);
 
     [ObservableProperty]
     public partial string Endpoint { get; set; } = string.Empty;

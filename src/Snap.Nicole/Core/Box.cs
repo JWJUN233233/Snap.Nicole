@@ -1,4 +1,4 @@
-﻿namespace Snap.Nicole.Core;
+namespace Snap.Nicole.Core;
 
 internal sealed class Box<T>
 {

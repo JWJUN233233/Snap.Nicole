@@ -2,7 +2,7 @@
     x:Class="Snap.Nicole.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:Snap.Nicole">
+    xmlns:snsam="using:Snap.Nicole.Services.AI.Models">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -18,6 +18,8 @@
             <!--  Modify Window title bar color  -->
             <StaticResource x:Key="WindowCaptionBackground" ResourceKey="ControlFillColorTransparentBrush" />
             <StaticResource x:Key="WindowCaptionBackgroundDisabled" ResourceKey="ControlFillColorTransparentBrush" />
+
+            <snsam:ModelProviderType x:Key="OpenAIChatCompletion">OpenAIChatCompletion</snsam:ModelProviderType>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
