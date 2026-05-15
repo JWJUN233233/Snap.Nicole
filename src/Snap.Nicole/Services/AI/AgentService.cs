@@ -33,8 +33,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             return;
         }
 
-        // [AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)]
-        ChatClientAgent agent = options.CreateAIAgent(null, loggerFactory);
+        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], loggerFactory);
         ObservableChatMessage? responseMessage = null;
         bool responseAdded = false;
 

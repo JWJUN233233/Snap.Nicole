@@ -1,6 +1,8 @@
 using Microsoft.Extensions.AI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
+using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -137,14 +139,24 @@ internal sealed partial class ChatMessageView : UserControl
             MessageBorder.Visibility = Visibility.Collapsed;
             ContentItemsControl.ItemsSource = null;
             UserMessageTextBlock.Text = string.Empty;
-            HeaderTextBlock.Text = string.Empty;
+            SetHeaderText(string.Empty);
             return;
         }
 
         MessageBorder.Visibility = Visibility.Visible;
-        HeaderTextBlock.Text = Message.Role == ChatRole.User
-            ? "You"
-            : (Message.AuthorName ?? "AI");
+
+        if (Message.Role == ChatRole.User)
+        {
+            SetHeaderResourceText(SRName.UIXamlControlsChatMessageViewLabelUser);
+        }
+        else if (string.IsNullOrWhiteSpace(Message.AuthorName))
+        {
+            SetHeaderResourceText(SRName.UIXamlControlsChatMessageViewLabelAssistant);
+        }
+        else
+        {
+            SetHeaderText(Message.AuthorName);
+        }
 
         bool isUserMessage = Message.Role == ChatRole.User;
         UserMessageTextBlock.Visibility = isUserMessage ? Visibility.Visible : Visibility.Collapsed;
@@ -166,5 +178,21 @@ internal sealed partial class ChatMessageView : UserControl
         UserMessageTextBlock.Text = Message is null
             ? string.Empty
             : string.Concat(Message.Contents.OfType<ObservableTextContent>().Select(content => content.Text));
+    }
+
+    private void SetHeaderResourceText(SRName resourceName)
+    {
+        HeaderTextBlock.SetBinding(TextBlock.TextProperty, new Binding
+        {
+            Source = StringResourceProxy.Default,
+            Path = new PropertyPath($"[{resourceName}]"),
+            Mode = BindingMode.OneWay,
+        });
+    }
+
+    private void SetHeaderText(string text)
+    {
+        HeaderTextBlock.ClearValue(TextBlock.TextProperty);
+        HeaderTextBlock.Text = text;
     }
 }

@@ -13,26 +13,19 @@
     <Grid Padding="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock
-            Grid.Row="0"
-            Margin="0,0,0,12"
-            Style="{StaticResource TitleTextBlockStyle}"
-            Text="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}" />
-
         <ComboBox
-            Grid.Row="1"
+            Grid.Row="0"
             Margin="0,0,0,12"
             DisplayMemberPath="Name"
             Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProviderProfile}"
             ItemsSource="{x:Bind ViewModel.Settings.ModelProviderProfiles, Mode=OneWay}"
             SelectedItem="{x:Bind ViewModel.Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
 
-        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="2">
+        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
             <ItemsControl
                 x:Name="MessagesItemsControl"
                 ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
@@ -51,7 +44,7 @@
         </ScrollViewer>
 
         <Grid
-            Grid.Row="3"
+            Grid.Row="2"
             Margin="0,12,0,0"
             ColumnSpacing="8">
             <Grid.ColumnDefinitions>

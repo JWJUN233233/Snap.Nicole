@@ -2,7 +2,8 @@
     x:Class="Snap.Nicole.UI.Xaml.Controls.ChatFunctionResultSegmentView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls">
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
+    xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup">
 
-    <snuxc:ChatPlainTextSegmentView x:Name="Segment" Title="Tool Result" />
+    <snuxc:ChatPlainTextSegmentView x:Name="Segment" Title="{snuxm:StringResource Name=UIXamlControlsChatFunctionResultSegmentViewLabelTitle}" />
 </UserControl>

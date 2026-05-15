@@ -10,7 +10,9 @@ src/Snap.Nicole.SourceGeneration/bin
 src/Snap.Nicole.SourceGeneration/obj
 
 src/Snap.Nicole.Native/x64/Debug
+src/Snap.Nicole.Native/x64/Release
 src/Snap.Nicole.Native/Snap.Nic.*
 src/packages
 src/x64/Debug
+src/x64/Release
 .claude

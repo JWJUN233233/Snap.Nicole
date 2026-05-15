@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
+    xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -35,7 +36,7 @@
         </DataTemplate>
 
         <DataTemplate x:Key="UsageContentTemplate">
-            <snuxc:ChatPlainTextSegmentView Title="Usage" Text="{Binding Text}" />
+            <snuxc:ChatPlainTextSegmentView Title="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelUsage}" Text="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="FallbackContentTemplate">

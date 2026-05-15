@@ -192,4 +192,19 @@
   <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
     <value>思考中</value>
   </data>
+  <data name="UIXamlControlsChatMessageViewLabelUsage" xml:space="preserve">
+    <value>用量</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelUser" xml:space="preserve">
+    <value>你</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelAssistant" xml:space="preserve">
+    <value>AI</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionCallSegmentViewLabelTitle" xml:space="preserve">
+    <value>工具调用</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionResultSegmentViewLabelTitle" xml:space="preserve">
+    <value>工具结果</value>
+  </data>
 </root>

@@ -133,4 +133,19 @@
   <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
     <value>Thinking</value>
   </data>
+  <data name="UIXamlControlsChatMessageViewLabelUsage" xml:space="preserve">
+    <value>Usage</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelUser" xml:space="preserve">
+    <value>You</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelAssistant" xml:space="preserve">
+    <value>AI</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionCallSegmentViewLabelTitle" xml:space="preserve">
+    <value>Tool Call</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionResultSegmentViewLabelTitle" xml:space="preserve">
+    <value>Tool Result</value>
+  </data>
 </root>
