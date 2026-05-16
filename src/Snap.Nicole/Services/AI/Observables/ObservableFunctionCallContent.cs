@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.Generic;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
@@ -9,7 +8,7 @@ internal sealed partial class ObservableFunctionCallContent : ObservableToolCall
     public partial string Name { get; set; }
 
     [ObservableProperty]
-    public partial IDictionary<string, object?>? Arguments { get; set; }
+    public partial string? Arguments { get; set; }
 
     [ObservableProperty]
     public partial Exception? Exception { get; set; }

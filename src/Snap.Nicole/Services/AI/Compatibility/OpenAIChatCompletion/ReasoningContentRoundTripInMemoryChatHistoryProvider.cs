@@ -10,11 +10,11 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snap.Nicole.ViewModels;
+namespace Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 
-internal sealed class OpenAIChatCompletionInMemoryChatHistoryProvider : ChatHistoryProvider
+internal sealed class ReasoningContentRoundTripInMemoryChatHistoryProvider : ChatHistoryProvider
 {
-    public OpenAIChatCompletionInMemoryChatHistoryProvider()
+    public ReasoningContentRoundTripInMemoryChatHistoryProvider()
         : base(null, null, StoreInputResponseMessageFilter)
     {
         sessionState = new ProviderSessionState<State>((_ => new()), GetType().Name, null);

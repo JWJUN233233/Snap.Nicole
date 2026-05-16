@@ -29,6 +29,8 @@ internal static class Program
     {
         ComWrappersSupport.InitializeComWrappers();
 
+        AppContext.SetSwitch("System.Net.Http.EnableActivityPropagation", true);
+
         IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
         hostBuilder.ConfigureServices(static (context, services) =>
         {

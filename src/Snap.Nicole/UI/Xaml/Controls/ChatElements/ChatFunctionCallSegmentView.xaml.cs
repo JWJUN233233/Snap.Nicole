@@ -2,10 +2,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Snap.Nicole.Services.AI.Observables;
 using System.ComponentModel;
-using System.Text.Json;
 
 namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
+[GeneratedDependencyProperty<ObservableFunctionCallContent>("FunctionCall", PropertyChangedCallbackName = nameof(OnFunctionCallChanged))]
 internal sealed partial class ChatFunctionCallSegmentView : UserControl
 {
     public ChatFunctionCallSegmentView()
@@ -13,18 +13,6 @@ internal sealed partial class ChatFunctionCallSegmentView : UserControl
         InitializeComponent();
         UpdateText();
     }
-
-    public ObservableFunctionCallContent? FunctionCall
-    {
-        get => (ObservableFunctionCallContent?)GetValue(FunctionCallProperty);
-        set => SetValue(FunctionCallProperty, value);
-    }
-
-    public static readonly DependencyProperty FunctionCallProperty = DependencyProperty.Register(
-        nameof(FunctionCall),
-        typeof(ObservableFunctionCallContent),
-        typeof(ChatFunctionCallSegmentView),
-        new PropertyMetadata(null, OnFunctionCallChanged));
 
     private static void OnFunctionCallChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
@@ -55,18 +43,6 @@ internal sealed partial class ChatFunctionCallSegmentView : UserControl
     {
         Segment.Text = FunctionCall is null
             ? string.Empty
-            : $"{FunctionCall.Name}: {Serialize(FunctionCall.Arguments)}";
-    }
-
-    private static string Serialize(object? value)
-    {
-        try
-        {
-            return JsonSerializer.Serialize(value);
-        }
-        catch
-        {
-            return value?.ToString() ?? string.Empty;
-        }
+            : $"{FunctionCall.Name}: {FunctionCall.Arguments}";
     }
 }

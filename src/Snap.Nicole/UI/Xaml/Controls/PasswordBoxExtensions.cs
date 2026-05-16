@@ -4,28 +4,9 @@ using System;
 
 namespace Snap.Nicole.UI.Xaml.Controls;
 
-public static class PasswordBoxExtensions
+[GeneratedDependencyProperty<string>("Password", IsAttached = true, TargetType = typeof(PasswordBox), PropertyChangedCallbackName = nameof(OnPasswordChanged))]
+public static partial class PasswordBoxExtensions
 {
-    public static readonly DependencyProperty PasswordProperty = DependencyProperty.RegisterAttached(
-        "Password",
-        typeof(string),
-        typeof(PasswordBoxExtensions),
-        new PropertyMetadata(null, OnPasswordChanged));
-
-    public static string? GetPassword(PasswordBox passwordBox)
-    {
-        ArgumentNullException.ThrowIfNull(passwordBox);
-
-        return (string?)passwordBox.GetValue(PasswordProperty);
-    }
-
-    public static void SetPassword(PasswordBox passwordBox, string? value)
-    {
-        ArgumentNullException.ThrowIfNull(passwordBox);
-
-        passwordBox.SetValue(PasswordProperty, value);
-    }
-
     private static void OnPasswordChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not PasswordBox passwordBox)
@@ -35,10 +16,10 @@ public static class PasswordBoxExtensions
 
         passwordBox.PasswordChanged -= OnPasswordBoxPasswordChanged;
 
-        string password = e.NewValue as string ?? string.Empty;
-        if (passwordBox.Password != password)
+        string newPassword = e.NewValue as string ?? string.Empty;
+        if (!string.Equals(passwordBox.Password, newPassword))
         {
-            passwordBox.Password = password;
+            passwordBox.Password = newPassword;
         }
 
         passwordBox.PasswordChanged += OnPasswordBoxPasswordChanged;

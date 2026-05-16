@@ -7,7 +7,7 @@ using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Responses;
 using Snap.Nicole.Core;
-using Snap.Nicole.ViewModels;
+using Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 using System.ClientModel;
 using System.Collections.Generic;
 
@@ -78,33 +78,51 @@ internal sealed class ExtendedAgentOptions
             ? ThinkingEnabled.Value ? "enabled" : "disabled"
             : null;
 
-        ChatClient client = CreateOpenAIClient().GetChatClient(ModelId);
-        return client.AsAIAgent(new ChatClientAgentOptions
+        ApiKeyCredential apiKeyCredential = new(ApiKey!);
+        OpenAIClientOptions clientOptions = new()
         {
-            ChatOptions = new()
+            Endpoint = Endpoint.ToUri(),
+            ClientLoggingOptions = new()
             {
-                RawRepresentationFactory = client =>
-                {
-                    ChatCompletionOptions options = new();
-                    if (!string.IsNullOrEmpty(thinkingEnabled))
-                    {
-                        // "thinking": { "type": "enabled" } | "thinking": { "type": "disabled" }
-                        options.Patch.Set("$.thinking.type"u8, thinkingEnabled);
-                    }
-
-                    return options;
-                },
-                Instructions = SystemPrompt,
-                Tools = tools,
+                LoggerFactory = loggerFactory,
+                EnableMessageContentLogging = true,
             },
-            ChatHistoryProvider = new OpenAIChatCompletionInMemoryChatHistoryProvider(),
-            RequirePerServiceCallChatHistoryPersistence = true,
-        }, loggerFactory: loggerFactory);
+        };
+
+        return new OpenAIClient(apiKeyCredential, clientOptions)
+            .GetChatClient(ModelId)
+            .AsIChatClient()
+            .AsBuilder()
+            .Use(innerClient => new UsageContentRectifyDelegatingChatClient(innerClient))
+            .BuildAIAgent(new ChatClientAgentOptions
+            {
+                ChatOptions = new()
+                {
+                    RawRepresentationFactory = client =>
+                    {
+                        ChatCompletionOptions options = new();
+                        if (!string.IsNullOrEmpty(thinkingEnabled))
+                        {
+                            // "thinking": { "type": "enabled" } | "thinking": { "type": "disabled" }
+                            options.Patch.Set("$.thinking.type"u8, thinkingEnabled);
+                        }
+
+                        return options;
+                    },
+                    Instructions = SystemPrompt,
+                    Tools = tools,
+                },
+                ChatHistoryProvider = new ReasoningContentRoundTripInMemoryChatHistoryProvider(),
+                RequirePerServiceCallChatHistoryPersistence = true,
+            }, loggerFactory: loggerFactory);
     }
 
     private ChatClientAgent CreateOpenAIResponsesAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
     {
-        ResponsesClient client = CreateOpenAIClient().GetResponsesClient();
+        ResponsesClient client = new OpenAIClient(new ApiKeyCredential(ApiKey!), new OpenAIClientOptions()
+        {
+            Endpoint = Endpoint.ToUri(),
+        }).GetResponsesClient();
         return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: ModelId, loggerFactory: loggerFactory);
     }
 
@@ -117,14 +135,6 @@ internal sealed class ExtendedAgentOptions
         });
 
         return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), loggerFactory: loggerFactory);
-    }
-
-    private OpenAIClient CreateOpenAIClient()
-    {
-        return new(new ApiKeyCredential(ApiKey!), new OpenAIClientOptions()
-        {
-            Endpoint = Endpoint.ToUri(),
-        });
     }
 
     private ChatClientAgentOptions CreateAgentOptions(IList<AITool>? tools, ChatHistoryProvider chatHistoryProvider)

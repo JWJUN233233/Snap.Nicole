@@ -6,6 +6,7 @@ using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -135,7 +136,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             {
                 CallId = functionCallContent.CallId,
                 Name = functionCallContent.Name,
-                Arguments = functionCallContent.Arguments,
+                Arguments = SerializeArguments(functionCallContent.Arguments),
                 RawRepresentation = functionCallContent.RawRepresentation,
             },
             FunctionResultContent functionResultContent => new ObservableFunctionResultContent
@@ -160,6 +161,18 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         return string.IsNullOrWhiteSpace(observableContent.Text)
             ? null
             : observableContent;
+    }
+
+    private static string? SerializeArguments(object? value)
+    {
+        try
+        {
+            return JsonSerializer.Serialize(value);
+        }
+        catch
+        {
+            return value?.ToString();
+        }
     }
 
     private static void AppendContent(ObservableAIContentCollection contents, ObservableAIContent content)
