@@ -1,8 +1,8 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
-using System;
+using Snap.Nicole.Core;
+using Snap.Nicole.Core.IO;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text.Json;
@@ -10,8 +10,10 @@ using System.Threading;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TOptions>, IOptionsWriter<TOptions>, IDisposable
-    where TOptions : class, new()
+// A single change in the options can trigger the whole object graph to be serialized and written to disk,
+// so it's recommended to use this provider only for relatively small options objects and avoid putting large data in them.
+internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<TOptions>, IDisposable
+    where TOptions : class, INotifyPropertyChanged, ICopyFrom<TOptions>, new()
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -24,16 +26,16 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TO
     private readonly string fileName;
 
     private readonly PhysicalFileProvider fileProvider;
+    private readonly List<INotifyPropertyChanged> observableChildren = [];
+    private readonly TOptions cachedValue;
+
     private IDisposable? watchRegistration;
-
-    private ConfigurationReloadToken changeToken = new();
-    private TOptions cachedValue = new();
-
+    private bool isExternalChange;
     private volatile bool disposed;
 
     public JsonSettingsOptionsProvider(string fileNameWithoutExtension)
     {
-        string directory = Path.Combine(AppContext.BaseDirectory, "Settings");
+        string directory = WellKnownLocations.Settings;
         Directory.CreateDirectory(directory);
 
         fileName = $"{fileNameWithoutExtension}.json";
@@ -45,9 +47,11 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TO
         }
 
         cachedValue = value;
+        cachedValue.PropertyChanged += OnRootPropertyChanged;
+        UpdateObservableChildren();
 
         fileProvider = new(directory);
-        StartWatching();
+        StartWatchingFileChange();
     }
 
     public TOptions CurrentValue
@@ -61,40 +65,21 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TO
         }
     }
 
-    public TOptions Get(string? name)
-    {
-        if (!string.IsNullOrEmpty(name))
-        {
-            throw new NotSupportedException("Named options are not supported.");
-        }
-
-        return CurrentValue;
-    }
-
-    public IDisposable OnChange(Action<TOptions, string?> listener)
-    {
-        return ChangeToken.OnChange(() => changeToken, state => state(CurrentValue, string.Empty), listener);
-    }
-
-    public void Update()
-    {
-        lock (syncRoot)
-        {
-            SaveCore(cachedValue);
-        }
-    }
-
     public void Dispose()
     {
-        if (disposed)
+        if (Interlocked.Exchange(ref disposed, true))
         {
             return;
         }
 
-        disposed = true;
+        lock (syncRoot)
+        {
+            watchRegistration?.Dispose();
+            fileProvider.Dispose();
+        }
 
-        watchRegistration?.Dispose();
-        fileProvider.Dispose();
+        cachedValue.PropertyChanged -= OnRootPropertyChanged;
+        ClearObservableChildren();
     }
 
     private static void OnFileChanged(object? state)
@@ -109,24 +94,148 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsMonitor<TO
             return;
         }
 
-        lock (self.syncRoot)
+        try
         {
-            if (self.TryLoadCore(out TOptions? newValue))
-            {
-                self.cachedValue = newValue;
+            TOptions? newValue;
+            bool loaded;
 
-                ConfigurationReloadToken oldToken = self.changeToken;
-                self.changeToken = new();
-                oldToken.OnReload();
+            lock (self.syncRoot)
+            {
+                loaded = self.TryLoadCore(out newValue);
+            }
+
+            if (loaded)
+            {
+                self.BeginApplyExternalChangeOnMainThread(newValue!);
             }
         }
-
-        self.StartWatching();
+        finally
+        {
+            self.StartWatchingFileChange();
+        }
     }
 
-    private void StartWatching()
+    private void StartWatchingFileChange()
     {
-        watchRegistration = fileProvider.Watch(fileName).RegisterChangeCallback(OnFileChanged, this);
+        if (disposed)
+        {
+            return;
+        }
+
+        IDisposable registration = fileProvider.Watch(fileName).RegisterChangeCallback(OnFileChanged, this);
+
+        lock (syncRoot)
+        {
+            if (disposed)
+            {
+                registration.Dispose();
+                return;
+            }
+
+            watchRegistration?.Dispose();
+            watchRegistration = registration;
+        }
+    }
+
+    private void BeginApplyExternalChangeOnMainThread(TOptions value)
+    {
+        if (ReferenceEquals(SynchronizationContext.Current, App.Current.Threading.SynchronizationContext))
+        {
+            ApplyExternalChange(value);
+            return;
+        }
+
+        App.Current.Threading.SynchronizationContext.Post(static state =>
+        {
+            if (state is (JsonSettingsOptionsProvider<TOptions> provider, TOptions change))
+            {
+                provider.ApplyExternalChange(change);
+            }
+        }, Tuple.Create(this, value));
+    }
+
+    private void ApplyExternalChange(TOptions value)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        isExternalChange = true;
+        try
+        {
+            cachedValue.CopyFrom(value);
+            UpdateObservableChildren();
+        }
+        finally
+        {
+            isExternalChange = false;
+        }
+    }
+
+    private void OnRootPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (isExternalChange)
+        {
+            return;
+        }
+
+        UpdateObservableChildren();
+        PersistObservedChange();
+    }
+
+    private void OnObservableChildPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (isExternalChange)
+        {
+            return;
+        }
+
+        PersistObservedChange();
+    }
+
+    private void PersistObservedChange()
+    {
+        if (disposed || /* defensive check */ isExternalChange)
+        {
+            return;
+        }
+
+        lock (syncRoot)
+        {
+            if (disposed || /* defensive check */ isExternalChange)
+            {
+                return;
+            }
+
+            SaveCore(cachedValue);
+        }
+    }
+
+    private void UpdateObservableChildren()
+    {
+        ClearObservableChildren();
+
+        if (cachedValue is not IOptionsObservableChildrenProvider provider)
+        {
+            return;
+        }
+
+        foreach (INotifyPropertyChanged source in provider.EnumerateObservableChildren())
+        {
+            source.PropertyChanged += OnObservableChildPropertyChanged;
+            observableChildren.Add(source);
+        }
+    }
+
+    private void ClearObservableChildren()
+    {
+        foreach (INotifyPropertyChanged source in observableChildren)
+        {
+            source.PropertyChanged -= OnObservableChildPropertyChanged;
+        }
+
+        observableChildren.Clear();
     }
 
     private bool TryLoadCore([NotNullWhen(true)] out TOptions? value)

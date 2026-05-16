@@ -5,12 +5,13 @@
     <TargetPlatformMinVersion>10.0.26100.0</TargetPlatformMinVersion>
     <RootNamespace>Snap.Nicole</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <Platforms>x86;x64;ARM64</Platforms>
+    <Platforms>x86;x64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64</RuntimeIdentifiers>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
     <WinUISDKReferences>false</WinUISDKReferences>
     <EnableMsixTooling>true</EnableMsixTooling>
+    <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ImplicitUsings>disable</ImplicitUsings>
@@ -21,6 +22,7 @@
     <NeutralLanguage>zh-CN</NeutralLanguage>
     <DefaultLanguage>zh-CN</DefaultLanguage>
     <SatelliteResourceLanguages>zh-CN;en-US</SatelliteResourceLanguages>
+	<NoWarn>$(NoWarn);MAAI001,SCME0001,MEAI001,OPENAI001</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <AdditionalFiles Include="Resources\SR.resx" />
@@ -28,8 +30,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Assets\Logo.ico" />
-    <Content Include="Assets\Logo.png" />
+    <Content Include="Assets\Logo.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\MiSans-Regular.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -47,9 +56,11 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="CommunityToolkit.WinUI.Behaviors" Version="8.3.260402-preview2" />
-    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.5.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.7" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.7" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <PackageReference Include="Microsoft.Agents.AI.Anthropic" Version="1.6.0-preview.260512.1" />
+    <PackageReference Include="Microsoft.Agents.AI.OpenAI" Version="1.6.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="10.0.8" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
   </ItemGroup>
@@ -57,7 +68,9 @@
     <ProjectReference Include="..\Snap.Nicole.Native\Snap.Nicole.Native.vcxproj">
       <ReferenceOutputAssembly>True</ReferenceOutputAssembly>
     </ProjectReference>
-    <ProjectReference Include="..\Snap.Nicole.SourceGeneration\Snap.Nicole.SourceGeneration.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=netstandard2.0" />
+    <ProjectReference Include="..\Snap.Nicole.SourceGeneration\Snap.Nicole.SourceGeneration.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=netstandard2.0" GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained">
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
   </ItemGroup>
 
   <PropertyGroup>
@@ -67,6 +80,9 @@
 
   <Target Name="CopyNicoleNativeDll" AfterTargets="Build" Condition="Exists('..\$(NativePlatform)\$(Configuration)\Snap.Nicole.Native.dll')">
     <Copy SourceFiles="..\$(NativePlatform)\$(Configuration)\Snap.Nicole.Native.dll" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="CopyNicoleNativeDllToPublish" AfterTargets="Publish" Condition="Exists('..\$(NativePlatform)\$(Configuration)\Snap.Nicole.Native.dll')">
+    <Copy SourceFiles="..\$(NativePlatform)\$(Configuration)\Snap.Nicole.Native.dll" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="true" />
   </Target>
 
   <!--

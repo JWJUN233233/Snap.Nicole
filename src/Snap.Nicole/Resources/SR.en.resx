@@ -82,4 +82,76 @@
   <data name="UIXamlPagesSettingsPageLabelLanguage" xml:space="preserve">
     <value>Language</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
+    <value>Chat</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelSend" xml:space="preserve">
+    <value>Send</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelPlaceholder" xml:space="preserve">
+    <value>Type a message...</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
+    <value>Model Provider Profile</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
+    <value>Model Provider Profiles</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
+    <value>Profile Name</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileProviderType" xml:space="preserve">
+    <value>Provider Type</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileEndpoint" xml:space="preserve">
+    <value>Endpoint URL</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileApiKey" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionProfileApiKey" xml:space="preserve">
+    <value>You can only view the original API Key when first entering it, or after clearing and entering it again.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
+    <value>Model ID</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelAddProfile" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelUpdateProfile" xml:space="preserve">
+    <value>Update</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDeleteProfile" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
+    <value>Please configure your API key in Settings.</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
+    <value>Thought</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
+    <value>Thinking</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelUsage" xml:space="preserve">
+    <value>Usage</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelUser" xml:space="preserve">
+    <value>You</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelAssistant" xml:space="preserve">
+    <value>AI</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionCallSegmentViewLabelTitle" xml:space="preserve">
+    <value>Tool Call</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionResultSegmentViewLabelTitle" xml:space="preserve">
+    <value>Tool Result</value>
+  </data>
 </root>

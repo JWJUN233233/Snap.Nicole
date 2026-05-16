@@ -24,6 +24,15 @@
     <ClInclude Include="WindowUtilities.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Detours\detours.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Detours\detver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="XamlUtilities.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -41,6 +50,9 @@
     <ClCompile Include="NicoleNativeWindowSubclass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="XamlUtilities.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -48,5 +60,10 @@
   <ItemGroup>
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natstepfilter" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Detours\detours-x64.lib">
+      <Filter>资源文件</Filter>
+    </Library>
   </ItemGroup>
 </Project>

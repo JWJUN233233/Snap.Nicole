@@ -10,4 +10,6 @@ internal sealed partial class SettingsPage : Page
         InitializeComponent();
         DataContext = App.Host.Services.GetRequiredService<SettingsViewModel>();
     }
+
+    private SettingsViewModel ViewModel => (SettingsViewModel)DataContext;
 }

@@ -27,7 +27,7 @@ internal sealed partial class NotifyIconContextMenuFlyoutViewModel(IServiceProvi
             return;
         }
 
-        await applicationLifeTime.ShowdownAsync();
+        await applicationLifeTime.ShutdownAsync();
     }
 
     [RelayCommand]

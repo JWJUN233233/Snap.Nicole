@@ -2,11 +2,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Core.Threading;
+using Snap.Nicole.Native;
+using Snap.Nicole.Resources;
+using Snap.Nicole.Services.Settings;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Windows;
-using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 
 namespace Snap.Nicole;
 
@@ -16,7 +19,10 @@ public partial class App : Application
     {
         Threading = new ApplicationThreading();
 
+        XamlUtilities.PatchFontAndScriptServicesGetDefaultFontNameString("ms-appx:///Assets/MiSans-Regular.ttf#MiSans");
+
         DispatcherShutdownMode = DispatcherShutdownMode.OnExplicitShutdown;
+        DebugSettings.IsXamlResourceReferenceTracingEnabled = true;
         InitializeComponent();
     }
 
@@ -47,6 +53,9 @@ public partial class App : Application
         _ = Host.StartAsync().ContinueWith(static task =>
         {
             IServiceProvider serviceProvider = Host.Services;
+
+            // AppSettings must be initialized on the UI thread
+            StringResourceProxy.Default.CurrentCulture = CultureInfo.GetCultureInfo(serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue.Language);
             serviceProvider.GetRequiredService<INotifyIcon>().Create();
             serviceProvider.GetRequiredService<IWindowLifeTime<MainWindow>>().Show();
         }, Threading.TaskScheduler);

@@ -1,0 +1,7 @@
+<UserControl
+    x:Class="Snap.Nicole.UI.Xaml.Controls.ChatElements.MarkdownTextBlock"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <ContentControl x:Name="ContentHost" />
+</UserControl>

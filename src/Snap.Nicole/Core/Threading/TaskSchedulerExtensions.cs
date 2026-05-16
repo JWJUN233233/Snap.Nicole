@@ -1,0 +1,38 @@
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Snap.Nicole.Core.Threading;
+
+internal static class TaskSchedulerExtensions
+{
+    extension(TaskScheduler taskScheduler)
+    {
+        public Task Run(Action action, CancellationToken cancellationToken = default)
+        {
+            return Task.Factory.StartNew(action, cancellationToken, TaskCreationOptions.None, taskScheduler);
+        }
+
+        public Task Run(Action action, TaskCreationOptions taskCreationOptions, CancellationToken cancellationToken = default)
+        {
+            return Task.Factory.StartNew(action, cancellationToken, taskCreationOptions, taskScheduler);
+        }
+
+        public Task Run<T1, T2>(Action<T1, T2> action, T1 t1, T2 t2, CancellationToken cancellationToken = default)
+        {
+            return Task.Factory.StartNew(static (stateObject) =>
+            {
+                (Action<T1, T2> action, T1 t1, T2 t2) = ((Action<T1, T2>, T1, T2))stateObject!;
+                action(t1, t2);
+            }, (action, t1, t2), cancellationToken, TaskCreationOptions.None, taskScheduler);
+        }
+
+        public Task Run<T1, T2>(Action<T1, T2> action, T1 t1, T2 t2, TaskCreationOptions taskCreationOptions, CancellationToken cancellationToken = default)
+        {
+            return Task.Factory.StartNew(static (stateObject) =>
+            {
+                (Action<T1, T2> action, T1 t1, T2 t2) = ((Action<T1, T2>, T1, T2))stateObject!;
+                action(t1, t2);
+            }, (action, t1, t2), cancellationToken, taskCreationOptions, taskScheduler);
+        }
+    }
+}

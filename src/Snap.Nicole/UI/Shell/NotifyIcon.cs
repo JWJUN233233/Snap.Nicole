@@ -1,11 +1,10 @@
 ﻿using Microsoft.UI.Xaml.Controls.Primitives;
 using Snap.Nicole.Core.Hosting;
+using Snap.Nicole.Core.IO;
 using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.UI.Xaml.Windows;
 using Snap.Nicole.ViewModels.NotifyIcon;
-using System;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -28,7 +27,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
     {
         this.serviceProvider = serviceProvider;
 
-        string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Logo.ico");
+        string iconPath = WellKnownLocations.AppIcon;
         Guid id = MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(iconPath)));
         native = NicoleNative.Default.MakeNotifyIcon(iconPath, in id);
 

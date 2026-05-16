@@ -5,8 +5,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mxi="using:Microsoft.Xaml.Interactivity"
-    xmlns:snux="using:Snap.Nicole.UI.Xaml"
     xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snuxp="using:Snap.Nicole.UI.Xaml.Pages"
     Title="Snap.Nicole"
@@ -28,32 +28,42 @@
             Grid.Row="0"
             IsBackButtonVisible="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"
             IsPaneToggleButtonVisible="True">
-            <mxi:Interaction.Behaviors>
-                <snuxb:TitleBarBehavior />
-            </mxi:Interaction.Behaviors>
             <TitleBar.Resources>
+                <x:Double x:Key="TitleBarLeftPaddingWidth">40</x:Double>
                 <x:Double x:Key="TitleBarCompactHeight">44</x:Double>
                 <x:Double x:Key="TitleBarExpandedHeight">44</x:Double>
                 <x:Double x:Key="TitleBarMinDragRegionWidth">0</x:Double>
             </TitleBar.Resources>
+            <mxi:Interaction.Behaviors>
+                <snuxb:TitleBarBehavior />
+            </mxi:Interaction.Behaviors>
+            <TitleBar.Content>
+                <Border Width="44" Height="44" />
+            </TitleBar.Content>
         </TitleBar>
 
         <NavigationView
             x:Name="NavView"
             Grid.Row="1"
+            CompactPaneLength="45"
             IsBackButtonVisible="Collapsed"
             IsPaneOpen="True"
             IsPaneToggleButtonVisible="False"
             IsSettingsVisible="True"
             ItemInvoked="OnNavigationItemInvoked"
-            Loaded="OnLoaded">
+            Loaded="OnLoaded"
+            OpenPaneLength="205">
             <NavigationView.MenuItems>
                 <NavigationViewItem
-                    snux:NavigationExtensions.NavigateTo="snuxp:HomePage"
+                    snuxc:NavigationExtensions.NavigateTo="snuxp:HomePage"
                     Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemHomePageContent}"
                     Icon="{snuxm:FontIcon Glyph=&#xE80F;}" />
+                <NavigationViewItem
+                    snuxc:NavigationExtensions.NavigateTo="snuxp:ChatPage"
+                    Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}"
+                    Icon="{snuxm:FontIcon Glyph=&#xE76E;}" />
             </NavigationView.MenuItems>
-            <Frame x:Name="ContentFrame" />
+            <Frame x:Name="ContentFrame" Transitions="{ThemeResource NavigationThemeTransitions}" />
         </NavigationView>
     </Grid>
 

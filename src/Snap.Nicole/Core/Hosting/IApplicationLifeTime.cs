@@ -6,5 +6,5 @@ internal interface IApplicationLifeTime
 {
     bool IsExiting { get; }
 
-    Task ShowdownAsync();
+    Task ShutdownAsync();
 }

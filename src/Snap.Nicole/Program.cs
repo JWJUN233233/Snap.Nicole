@@ -1,4 +1,5 @@
 global using Microsoft.Extensions.DependencyInjection;
+global using System;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
@@ -9,9 +10,9 @@ using Snap.Nicole.Core.Threading;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Navigation;
 using Snap.Nicole.UI.Xaml.Windows;
+using Snap.Nicole.Services.AI;
 using Snap.Nicole.ViewModels;
 using Snap.Nicole.ViewModels.NotifyIcon;
-using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using WinRT;
@@ -40,14 +41,15 @@ internal static class Program
                         .AddXamlWindow<MainWindow>()
                         .AddXamlWindow<NotifyIconXamlHostWindow>();
                 })
-                .AddHostedService<AppSettingsChangeTracker>()
                 .AddSingleton<IMessenger, WeakReferenceMessenger>()
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
+                .AddSingleton<IAgentService, AgentService>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()
                 .AddTransient<HomeViewModel>()
-                .AddTransient<SettingsViewModel>();
+                .AddTransient<SettingsViewModel>()
+                .AddTransient<ChatViewModel>();
         });
 
         App.Host = hostBuilder.Build();

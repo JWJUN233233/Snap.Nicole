@@ -1,0 +1,102 @@
+using Microsoft.UI.Text;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Media;
+using Snap.Nicole.UI.Xaml.Helpers;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
+
+internal sealed partial class MarkdownTableView : UserControl
+{
+    public MarkdownTableView()
+    {
+        InitializeComponent();
+    }
+
+    public IReadOnlyList<IReadOnlyList<string>>? Rows
+    {
+        get => (IReadOnlyList<IReadOnlyList<string>>?)GetValue(RowsProperty);
+        set => SetValue(RowsProperty, value);
+    }
+
+    public static readonly DependencyProperty RowsProperty = DependencyProperty.Register(
+        nameof(Rows),
+        typeof(IReadOnlyList<IReadOnlyList<string>>),
+        typeof(MarkdownTableView),
+        new PropertyMetadata(null, OnRowsChanged));
+
+    private static void OnRowsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is MarkdownTableView view)
+        {
+            view.RebuildRows();
+        }
+    }
+
+    private void RebuildRows()
+    {
+        TableGrid.RowDefinitions.Clear();
+        TableGrid.ColumnDefinitions.Clear();
+        TableGrid.Children.Clear();
+
+        if (Rows is null || Rows.Count == 0)
+        {
+            return;
+        }
+
+        int columnCount = Rows.Max(row => row.Count);
+        for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
+        {
+            TableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        }
+
+        for (int rowIndex = 0; rowIndex < Rows.Count; rowIndex++)
+        {
+            TableGrid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            IReadOnlyList<string> row = Rows[rowIndex];
+
+            for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
+            {
+                AddCell(row, rowIndex, columnIndex, columnCount);
+            }
+        }
+    }
+
+    private void AddCell(IReadOnlyList<string> row, int rowIndex, int columnIndex, int columnCount)
+    {
+        RichTextBlock cellText = new()
+        {
+            FontSize = 13,
+            IsTextSelectionEnabled = true,
+            TextWrapping = TextWrapping.Wrap,
+        };
+
+        Paragraph paragraph = new() { Margin = new Thickness(0) };
+        MarkdownHelper.AddInlineMarkdown(paragraph.Inlines, columnIndex < row.Count ? row[columnIndex] : "");
+        if (rowIndex == 0)
+        {
+            paragraph.FontWeight = FontWeights.SemiBold;
+        }
+
+        cellText.Blocks.Add(paragraph);
+
+        Border cellBorder = new()
+        {
+            Child = cellText,
+            Padding = new Thickness(8, 4, 8, 4),
+            BorderBrush = MarkdownHelper.GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
+            BorderThickness = new Thickness(
+                0,
+                0,
+                columnIndex < columnCount - 1 ? 1 : 0,
+                rowIndex == 0 ? 1 : 0),
+        };
+
+        Grid.SetRow(cellBorder, rowIndex);
+        Grid.SetColumn(cellBorder, columnIndex);
+        TableGrid.Children.Add(cellBorder);
+    }
+}

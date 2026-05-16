@@ -141,4 +141,76 @@
   <data name="UIXamlPagesSettingsPageLabelLanguage" xml:space="preserve">
     <value>语言</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelAppearance" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
+    <value>AI 对话</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelSend" xml:space="preserve">
+    <value>发送</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelPlaceholder" xml:space="preserve">
+    <value>输入消息...</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
+    <value>清空</value>
+  </data>
+  <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
+    <value>模型配置</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
+    <value>模型配置</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
+    <value>配置名称</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileProviderType" xml:space="preserve">
+    <value>提供商类型</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileEndpoint" xml:space="preserve">
+    <value>端点 URL</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileApiKey" xml:space="preserve">
+    <value>API Key</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionProfileApiKey" xml:space="preserve">
+    <value>你仅能在首次输入或清空并重新输入时查看 API Key 的原文</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
+    <value>模型 ID</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelAddProfile" xml:space="preserve">
+    <value>添加</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelUpdateProfile" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDeleteProfile" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
+    <value>请先在设置中配置 API Key。</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
+    <value>已思考</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
+    <value>思考中</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelUsage" xml:space="preserve">
+    <value>用量</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelUser" xml:space="preserve">
+    <value>你</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewLabelAssistant" xml:space="preserve">
+    <value>AI</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionCallSegmentViewLabelTitle" xml:space="preserve">
+    <value>工具调用</value>
+  </data>
+  <data name="UIXamlControlsChatFunctionResultSegmentViewLabelTitle" xml:space="preserve">
+    <value>工具结果</value>
+  </data>
 </root>

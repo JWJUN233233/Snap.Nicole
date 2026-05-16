@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Snap.Nicole.Resources;
+using Snap.Nicole.UI.Xaml.Controls;
 using Snap.Nicole.UI.Xaml.Navigation;
 using Snap.Nicole.UI.Xaml.Pages;
 using Snap.Nicole.ViewModels;

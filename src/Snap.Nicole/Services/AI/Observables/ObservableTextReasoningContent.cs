@@ -1,0 +1,12 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace Snap.Nicole.Services.AI.Observables;
+
+internal sealed partial class ObservableTextReasoningContent : ObservableAIContent
+{
+    [ObservableProperty]
+    public partial string Text { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsCompleted { get; set; }
+}
