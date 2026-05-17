@@ -16,9 +16,4 @@ internal struct RECT
         this.right = right;
         this.bottom = bottom;
     }
-
-    public static implicit operator RectInt32(RECT rect)
-    {
-        return new RectInt32(rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top);
-    }
 }

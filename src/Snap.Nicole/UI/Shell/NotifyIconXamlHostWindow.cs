@@ -6,6 +6,7 @@ using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.UI.Xaml;
 using System;
+using Windows.Graphics;
 
 namespace Snap.Nicole.UI.Shell;
 
@@ -59,7 +60,7 @@ internal sealed class NotifyIconXamlHostWindow : Window, IXamlWindowEraseBackgro
         }
 
         this.SwitchTo();
-        AppWindow.MoveAndResize(icon);
+        AppWindow.MoveAndResize(new(icon.left, icon.top, icon.right - icon.left, icon.bottom - icon.top));
 
         flyout.ShowAt(Content, new()
         {

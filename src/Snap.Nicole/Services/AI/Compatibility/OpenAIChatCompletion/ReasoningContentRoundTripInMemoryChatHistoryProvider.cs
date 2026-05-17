@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 
+// Specially designed ChatHistoryProvider to make sure that 'reasoning_content' can be round-tripped correctly in the chat history
 internal sealed class ReasoningContentRoundTripInMemoryChatHistoryProvider : ChatHistoryProvider
 {
     public ReasoningContentRoundTripInMemoryChatHistoryProvider()

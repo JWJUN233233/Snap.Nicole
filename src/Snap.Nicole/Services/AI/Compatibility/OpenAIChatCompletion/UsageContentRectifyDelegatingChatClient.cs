@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 
+// Specially designed DelegatingChatClient to rectify multiple 'usage_content' in one chat response.
 internal sealed class UsageContentRectifyDelegatingChatClient(IChatClient innerClient) : DelegatingChatClient(innerClient)
 {
     public override async Task<ChatResponse> GetResponseAsync(IEnumerable<ChatMessage> messages, ChatOptions? options = null, CancellationToken cancellationToken = default)

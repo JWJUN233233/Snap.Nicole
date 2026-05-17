@@ -23,6 +23,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
         if (Window == null)
         {
             TWindow window = serviceProvider.GetRequiredService<TWindow>();
+            window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window)))));
             Window = window;
 
             subclass = new(window);
@@ -44,8 +45,6 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
                 UpdateTitleButtonColor(default!, default!);
                 xamlWindow.TitleBar.ActualThemeChanged += UpdateTitleButtonColor;
             }
-
-            window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window)))));
 
             window.Closed += OnWindowClose;
         }

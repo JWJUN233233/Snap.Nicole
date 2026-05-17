@@ -16,6 +16,8 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 {
     private readonly ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
+    // TODO: perserve AIAgent instance across multiple calls to RunStreamingAsync for the same conversation
+    // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
     public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
         ObservableChatMessage inputMessage = CreateObservableChatMessage(message);
@@ -28,6 +30,8 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 Role = ChatRole.Assistant,
                 CreatedAt = DateTimeOffset.Now,
             };
+
+            // Unfortunately, Text is not a dependency property, so we cannot localize this string here. 
             configurationMessage.Contents.Add(new ObservableTextContent { Text = SR.UIXamlPagesChatPageMessageConfigureApiKey });
 
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
@@ -184,8 +188,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
 
         ObservableAIContent last = contents[^1];
-        if (last is ObservableTextReasoningContent lastReasoningContent &&
-            content is not ObservableTextReasoningContent)
+        if (last is ObservableTextReasoningContent lastReasoningContent && content is not ObservableTextReasoningContent)
         {
             lastReasoningContent.IsCompleted = true;
         }

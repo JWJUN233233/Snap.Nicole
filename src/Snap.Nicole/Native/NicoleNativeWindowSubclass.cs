@@ -27,10 +27,8 @@ internal sealed unsafe partial class NicoleNativeWindowSubclass(ObjectReference<
     [Guid(NicoleNative.IID_INicoleNativeWindowSubclass)]
     internal readonly struct Vftbl
     {
-#pragma warning disable CS0649
         internal readonly IUnknownVftbl IUnknownVftbl;
         internal readonly delegate* unmanaged[Stdcall]<nint, HRESULT> Attach;
         internal readonly delegate* unmanaged[Stdcall]<nint, HRESULT> Detach;
-#pragma warning restore CS0649
     }
 }

@@ -8,12 +8,12 @@ internal static class XamlUtilities
 {
     public static unsafe void PatchFontAndScriptServicesGetDefaultFontNameString(ReadOnlySpan<char> resource)
     {
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        static extern HRESULT NativeMethod(PCWSTR resource);
+
         fixed (char* pResource = resource)
         {
-            Marshal.ThrowExceptionForHR(PatchFontAndScriptServicesGetDefaultFontNameString(pResource));
+            Marshal.ThrowExceptionForHR(NativeMethod(pResource));
         }
     }
-
-    [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
-    private static extern HRESULT PatchFontAndScriptServicesGetDefaultFontNameString(PCWSTR resource);
 }

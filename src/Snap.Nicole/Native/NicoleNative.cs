@@ -19,8 +19,11 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
 
     private static NicoleNative NicoleCreateInstance()
     {
+        [DllImport(DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        static extern HRESULT NativeMethod(Vftbl** ppv);
+
         nint pv = default;
-        Marshal.ThrowExceptionForHR(NicoleCreateInstance((Vftbl**)&pv));
+        Marshal.ThrowExceptionForHR(NativeMethod((Vftbl**)&pv));
         return new NicoleNative(ObjectReference<Vftbl>.Attach(ref pv, typeof(Vftbl).GUID));
     }
 
@@ -44,16 +47,11 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
         return new(ObjectReference<NicoleNativeWindowSubclass.Vftbl>.Attach(ref pv, typeof(NicoleNativeWindowSubclass.Vftbl).GUID));
     }
 
-    [DllImport(DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
-    private static extern HRESULT NicoleCreateInstance(Vftbl** ppv);
-
     [Guid(IID_INicoleNative)]
     internal readonly struct Vftbl
     {
-#pragma warning disable CS0649
         internal readonly IUnknownVftbl IUnknownVftbl;
         internal readonly delegate* unmanaged[Stdcall]<nint, PCWSTR, Guid*, NicoleNativeNotifyIcon.Vftbl**, HRESULT> MakeNotifyIcon;
         internal readonly delegate* unmanaged[Stdcall]<nint, HWND, NicoleNativeWindowSubclass.Callback, GCHandle<WindowSubclassLifeTime>, NicoleNativeWindowSubclass.Vftbl**, HRESULT> MakeWindowSubclass;
-#pragma warning restore CS0649
     }
 }

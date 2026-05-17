@@ -58,12 +58,10 @@ internal sealed unsafe partial class NicoleNativeNotifyIcon(ObjectReference<Nico
     [Guid(NicoleNative.IID_INicoleNativeNotifyIcon)]
     internal readonly struct Vftbl
     {
-#pragma warning disable CS0649
         internal readonly IUnknownVftbl IUnknownVftbl;
         internal readonly delegate* unmanaged[Stdcall]<nint, Callback, GCHandle<INotifyIcon>, PCWSTR, HRESULT> Create;
         internal readonly delegate* unmanaged[Stdcall]<nint, PCWSTR, HRESULT> Recreate;
         internal readonly delegate* unmanaged[Stdcall]<nint, HRESULT> Destroy;
         internal readonly delegate* unmanaged[Stdcall]<nint, BOOL*, HRESULT> IsPromoted;
-#pragma warning restore CS0649
     }
 }

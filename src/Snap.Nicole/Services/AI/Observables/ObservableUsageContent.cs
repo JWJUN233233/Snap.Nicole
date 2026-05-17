@@ -5,6 +5,7 @@ using System.Globalization;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
+// TODO: separate text into multiple properties for better UI binding and formatting control
 internal sealed partial class ObservableUsageContent : ObservableAIContent
 {
     [ObservableProperty]
