@@ -1,4 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.Windows.Globalization;
 using System.Collections.Generic;
 using System.Globalization;
@@ -35,5 +37,15 @@ internal sealed class StringResourceProxy : ObservableObject
     public string this[string name]
     {
         get => SR.GetString(string.Intern(name), CurrentCulture) ?? string.Empty;
+    }
+
+    public BindingBase CreateBinding(string name)
+    {
+        return new Binding
+        {
+            Source = this,
+            Path = new PropertyPath($"[{string.Intern(name)}]"),
+            Mode = BindingMode.OneWay,
+        };
     }
 }

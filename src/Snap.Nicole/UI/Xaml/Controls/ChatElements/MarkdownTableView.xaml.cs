@@ -75,7 +75,7 @@ internal sealed partial class MarkdownTableView : UserControl
         };
 
         Paragraph paragraph = new() { Margin = new Thickness(0) };
-        MarkdownHelper.AddInlineMarkdown(paragraph.Inlines, columnIndex < row.Count ? row[columnIndex] : "");
+        MarkdownHelper.AddInlineMarkdown(paragraph.Inlines, columnIndex < row.Count ? row[columnIndex] : string.Empty);
         if (rowIndex == 0)
         {
             paragraph.FontWeight = FontWeights.SemiBold;

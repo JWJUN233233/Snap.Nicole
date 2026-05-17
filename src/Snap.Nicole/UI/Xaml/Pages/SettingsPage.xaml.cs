@@ -1,5 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
-using Snap.Nicole.ViewModels;
+using Snap.Nicole.ViewModels.Settings;
 
 namespace Snap.Nicole.UI.Xaml.Pages;
 
@@ -10,6 +10,4 @@ internal sealed partial class SettingsPage : Page
         InitializeComponent();
         DataContext = App.Host.Services.GetRequiredService<SettingsViewModel>();
     }
-
-    private SettingsViewModel ViewModel => (SettingsViewModel)DataContext;
 }

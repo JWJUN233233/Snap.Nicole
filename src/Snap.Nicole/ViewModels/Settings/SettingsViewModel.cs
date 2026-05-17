@@ -8,11 +8,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 
-namespace Snap.Nicole.ViewModels;
+namespace Snap.Nicole.ViewModels.Settings;
 
 internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider) : ObservableObject
 {
     public AppSettings Settings { get; } = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
+
+    public SettingsGitSyncViewModel GitSync { get; } = serviceProvider.GetRequiredService<SettingsGitSyncViewModel>();
 
     // TODO: Potentially cache this list
     public IReadOnlyList<SettingsItem<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsItem<string>(CultureInfo.GetCultureInfo(name).NativeName, name))];

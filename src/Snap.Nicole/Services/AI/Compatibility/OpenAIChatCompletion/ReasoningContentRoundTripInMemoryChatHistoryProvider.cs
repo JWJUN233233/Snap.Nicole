@@ -23,7 +23,7 @@ internal sealed class ReasoningContentRoundTripInMemoryChatHistoryProvider : Cha
     private readonly ProviderSessionState<State> sessionState;
     private IReadOnlyList<string>? stateKeys;
 
-    public override IReadOnlyList<string> StateKeys => stateKeys ??= [sessionState.StateKey];
+    public override IReadOnlyList<string> StateKeys { get => stateKeys ??= [sessionState.StateKey]; }
 
     protected override async ValueTask<IEnumerable<ChatMessage>> ProvideChatHistoryAsync(InvokingContext context, CancellationToken cancellationToken = default)
     {

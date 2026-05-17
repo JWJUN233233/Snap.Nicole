@@ -9,7 +9,7 @@ using Snap.Nicole.ViewModels;
 
 namespace Snap.Nicole.UI.Xaml.Windows;
 
-internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentIntoTitleBar
+internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentIntoTitleBar, IXamlWindowCloseHandler
 {
     private readonly INavigationService navigationService;
 
@@ -30,13 +30,7 @@ internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentInto
     {
         NavigationViewItem settingsItem = (NavigationViewItem)NavView.SettingsItem!;
         NavigationExtensions.SetNavigateTo(settingsItem, typeof(SettingsPage));
-        settingsItem.SetBinding(ContentControl.ContentProperty, new Binding
-        {
-            Source = StringResourceProxy.Default,
-            Path = new PropertyPath($"[{nameof(SRName.UIXamlWindowsMainWindowNavigationViewItemSettingsContent)}]"),
-            Mode = BindingMode.OneWay,
-        });
-
+        settingsItem.SetBinding(ContentControl.ContentProperty, StringResourceProxy.Default.CreateBinding(nameof(SRName.UIXamlWindowsMainWindowNavigationViewItemSettingsContent)));
         navigationService.NavigateTo(typeof(HomePage));
     }
 
@@ -46,5 +40,17 @@ internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentInto
         {
             navigationService.NavigateTo(item);
         }
+    }
+
+    void IXamlWindowCloseHandler.OnWindowClosing(out bool cancel)
+    {
+        cancel = false;
+    }
+
+    void IXamlWindowCloseHandler.OnWindowClosed()
+    {
+        ContentFrame.Content = null;
+        navigationService.Frame = null;
+        navigationService.NavigationView = null;
     }
 }

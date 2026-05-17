@@ -13,10 +13,12 @@ using Snap.Nicole.UI.Xaml.Windows;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.ViewModels;
 using Snap.Nicole.ViewModels.NotifyIcon;
+using Snap.Nicole.ViewModels.Settings;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using WinRT;
 using CommunityToolkit.Mvvm.Messaging;
+using Snap.Nicole.Services.Git;
 
 [assembly: DisableRuntimeMarshalling]
 
@@ -47,9 +49,11 @@ internal static class Program
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
                 .AddSingleton<IAgentService, AgentService>()
+                .AddSingleton<ISettingsGitSyncService, SettingsGitSyncService>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()
                 .AddTransient<HomeViewModel>()
+                .AddTransient<SettingsGitSyncViewModel>()
                 .AddTransient<SettingsViewModel>()
                 .AddTransient<ChatViewModel>();
         });

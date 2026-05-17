@@ -1,4 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Snap.Nicole.SourceGeneration.Extension;
 using Snap.Nicole.SourceGeneration.Primitive;

@@ -13,13 +13,14 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels;
 
-internal sealed partial class ChatViewModel : ObservableObject
+internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 {
     private readonly IAgentService chatService;
     private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
 
     private CancellationTokenSource? generationCts;
     private AgentSession? session;
+    private bool disposed;
 
     public ChatViewModel(IServiceProvider serviceProvider)
     {
@@ -36,17 +37,22 @@ internal sealed partial class ChatViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
-    public partial string InputText { get; set; } = "";
+    public partial string InputText { get; set; } = string.Empty;
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
     public partial bool IsBusy { get; set; }
 
-    private bool CanSendMessage => !IsBusy && !string.IsNullOrWhiteSpace(InputText) && Settings.ModelProviderProfiles.CurrentItem is not null;
+    private bool CanSendMessage { get => !disposed && !IsBusy && !string.IsNullOrWhiteSpace(InputText) && Settings.ModelProviderProfiles.CurrentItem is not null; }
 
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         string input = InputText.Trim();
         if (string.IsNullOrEmpty(input))
         {
@@ -79,21 +85,26 @@ internal sealed partial class ChatViewModel : ObservableObject
             AuthorName = "You",
         };
 
-        InputText = "";
+        InputText = string.Empty;
         IsBusy = true;
-        generationCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        generationCts = linkedCts;
 
         try
         {
-            await chatService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, generationCts.Token);
+            await chatService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
         }
         catch (OperationCanceledException)
         {
         }
         finally
         {
-            generationCts?.Dispose();
-            generationCts = null;
+            if (ReferenceEquals(generationCts, linkedCts))
+            {
+                generationCts = null;
+            }
+
+            linkedCts.Dispose();
             IsBusy = false;
         }
     }
@@ -101,18 +112,49 @@ internal sealed partial class ChatViewModel : ObservableObject
     [RelayCommand]
     private void StopGeneration()
     {
+        if (disposed)
+        {
+            return;
+        }
+
         generationCts?.Cancel();
     }
 
     [RelayCommand]
     private void ClearChat()
     {
+        if (disposed)
+        {
+            return;
+        }
+
         Messages.Clear();
         session = null;
     }
 
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+
+        Settings.PropertyChanged -= OnSettingsPropertyChanged;
+        UnsubscribeModelProviderProfiles();
+
+        generationCts?.Cancel();
+        SendMessageCommand.NotifyCanExecuteChanged();
+    }
+
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         if (e.PropertyName is nameof(AppSettings.ModelProviderProfiles))
         {
             SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
@@ -121,8 +163,12 @@ internal sealed partial class ChatViewModel : ObservableObject
 
     private void OnModelProviderProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName is nameof(ObservableSettingsCollection<ModelProviderProfile, Guid>.CurrentItem)
-            or nameof(ObservableSettingsCollection<ModelProviderProfile, Guid>.CurrentItemId))
+        if (disposed)
+        {
+            return;
+        }
+
+        if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
             session = null;
             SendMessageCommand.NotifyCanExecuteChanged();
@@ -131,18 +177,25 @@ internal sealed partial class ChatViewModel : ObservableObject
 
     private void SubscribeModelProviderProfiles(ObservableSettingsCollection<ModelProviderProfile, Guid> providerProfiles)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         if (ReferenceEquals(modelProviderProfiles, providerProfiles))
         {
             return;
         }
 
-        if (modelProviderProfiles is not null)
-        {
-            ((INotifyPropertyChanged)modelProviderProfiles).PropertyChanged -= OnModelProviderProfilesPropertyChanged;
-        }
-
+        UnsubscribeModelProviderProfiles();
         modelProviderProfiles = providerProfiles;
-        ((INotifyPropertyChanged)modelProviderProfiles).PropertyChanged += OnModelProviderProfilesPropertyChanged;
+        (modelProviderProfiles as INotifyPropertyChanged).PropertyChanged += OnModelProviderProfilesPropertyChanged;
+    }
+
+    private void UnsubscribeModelProviderProfiles()
+    {
+        (modelProviderProfiles as INotifyPropertyChanged)?.PropertyChanged -= OnModelProviderProfilesPropertyChanged;
+        modelProviderProfiles = null;
     }
 
     [UnsafeAccessor(UnsafeAccessorKind.Constructor)]

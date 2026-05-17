@@ -12,11 +12,15 @@ namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
 internal sealed partial class ChatMessageView : UserControl
 {
+    private ObservableChatMessage? subscribedMessage;
     private ObservableAIContentCollection? subscribedContents;
+    private bool isLoaded;
 
     public ChatMessageView()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         UpdateView();
     }
 
@@ -39,28 +43,65 @@ internal sealed partial class ChatMessageView : UserControl
             return;
         }
 
-        if (e.OldValue is ObservableChatMessage oldMessage)
-        {
-            view.UnsubscribeMessage(oldMessage);
-        }
-
-        if (e.NewValue is ObservableChatMessage newMessage)
-        {
-            view.SubscribeMessage(newMessage);
-        }
-
+        view.UpdateMessageSubscription();
         view.UpdateView();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        isLoaded = true;
+        UpdateMessageSubscription();
+        UpdateView();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        isLoaded = false;
+        UnsubscribeMessage();
+    }
+
+    private void UpdateMessageSubscription()
+    {
+        if (!isLoaded)
+        {
+            UnsubscribeMessage();
+            return;
+        }
+
+        if (ReferenceEquals(subscribedMessage, Message))
+        {
+            return;
+        }
+
+        UnsubscribeMessage();
+
+        if (Message is ObservableChatMessage message)
+        {
+            SubscribeMessage(message);
+        }
     }
 
     private void SubscribeMessage(ObservableChatMessage message)
     {
+        if (ReferenceEquals(subscribedMessage, message))
+        {
+            return;
+        }
+
+        subscribedMessage = message;
         message.PropertyChanged += OnMessagePropertyChanged;
         SubscribeContents(message.Contents);
     }
 
-    private void UnsubscribeMessage(ObservableChatMessage message)
+    private void UnsubscribeMessage()
     {
-        message.PropertyChanged -= OnMessagePropertyChanged;
+        if (subscribedMessage is null)
+        {
+            return;
+        }
+
+        subscribedMessage.PropertyChanged -= OnMessagePropertyChanged;
+        subscribedMessage = null;
         UnsubscribeContents();
     }
 
@@ -94,10 +135,10 @@ internal sealed partial class ChatMessageView : UserControl
 
     private void OnMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.PropertyName == nameof(ObservableChatMessage.Contents) && Message is not null)
+        if (e.PropertyName == nameof(ObservableChatMessage.Contents) && subscribedMessage is not null)
         {
             UnsubscribeContents();
-            SubscribeContents(Message.Contents);
+            SubscribeContents(subscribedMessage.Contents);
         }
 
         UpdateView();

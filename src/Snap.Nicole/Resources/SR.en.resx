@@ -85,6 +85,153 @@
   <data name="UIXamlPagesSettingsPageLabelAppearance" xml:space="preserve">
     <value>Appearance</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelSettingsSync" xml:space="preserve">
+    <value>Settings Sync</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionSettingsSync" xml:space="preserve">
+    <value>Use the local Git command line client to sync every settings file and subfolder under the app Settings folder.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionCreateEmptyRepository" xml:space="preserve">
+    <value>Create a new empty repository on GitHub, GitLab, Gitee, or another Git service. Do not add a README, .gitignore, or License. Copy the HTTPS or SSH URL here to enable sync.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelRepositoryUrl" xml:space="preserve">
+    <value>Repository URL</value>
+  </data>
+  <data name="UIXamlPagesSettingsPagePlaceholderRepositoryUrl" xml:space="preserve">
+    <value>https://github.com/you/snap-nicole-settings.git or git@github.com:you/snap-nicole-settings.git</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelEnableSync" xml:space="preserve">
+    <value>Enable Sync</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelPull" xml:space="preserve">
+    <value>Pull</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelPush" xml:space="preserve">
+    <value>Push</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelRefreshGitState" xml:space="preserve">
+    <value>Refresh Git Status</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelOpenSettingsFolder" xml:space="preserve">
+    <value>Open Folder</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelRepositoryPath" xml:space="preserve">
+    <value>Local Folder</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelRemoteRepository" xml:space="preserve">
+    <value>Remote Repository</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelUnavailable" xml:space="preserve">
+    <value>Unavailable</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusCheckingTitle" xml:space="preserve">
+    <value>Checking Git</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusCheckingMessage" xml:space="preserve">
+    <value>Checking the git command and the Settings folder repository state.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusUnavailableTitle" xml:space="preserve">
+    <value>Git Unavailable</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusNotRepositoryTitle" xml:space="preserve">
+    <value>Sync Not Enabled</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusNotRepositoryMessage" xml:space="preserve">
+    <value>Enter an empty repository URL and the app will initialize the Settings folder as an independent Git repository.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusRepositoryReadyTitle" xml:space="preserve">
+    <value>Sync Ready</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusRepositoryReadyMessage" xml:space="preserve">
+    <value>The Settings folder is connected to a remote repository.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusRemoteMissingTitle" xml:space="preserve">
+    <value>Remote Repository Missing</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusRemoteMissingMessage" xml:space="preserve">
+    <value>The Settings folder is already a Git repository. Provide a repository URL to continue syncing.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusInvalidRepositoryTitle" xml:space="preserve">
+    <value>Repository State Error</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusOperationTitle" xml:space="preserve">
+    <value>Syncing</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusInitializeMessage" xml:space="preserve">
+    <value>Initializing the Settings folder repository...</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusPullMessage" xml:space="preserve">
+    <value>Pulling settings from the remote repository...</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusPushMessage" xml:space="preserve">
+    <value>Committing and pushing settings...</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusInitializeSuccessTitle" xml:space="preserve">
+    <value>Sync Enabled</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage" xml:space="preserve">
+    <value>The Settings folder has been configured as a Git repository.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusPullSuccessTitle" xml:space="preserve">
+    <value>Pull Succeeded</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusPullSuccessMessage" xml:space="preserve">
+    <value>Remote settings have been synced locally.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusPushSuccessTitle" xml:space="preserve">
+    <value>Push Succeeded</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusPushSuccessMessage" xml:space="preserve">
+    <value>Local settings have been pushed to the remote repository.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusRemoteEmptyMessage" xml:space="preserve">
+    <value>The remote repository is empty; there is nothing to pull yet.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusNoLocalCommitsMessage" xml:space="preserve">
+    <value>There are no settings files to push yet.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitStatusOperationFailedTitle" xml:space="preserve">
+    <value>Sync Failed</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageOpenSettingsFolderSuccessTitle" xml:space="preserve">
+    <value>Folder Opened</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageOpenSettingsFolderSuccessMessage" xml:space="preserve">
+    <value>The local Settings folder was opened.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageOpenSettingsFolderFailedTitle" xml:space="preserve">
+    <value>Open Folder Failed</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageOpenSettingsFolderFailedMessage" xml:space="preserve">
+    <value>The local Settings folder could not be opened.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorCanceled" xml:space="preserve">
+    <value>The operation was canceled.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorGitUnavailable" xml:space="preserve">
+    <value>No usable git command was found. Install Git for Windows and make sure git is available in PATH.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorNetwork" xml:space="preserve">
+    <value>The network connection failed, so the remote repository could not be reached.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorPermission" xml:space="preserve">
+    <value>Permission or authentication failed. Check repository access, credentials, or your SSH key.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorRemote" xml:space="preserve">
+    <value>The remote repository configuration is invalid. Confirm the URL exists and points to an empty or accessible repository.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorRepository" xml:space="preserve">
+    <value>The local repository state is invalid. Check the Git repository under the Settings folder.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorConflict" xml:space="preserve">
+    <value>The repository has conflicts or a non-fast-forward push. Resolve it manually, then sync again.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorCommand" xml:space="preserve">
+    <value>The Git command failed.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
+    <value>An unfinished merge, rebase, or lock file was detected. Complete or clean up that Git operation first.</value>
+  </data>
   <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
     <value>Chat</value>
   </data>

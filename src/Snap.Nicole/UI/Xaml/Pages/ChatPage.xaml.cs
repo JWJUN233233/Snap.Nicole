@@ -1,3 +1,4 @@
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
@@ -11,6 +12,8 @@ namespace Snap.Nicole.UI.Xaml.Pages;
 
 internal sealed partial class ChatPage : Page
 {
+    private bool disposed;
+
     public ChatPage()
     {
         InitializeComponent();
@@ -20,6 +23,7 @@ internal sealed partial class ChatPage : Page
         ViewModel.Messages.CollectionChanged += OnMessagesCollectionChanged;
         SubscribeMessages(ViewModel.Messages);
         InputBox.PreviewKeyDown += OnInputBoxPreviewKeyDown;
+        Unloaded += OnUnloaded;
     }
 
     internal ChatViewModel ViewModel { get; }
@@ -30,8 +34,24 @@ internal sealed partial class ChatPage : Page
         ScrollToBottom();
     }
 
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        Cleanup();
+        base.OnNavigatedFrom(e);
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        Cleanup();
+    }
+
     private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         if (e.OldItems is not null)
         {
             foreach (ObservableChatMessage message in e.OldItems)
@@ -53,6 +73,11 @@ internal sealed partial class ChatPage : Page
 
     private void OnMessageContentsCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         if (e.OldItems is not null)
         {
             foreach (ObservableAIContent content in e.OldItems)
@@ -74,18 +99,38 @@ internal sealed partial class ChatPage : Page
 
     private void OnMessagePropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         ScrollToBottom();
     }
 
     private void OnContentPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         ScrollToBottom();
     }
 
     private void ScrollToBottom()
     {
+        if (disposed)
+        {
+            return;
+        }
+
         DispatcherQueue.TryEnqueue(() =>
         {
+            if (disposed)
+            {
+                return;
+            }
+
             ChatScrollViewer.ChangeView(null, ChatScrollViewer.ScrollableHeight, null);
         });
     }
@@ -130,6 +175,11 @@ internal sealed partial class ChatPage : Page
 
     private void OnInputBoxPreviewKeyDown(object sender, KeyRoutedEventArgs e)
     {
+        if (disposed)
+        {
+            return;
+        }
+
         if (e.Key != VirtualKey.Enter)
         {
             return;
@@ -161,5 +211,27 @@ internal sealed partial class ChatPage : Page
     private static bool IsKeyDown(VirtualKey key)
     {
         return (global::Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(key) & global::Windows.UI.Core.CoreVirtualKeyStates.Down) == global::Windows.UI.Core.CoreVirtualKeyStates.Down;
+    }
+
+    private void Cleanup()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+
+        Unloaded -= OnUnloaded;
+        InputBox.PreviewKeyDown -= OnInputBoxPreviewKeyDown;
+        ViewModel.Messages.CollectionChanged -= OnMessagesCollectionChanged;
+
+        foreach (ObservableChatMessage message in ViewModel.Messages)
+        {
+            UnsubscribeMessage(message);
+        }
+
+        DataContext = null;
+        ViewModel.Dispose();
     }
 }

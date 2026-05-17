@@ -1,4 +1,4 @@
-namespace Snap.Nicole.ViewModels;
+namespace Snap.Nicole.ViewModels.Settings;
 
 internal sealed record SettingsItem<T>
 {

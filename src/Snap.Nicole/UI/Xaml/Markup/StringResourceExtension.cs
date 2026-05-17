@@ -5,18 +5,18 @@ using Snap.Nicole.Resources;
 
 namespace Snap.Nicole.UI.Xaml.Markup;
 
-[MarkupExtensionReturnType(ReturnType = typeof(string))]
+[MarkupExtensionReturnType(ReturnType = typeof(Binding))]
 internal sealed class StringResourceExtension : MarkupExtension
 {
     public SRName Name { get; set; }
 
     protected override object ProvideValue()
     {
-        return new Binding
-        {
-            Source = StringResourceProxy.Default,
-            Path = new PropertyPath($"[{Name}]"),
-            Mode = BindingMode.OneWay,
-        };
+        return StringResourceProxy.Default.CreateBinding($"{Name}");
+    }
+
+    protected override object ProvideValue(IXamlServiceProvider serviceProvider)
+    {
+        return ProvideValue();
     }
 }

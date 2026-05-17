@@ -5,14 +5,154 @@
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mxi="using:Microsoft.Xaml.Interactivity"
+    xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
     xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
-    xmlns:snv="using:Snap.Nicole.ViewModels"
-    d:DataContext="{d:DesignInstance snv:SettingsViewModel}"
+    xmlns:snvs="using:Snap.Nicole.ViewModels.Settings"
+    d:DataContext="{d:DesignInstance snvs:SettingsViewModel}"
     mc:Ignorable="d">
 
     <ScrollViewer Padding="24">
+        <mxi:Interaction.Behaviors>
+            <snuxb:InvokeCommandOnLoadedBehavior Command="{Binding GitSync.RefreshRepositoryStateCommand}" />
+        </mxi:Interaction.Behaviors>
+
         <StackPanel Spacing="24">
+            <Border
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                CornerRadius="{ThemeResource ControlCornerRadius}">
+                <StackPanel Padding="16" Spacing="16">
+                    <Grid ColumnSpacing="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock
+                                Margin="1,0,0,0"
+                                Style="{ThemeResource BaseTextBlockStyle}"
+                                Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSettingsSync}" />
+                            <TextBlock
+                                Margin="1,0,0,0"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Style="{ThemeResource BodyTextBlockStyle}"
+                                Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionSettingsSync}"
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="8">
+
+                            <Button
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                Command="{Binding GitSync.RefreshRepositoryStateCommand}"
+                                ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRefreshGitState}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="16" Glyph="&#xE72C;" />
+                                    <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRefreshGitState}" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+
+                    <StackPanel Spacing="3">
+                        <InfoBar
+                            Title="{Binding GitSync.StatusTitle}"
+                            IsClosable="False"
+                            IsOpen="{Binding GitSync.IsStatusOpen, Mode=TwoWay}"
+                            Message="{Binding GitSync.StatusMessage}"
+                            Severity="{Binding GitSync.InfoBarSeverity}" />
+                        <cwc:SettingsCard
+                            Grid.Row="0"
+                            Description="{Binding GitSync.RepositoryPath}"
+                            Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRepositoryPath}">
+                            <Button BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Command="{Binding GitSync.OpenSettingsFolderCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <FontIcon FontSize="16" Glyph="&#xE8DA;" />
+                                    <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelOpenSettingsFolder}" />
+                                </StackPanel>
+                            </Button>
+                        </cwc:SettingsCard>
+                        <cwc:SettingsCard
+                            Grid.Row="1"
+                            Description="{Binding GitSync.RemoteUrl}"
+                            Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRemoteRepository}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="12" Visibility="{Binding GitSync.SetupVisibility}">
+                        <TextBox
+                            IsEnabled="{Binding GitSync.IsRepositoryUrlEnabled}"
+                            PlaceholderText="{snuxm:StringResource Name=UIXamlPagesSettingsPagePlaceholderRepositoryUrl}"
+                            Text="{Binding GitSync.RepositoryUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.Header>
+                                <TextBlock Margin="1,0,0,0" Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRepositoryUrl}" />
+                            </TextBox.Header>
+                            <TextBox.Description>
+                                <TextBlock
+                                    Margin="1,4,0,0"
+                                    FontSize="{ThemeResource CaptionTextBlockFontSize}"
+                                    Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionCreateEmptyRepository}" />
+                            </TextBox.Description>
+                        </TextBox>
+                        <Button HorizontalAlignment="Left" Command="{Binding GitSync.InitializeRepositoryCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="16" Glyph="&#xE8B5;" />
+                                <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelEnableSync}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <Grid ColumnSpacing="8" Visibility="{Binding GitSync.OperationsVisibility}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+
+                        <Button
+                            Grid.Column="0"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            Command="{Binding GitSync.PullRepositoryCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="16" Glyph="&#xE896;" />
+                                <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelPull}" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button
+                            Grid.Column="1"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            Command="{Binding GitSync.PushRepositoryCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <FontIcon FontSize="16" Glyph="&#xE898;" />
+                                <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelPush}" />
+                            </StackPanel>
+                        </Button>
+
+                        <StackPanel
+                            Grid.Column="2"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            Visibility="{Binding GitSync.ProgressVisibility}">
+                            <ProgressRing
+                                Width="20"
+                                Height="20"
+                                IsActive="{Binding GitSync.IsBusy}" />
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="{Binding GitSync.CurrentOperationText}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <Border
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -25,6 +165,7 @@
                     <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelLanguage}">
                         <ComboBox
                             MinWidth="160"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             DisplayMemberPath="Label"
                             ItemsSource="{Binding Languages}"
                             SelectedValue="{Binding Settings.Language, Mode=TwoWay}"
@@ -62,7 +203,7 @@
                                 <Grid
                                     Grid.Row="0"
                                     Padding="16"
-                                    ColumnSpacing="16">
+                                    ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition />
                                         <ColumnDefinition />
@@ -70,13 +211,23 @@
                                     <Button
                                         Grid.Column="0"
                                         HorizontalAlignment="Stretch"
-                                        Command="{Binding AddProfileCommand}"
-                                        Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddProfile}" />
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        Command="{Binding AddProfileCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE710;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddProfile}" />
+                                        </StackPanel>
+                                    </Button>
                                     <Button
                                         Grid.Column="1"
                                         HorizontalAlignment="Stretch"
-                                        Command="{Binding DeleteProfileCommand}"
-                                        Content="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteProfile}" />
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        Command="{Binding DeleteProfileCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE74D;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteProfile}" />
+                                        </StackPanel>
+                                    </Button>
                                 </Grid>
 
                                 <ListView
@@ -100,6 +251,7 @@
                                 <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <ComboBox
                                     MinWidth="240"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                     DisplayMemberPath="Label"
                                     Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}"
                                     ItemsSource="{Binding ModelProviderTypes}"

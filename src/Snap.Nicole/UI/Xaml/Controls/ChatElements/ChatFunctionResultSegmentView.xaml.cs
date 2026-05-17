@@ -8,9 +8,14 @@ namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
 internal sealed partial class ChatFunctionResultSegmentView : UserControl
 {
+    private ObservableFunctionResultContent? subscribedFunctionResult;
+    private bool isLoaded;
+
     public ChatFunctionResultSegmentView()
     {
         InitializeComponent();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         UpdateText();
     }
 
@@ -33,17 +38,54 @@ internal sealed partial class ChatFunctionResultSegmentView : UserControl
             return;
         }
 
-        if (e.OldValue is ObservableFunctionResultContent oldFunctionResult)
-        {
-            oldFunctionResult.PropertyChanged -= view.OnFunctionResultPropertyChanged;
-        }
-
-        if (e.NewValue is ObservableFunctionResultContent newFunctionResult)
-        {
-            newFunctionResult.PropertyChanged += view.OnFunctionResultPropertyChanged;
-        }
-
+        view.UpdateFunctionResultSubscription();
         view.UpdateText();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        isLoaded = true;
+        UpdateFunctionResultSubscription();
+        UpdateText();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        isLoaded = false;
+        UnsubscribeFunctionResult();
+    }
+
+    private void UpdateFunctionResultSubscription()
+    {
+        if (!isLoaded)
+        {
+            UnsubscribeFunctionResult();
+            return;
+        }
+
+        if (ReferenceEquals(subscribedFunctionResult, FunctionResult))
+        {
+            return;
+        }
+
+        UnsubscribeFunctionResult();
+
+        if (FunctionResult is not null)
+        {
+            subscribedFunctionResult = FunctionResult;
+            subscribedFunctionResult.PropertyChanged += OnFunctionResultPropertyChanged;
+        }
+    }
+
+    private void UnsubscribeFunctionResult()
+    {
+        if (subscribedFunctionResult is null)
+        {
+            return;
+        }
+
+        subscribedFunctionResult.PropertyChanged -= OnFunctionResultPropertyChanged;
+        subscribedFunctionResult = null;
     }
 
     private void OnFunctionResultPropertyChanged(object? sender, PropertyChangedEventArgs e)

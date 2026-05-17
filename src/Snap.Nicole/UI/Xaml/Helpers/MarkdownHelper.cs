@@ -29,8 +29,8 @@ internal static partial class MarkdownHelper
 
         string[] lines = markdown.Split('\n');
         bool inCodeBlock = false;
-        string codeBuffer = "";
-        string codeLanguage = "";
+        string codeBuffer = string.Empty;
+        string codeLanguage = string.Empty;
 
         for (int i = 0; i < lines.Length; i++)
         {
@@ -41,8 +41,8 @@ internal static partial class MarkdownHelper
                 if (inCodeBlock)
                 {
                     AddCodeBlock(richText, codeBuffer.TrimEnd('\r', '\n'), codeLanguage);
-                    codeBuffer = "";
-                    codeLanguage = "";
+                    codeBuffer = string.Empty;
+                    codeLanguage = string.Empty;
                     inCodeBlock = false;
                 }
                 else
@@ -106,7 +106,7 @@ internal static partial class MarkdownHelper
             else if (Regex.IsMatch(line, @"^\d+\.\s"))
             {
                 string num = Regex.Match(line, @"^(\d+)\.").Groups[1].Value;
-                string text = Regex.Replace(line, @"^\d+\.\s", "");
+                string text = Regex.Replace(line, @"^\d+\.\s", string.Empty);
                 AddListItem(richText, text, $"{num}. ");
             }
             else
@@ -219,7 +219,7 @@ internal static partial class MarkdownHelper
             List<string> cells = ParseTableCells(tableLines[r]);
             while (cells.Count < columnCount)
             {
-                cells.Add("");
+                cells.Add(string.Empty);
             }
 
             rows.Add(cells);

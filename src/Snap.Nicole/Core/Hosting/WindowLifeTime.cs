@@ -60,7 +60,13 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
 
     private void OnWindowClose(object ignore, WindowEventArgs args)
     {
-        if (Window is IXamlWindowCloseHandler handler)
+        if (Window is not { } window)
+        {
+            return;
+        }
+
+        IXamlWindowCloseHandler? handler = window as IXamlWindowCloseHandler;
+        if (handler is not null)
         {
             handler.OnWindowClosing(out bool cancel);
             if (cancel)
@@ -69,6 +75,15 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
                 return;
             }
         }
+
+        window.Closed -= OnWindowClose;
+
+        if (window is IXamlWindowExtendsContentIntoTitleBar xamlWindow)
+        {
+            xamlWindow.TitleBar.ActualThemeChanged -= UpdateTitleButtonColor;
+        }
+
+        handler?.OnWindowClosed();
 
         // 1. Free subclass lifetime
         subclass?.Dispose();
