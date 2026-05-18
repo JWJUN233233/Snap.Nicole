@@ -21,4 +21,14 @@ internal sealed partial class ObservableChatMessage : ObservableObject
     public partial string? MessageId { get; set; }
 
     public object? RawRepresentation { get; set; }
+
+    public static ObservableChatMessage Create(ChatRole role, DateTimeOffset? createdAt, string? authorName = default)
+    {
+        return new ObservableChatMessage
+        {
+            Role = role,
+            CreatedAt = createdAt,
+            AuthorName = authorName,
+        };
+    }
 }

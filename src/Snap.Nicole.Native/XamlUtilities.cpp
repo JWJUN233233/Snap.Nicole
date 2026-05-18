@@ -16,7 +16,7 @@ static HRESULT Endpoint(LPCVOID /* PALFontAndScriptServices* */ _this, void* /* 
     return S_OK;
 }
 
-HRESULT PatchFontAndScriptServicesGetDefaultFontNameString(LPCWSTR pResource)
+HRESULT XamlUtilitiesPatchFontAndScriptServicesGetDefaultFontNameString(LPCWSTR pResource)
 {
     s_resourceString = pResource;
 

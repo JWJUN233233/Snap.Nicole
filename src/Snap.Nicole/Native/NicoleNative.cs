@@ -19,7 +19,7 @@ internal unsafe sealed class NicoleNative(ObjectReference<NicoleNative.Vftbl> ob
 
     private static NicoleNative NicoleCreateInstance()
     {
-        [DllImport(DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "NicoleCreateInstance", ExactSpelling = true)]
         static extern HRESULT NativeMethod(Vftbl** ppv);
 
         nint pv = default;

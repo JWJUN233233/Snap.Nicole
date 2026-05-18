@@ -8,7 +8,7 @@ internal static class XamlUtilities
 {
     public static unsafe void PatchFontAndScriptServicesGetDefaultFontNameString(ReadOnlySpan<char> resource)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "XamlUtilitiesPatchFontAndScriptServicesGetDefaultFontNameString", ExactSpelling = true)]
         static extern HRESULT NativeMethod(PCWSTR resource);
 
         fixed (char* pResource = resource)

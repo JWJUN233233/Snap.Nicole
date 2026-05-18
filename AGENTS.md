@@ -17,7 +17,7 @@ src
 
 - Extensively adopt Microsoft.Extensions.Hosting and Microsoft.Extensions.DependencyInjection to manage the lifetime of applications, services, and objects.
 - Extensively adopt the Model-View-ViewModel (MVVM) pattern to handle data presentation and user interactions.
-- All class/struct members should be `internal` or `private`, unless XAML requires them to be `public` (for example, attached DependencyProperties and the `Application` class).
+- All top-level members like class/struct should be `internal` or `private`, unless XAML requires them to be `public` (for example, attached DependencyProperties and the `Application` class).
 - Prefer one top-level type per file for models, result records, and enums. Avoid broad aggregate files such as `*Models.cs`; split related types into files named after each type.
 - For all `record` types, do not use positional record declarations or positional construction patterns. Prefer explicit properties and object initializers so members remain self-describing.
 - Do not use expression-bodied syntax for methods, constructors, operators, or conversions. Lambdas or expressions inside method/property bodies are unaffected.

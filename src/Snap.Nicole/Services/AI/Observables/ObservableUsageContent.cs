@@ -1,56 +1,110 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.AI;
-using System.Collections.Generic;
-using System.Globalization;
+using System.Runtime.CompilerServices;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-// TODO: separate text into multiple properties for better UI binding and formatting control
 internal sealed partial class ObservableUsageContent : ObservableAIContent
 {
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Text))]
-    public partial UsageDetails? Details { get; set; }
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? TotalTokenCount { get; set; }
 
-    public string Text { get => FormatDetails(Details); }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? InputTokenCount { get; set; }
 
-    private static string FormatDetails(UsageDetails? details)
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? InputAudioTokenCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? InputTextTokenCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? ReasoningTokenCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? OutputTokenCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? OutputAudioTokenCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? OutputTextTokenCount { get; set; }
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCounts))]
+    public partial long? CachedInputTokenCount { get; set; }
+
+    public bool HasCounts
     {
-        if (details is null)
-        {
-            return string.Empty;
-        }
-
-        List<string> parts = [];
-
-        AppendCount(parts, "Total", details.TotalTokenCount);
-        AppendCount(parts, "Input", details.InputTokenCount);
-        AppendCount(parts, "Input Audio", details.InputAudioTokenCount);
-        AppendCount(parts, "Input Text", details.InputTextTokenCount);
-        AppendCount(parts, "Reasoning", details.ReasoningTokenCount);
-        AppendCount(parts, "Output", details.OutputTokenCount);
-        AppendCount(parts, "Output Audio", details.OutputAudioTokenCount);
-        AppendCount(parts, "Output Text", details.OutputTextTokenCount);
-        AppendCount(parts, "Cached Input", details.CachedInputTokenCount);
-
-        if (details.AdditionalCounts is not null)
-        {
-            foreach (KeyValuePair<string, long> count in details.AdditionalCounts)
-            {
-                AppendCount(parts, count.Key, count.Value);
-            }
-        }
-
-        return string.Join(" | ", parts);
+        get =>
+            TotalTokenCount.HasValue ||
+            InputTokenCount.HasValue ||
+            InputAudioTokenCount.HasValue ||
+            InputTextTokenCount.HasValue ||
+            ReasoningTokenCount.HasValue ||
+            OutputTokenCount.HasValue ||
+            OutputAudioTokenCount.HasValue ||
+            OutputTextTokenCount.HasValue ||
+            CachedInputTokenCount.HasValue;
     }
 
-    private static void AppendCount(List<string> parts, string label, long? value)
+    public static ObservableUsageContent? Create(UsageContent usageContent)
     {
-        if (value is not long count || count == 0)
+        UsageDetails details = usageContent.Details;
+        if (details is null ||
+            ((details.TotalTokenCount is not long totalTokenCount || totalTokenCount <= 0) &&
+            (details.InputTokenCount is not long inputTokenCount || inputTokenCount <= 0) &&
+            (details.InputAudioTokenCount is not long inputAudioTokenCount || inputAudioTokenCount < 0) &&
+            (details.InputTextTokenCount is not long inputTextTokenCount || inputTextTokenCount < 0) &&
+            (details.ReasoningTokenCount is not long reasoningTokenCount || reasoningTokenCount < 0) &&
+            (details.OutputTokenCount is not long outputTokenCount || outputTokenCount < 0) &&
+            (details.OutputAudioTokenCount is not long outputAudioTokenCount || outputAudioTokenCount < 0) &&
+            (details.OutputTextTokenCount is not long outputTextTokenCount || outputTextTokenCount < 0) &&
+            (details.CachedInputTokenCount is not long cachedInputTokenCount || cachedInputTokenCount < 0)))
         {
-            return;
+            return null;
         }
 
-        parts.Add($"{label}: {count.ToString("N0", CultureInfo.CurrentCulture)}");
+        return new()
+        {
+            TotalTokenCount = NormalizeCount(details?.TotalTokenCount),
+            InputTokenCount = NormalizeCount(details?.InputTokenCount),
+            InputAudioTokenCount = NormalizeCount(details?.InputAudioTokenCount),
+            InputTextTokenCount = NormalizeCount(details?.InputTextTokenCount),
+            ReasoningTokenCount = NormalizeCount(details?.ReasoningTokenCount),
+            OutputTokenCount = NormalizeCount(details?.OutputTokenCount),
+            OutputAudioTokenCount = NormalizeCount(details?.OutputAudioTokenCount),
+            OutputTextTokenCount = NormalizeCount(details?.OutputTextTokenCount),
+            CachedInputTokenCount = NormalizeCount(details?.CachedInputTokenCount)
+        };
+    }
+
+    public void Update(ObservableUsageContent usageContent)
+    {
+        TotalTokenCount = usageContent.TotalTokenCount;
+        InputTokenCount = usageContent.InputTokenCount;
+        InputAudioTokenCount = usageContent.InputAudioTokenCount;
+        InputTextTokenCount = usageContent.InputTextTokenCount;
+        ReasoningTokenCount = usageContent.ReasoningTokenCount;
+        OutputTokenCount = usageContent.OutputTokenCount;
+        OutputAudioTokenCount = usageContent.OutputAudioTokenCount;
+        OutputTextTokenCount = usageContent.OutputTextTokenCount;
+        CachedInputTokenCount = usageContent.CachedInputTokenCount;
+        RawRepresentation = usageContent.RawRepresentation;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static long? NormalizeCount(long? value)
+    {
+        // Treat 0 as null since some providers may return 0 instead of null when the count is not available
+        return value is long count && count != 0 ? count : null;
     }
 }

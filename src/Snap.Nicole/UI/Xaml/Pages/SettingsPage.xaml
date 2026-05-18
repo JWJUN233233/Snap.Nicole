@@ -248,7 +248,10 @@
                             BorderThickness="0,1,1,1"
                             CornerRadius="{Binding Source={ThemeResource ControlCornerRadius}, Converter={StaticResource RightCornerRadiusFilterConverter}}">
                             <StackPanel Spacing="16">
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox
+                                    Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}"
+                                    IsSpellCheckEnabled="False"
+                                    Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                 <ComboBox
                                     MinWidth="240"
                                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"

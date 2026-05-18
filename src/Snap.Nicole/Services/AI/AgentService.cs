@@ -25,26 +25,21 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
-            ObservableChatMessage configurationMessage = new()
-            {
-                Role = ChatRole.Assistant,
-                CreatedAt = DateTimeOffset.Now,
-            };
-
             // Unfortunately, Text is not a dependency property, so we cannot localize this string here. 
-            configurationMessage.Contents.Add(new ObservableTextContent { Text = SR.UIXamlPagesChatPageMessageConfigureApiKey });
-
+            ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now);
+            configurationMessage.Contents.Add(ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
             return;
         }
 
         ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], loggerFactory);
+
         ObservableChatMessage? responseMessage = null;
         bool responseAdded = false;
 
         try
         {
-            await foreach (AgentResponseUpdate update in agent.RunStreamingAsync([message], session, options: options.AsAgentRunOptions(), cancellationToken: cancellationToken))
+            await foreach (AgentResponseUpdate update in agent.RunStreamingAsync([message], session, options.AsAgentRunOptions(), cancellationToken))
             {
                 List<ObservableAIContent> observableContents = [];
                 foreach (AIContent content in update.Contents)
@@ -63,12 +58,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
                 await taskScheduler.Run(() =>
                 {
-                    responseMessage ??= new ObservableChatMessage
-                    {
-                        Role = ChatRole.Assistant,
-                        AuthorName = options.ModelId,
-                        CreatedAt = DateTimeOffset.Now,
-                    };
+                    responseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, options.ModelId);
 
                     if (!responseAdded)
                     {
@@ -126,57 +116,13 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
     {
         return content switch
         {
-            TextContent textContent when !string.IsNullOrEmpty(textContent.Text) => new ObservableTextContent
-            {
-                Text = textContent.Text,
-                RawRepresentation = textContent.RawRepresentation,
-            },
-            TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text) => new ObservableTextReasoningContent
-            {
-                Text = reasoningContent.Text,
-                RawRepresentation = reasoningContent.RawRepresentation,
-            },
-            FunctionCallContent functionCallContent => new ObservableFunctionCallContent
-            {
-                CallId = functionCallContent.CallId,
-                Name = functionCallContent.Name,
-                Arguments = SerializeArguments(functionCallContent.Arguments),
-                RawRepresentation = functionCallContent.RawRepresentation,
-            },
-            FunctionResultContent functionResultContent => new ObservableFunctionResultContent
-            {
-                CallId = functionResultContent.CallId,
-                Result = functionResultContent.Result,
-                RawRepresentation = functionResultContent.RawRepresentation,
-            },
-            UsageContent usageContent => CreateObservableUsageContent(usageContent),
+            TextContent textContent when !string.IsNullOrEmpty(textContent.Text) => ObservableTextContent.Create(textContent),
+            TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text) => ObservableTextReasoningContent.Create(reasoningContent),
+            FunctionCallContent functionCallContent => ObservableFunctionCallContent.Create(functionCallContent),
+            FunctionResultContent functionResultContent => ObservableFunctionResultContent.Create(functionResultContent),
+            UsageContent usageContent => ObservableUsageContent.Create(usageContent),
             _ => null,
         };
-    }
-
-    private static ObservableUsageContent? CreateObservableUsageContent(UsageContent usageContent)
-    {
-        ObservableUsageContent observableContent = new()
-        {
-            Details = usageContent.Details,
-            RawRepresentation = usageContent.RawRepresentation,
-        };
-
-        return string.IsNullOrWhiteSpace(observableContent.Text)
-            ? null
-            : observableContent;
-    }
-
-    private static string? SerializeArguments(object? value)
-    {
-        try
-        {
-            return JsonSerializer.Serialize(value);
-        }
-        catch
-        {
-            return value?.ToString();
-        }
     }
 
     private static void AppendContent(ObservableAIContentCollection contents, ObservableAIContent content)
@@ -213,8 +159,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 lastFunctionResult.RawRepresentation = newFunctionResult.RawRepresentation ?? lastFunctionResult.RawRepresentation;
                 return;
             case ObservableUsageContent lastUsage when content is ObservableUsageContent newUsage:
-                lastUsage.Details = newUsage.Details;
-                lastUsage.RawRepresentation = newUsage.RawRepresentation ?? lastUsage.RawRepresentation;
+                lastUsage.Update(newUsage);
                 return;
             default:
                 contents.Add(content);

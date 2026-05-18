@@ -13,7 +13,7 @@ internal static unsafe class WindowUtilities
 
     public static void AppWindowEnablePlacementRestoration(WindowId windowId, Guid guid)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesAppWindowEnablePlacementRestoration", ExactSpelling = true)]
         static extern HRESULT NativeMethod(WindowId windowId, Guid guid);
 
         Marshal.ThrowExceptionForHR(NativeMethod(windowId, guid));
@@ -21,7 +21,7 @@ internal static unsafe class WindowUtilities
 
     public static void SwitchToWindow(HWND hWnd)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesSwitchToWindow", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd));
@@ -29,7 +29,7 @@ internal static unsafe class WindowUtilities
 
     public static void AddExtendedStyleLayered(HWND hWnd)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesAddExtendedStyleLayered", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd));
@@ -37,7 +37,7 @@ internal static unsafe class WindowUtilities
 
     public static void RemoveExtendedStyleLayered(HWND hWnd)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesRemoveExtendedStyleLayered", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd));
@@ -45,7 +45,7 @@ internal static unsafe class WindowUtilities
 
     public static void SetLayeredWindowTransparency(HWND hWnd, byte opacity)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesSetLayeredWindowTransparency", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd, byte opacity);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd, opacity));
@@ -53,7 +53,7 @@ internal static unsafe class WindowUtilities
 
     public static void AddExtendedStyleToolWindow(HWND hWnd)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesAddExtendedStyleToolWindow", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd));
@@ -61,7 +61,7 @@ internal static unsafe class WindowUtilities
 
     public static void RemoveStyleOverlappedWindow(HWND hWnd)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesRemoveStyleOverlappedWindow", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd));
@@ -69,7 +69,7 @@ internal static unsafe class WindowUtilities
 
     public static float GetRasterizationScaleForWindow(HWND hWnd)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesGetRasterizationScaleForWindow", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd, float* scale);
 
         float scale;
@@ -79,7 +79,7 @@ internal static unsafe class WindowUtilities
 
     public static void SetWindowIsEnabled(HWND hWnd, BOOL isEnabled)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesSetWindowIsEnabled", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd, BOOL isEnabled);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd, isEnabled));
@@ -87,7 +87,7 @@ internal static unsafe class WindowUtilities
 
     public static void SetWindowOwner(HWND hWnd, HWND hWndOwner)
     {
-        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, ExactSpelling = true)]
+        [DllImport(NicoleNative.DllName, CallingConvention = CallingConvention.Winapi, EntryPoint = "WindowUtilitiesSetWindowOwner", ExactSpelling = true)]
         static extern HRESULT NativeMethod(HWND hWnd, HWND hWndOwner);
 
         Marshal.ThrowExceptionForHR(NativeMethod(hWnd, hWndOwner));
