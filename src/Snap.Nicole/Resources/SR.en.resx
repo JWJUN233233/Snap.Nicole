@@ -235,6 +235,9 @@
   <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
     <value>Model Provider Profile</value>
   </data>
+  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
+    <value>Model</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
     <value>Model Provider Profiles</value>
   </data>
@@ -255,6 +258,57 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
     <value>Model ID</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelListDocumentationLink" xml:space="preserve">
+    <value>Model List Documentation Link</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelSelectedModel" xml:space="preserve">
+    <value>Selected Model</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelName" xml:space="preserve">
+    <value>Model Name</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelFetchModels" xml:space="preserve">
+    <value>Fetch</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelAddModel" xml:space="preserve">
+    <value>Add Model</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDeleteModel" xml:space="preserve">
+    <value>Delete Model</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusFetchingTitle" xml:space="preserve">
+    <value>Fetching models</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusFetchingMessage" xml:space="preserve">
+    <value>Requesting the model list from the selected provider.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusSuccessTitle" xml:space="preserve">
+    <value>Models updated</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusSuccessMessage" xml:space="preserve">
+    <value>Fetched {0} models.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusFailedTitle" xml:space="preserve">
+    <value>Model fetch failed</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusNoProviderMessage" xml:space="preserve">
+    <value>Select a model provider profile first.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusApiKeyMissingMessage" xml:space="preserve">
+    <value>Enter an API key before fetching models.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusCanceledMessage" xml:space="preserve">
+    <value>The model fetch was canceled.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusDocumentationOpenedTitle" xml:space="preserve">
+    <value>Documentation opened</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusDocumentationOpenedMessage" xml:space="preserve">
+    <value>The provider model documentation was opened in your browser. Manage models manually in the list below.</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusInvalidDocumentationLinkMessage" xml:space="preserve">
+    <value>Enter a valid http or https documentation link.</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelAddProfile" xml:space="preserve">
     <value>Add</value>

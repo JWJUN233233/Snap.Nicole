@@ -98,7 +98,6 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
         OutputAudioTokenCount = usageContent.OutputAudioTokenCount;
         OutputTextTokenCount = usageContent.OutputTextTokenCount;
         CachedInputTokenCount = usageContent.CachedInputTokenCount;
-        RawRepresentation = usageContent.RawRepresentation;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

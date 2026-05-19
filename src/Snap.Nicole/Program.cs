@@ -49,6 +49,7 @@ internal static class Program
                 .AddSingleton<INavigationService, NavigationService>()
                 .AddSingleton<INotifyIcon, NotifyIcon>()
                 .AddSingleton<IAgentService, AgentService>()
+                .AddSingleton<IModelProfileService, ModelProfileService>()
                 .AddSingleton<ISettingsGitSyncService, SettingsGitSyncService>()
                 .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
                 .AddTransient<MainViewModel>()

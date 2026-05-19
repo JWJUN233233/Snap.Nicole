@@ -17,13 +17,32 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ComboBox
+        <Grid
             Grid.Row="0"
             Margin="0,0,0,12"
-            DisplayMemberPath="Name"
-            Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProviderProfile}"
-            ItemsSource="{x:Bind ViewModel.Settings.ModelProviderProfiles, Mode=OneWay}"
-            SelectedItem="{x:Bind ViewModel.Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+            ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <ComboBox
+                Grid.Column="0"
+                MinWidth="240"
+                DisplayMemberPath="Name"
+                Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProviderProfile}"
+                ItemsSource="{Binding Settings.ModelProviderProfiles}"
+                SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+
+            <ComboBox
+                Grid.Column="1"
+                MinWidth="240"
+                DisplayMemberPath="DisplayName"
+                Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProfile}"
+                ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
+                SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+        </Grid>
 
         <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
             <ItemsControl

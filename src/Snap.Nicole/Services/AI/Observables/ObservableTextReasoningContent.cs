@@ -16,7 +16,6 @@ internal sealed partial class ObservableTextReasoningContent : ObservableAIConte
         return new()
         {
             Text = textReasoningContent.Text,
-            RawRepresentation = textReasoningContent.RawRepresentation,
         };
     }
 }

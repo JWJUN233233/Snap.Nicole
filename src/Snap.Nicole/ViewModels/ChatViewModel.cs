@@ -17,6 +17,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 {
     private readonly IAgentService chatService;
     private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
+    private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
 
     private CancellationTokenSource? generationCts;
     private AgentSession? session;
@@ -29,6 +30,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
+        SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
     }
 
     public AppSettings Settings { get; }
@@ -43,7 +45,17 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
     public partial bool IsBusy { get; set; }
 
-    private bool CanSendMessage { get => !disposed && !IsBusy && !string.IsNullOrWhiteSpace(InputText) && Settings.ModelProviderProfiles.CurrentItem is not null; }
+    private bool CanSendMessage
+    {
+        get
+        {
+            ModelProfile? modelProfile = Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.CurrentItem;
+            return !disposed
+                && !IsBusy
+                && !string.IsNullOrWhiteSpace(InputText)
+                && !string.IsNullOrWhiteSpace(modelProfile?.ModelId);
+        }
+    }
 
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
@@ -65,10 +77,16 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
             return;
         }
 
+        ModelProfile? modelProfile = providerProfile.ModelProfiles.CurrentItem;
+        if (modelProfile is null || string.IsNullOrWhiteSpace(modelProfile.ModelId))
+        {
+            return;
+        }
+
         ExtendedAgentOptions requestOptions = new()
         {
             ProviderType = providerProfile.ProviderType.Value,
-            ModelId = providerProfile.ModelId,
+            ModelId = modelProfile.ModelId.Trim(),
             Endpoint = providerProfile.Endpoint,
             ApiKey = providerProfile.ApiKey,
             Temperature = 0.3f,
@@ -143,6 +161,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 
         Settings.PropertyChanged -= OnSettingsPropertyChanged;
         UnsubscribeModelProviderProfiles();
+        UnsubscribeModelProfiles();
 
         generationCts?.Cancel();
         SendMessageCommand.NotifyCanExecuteChanged();
@@ -158,6 +177,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
         if (e.PropertyName is nameof(AppSettings.ModelProviderProfiles))
         {
             SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
+            SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
         }
     }
 
@@ -170,8 +190,21 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 
         if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
-            session = null;
-            SendMessageCommand.NotifyCanExecuteChanged();
+            SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
+            ResetSession();
+        }
+    }
+
+    private void OnModelProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
+        {
+            ResetSession();
         }
     }
 
@@ -196,6 +229,33 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
     {
         (modelProviderProfiles as INotifyPropertyChanged)?.PropertyChanged -= OnModelProviderProfilesPropertyChanged;
         modelProviderProfiles = null;
+    }
+
+    private void SubscribeModelProfiles(ObservableSettingsCollection<ModelProfile, Guid>? profiles)
+    {
+        if (disposed || ReferenceEquals(modelProfiles, profiles))
+        {
+            return;
+        }
+
+        UnsubscribeModelProfiles();
+        modelProfiles = profiles;
+        if (modelProfiles is not null)
+        {
+            (modelProfiles as INotifyPropertyChanged).PropertyChanged += OnModelProfilesPropertyChanged;
+        }
+    }
+
+    private void UnsubscribeModelProfiles()
+    {
+        (modelProfiles as INotifyPropertyChanged)?.PropertyChanged -= OnModelProfilesPropertyChanged;
+        modelProfiles = null;
+    }
+
+    private void ResetSession()
+    {
+        session = null;
+        SendMessageCommand.NotifyCanExecuteChanged();
     }
 
     [UnsafeAccessor(UnsafeAccessorKind.Constructor)]

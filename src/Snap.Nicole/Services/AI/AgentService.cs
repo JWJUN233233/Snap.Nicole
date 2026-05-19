@@ -6,7 +6,6 @@ using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,32 +77,18 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
         catch (Exception ex)
         {
-            ObservableChatMessage errorMessage = new()
-            {
-                Role = ChatRole.Assistant,
-                CreatedAt = DateTimeOffset.Now,
-            };
-            errorMessage.Contents.Add(new ObservableTextContent { Text = $"Error: {ex.Message}" });
-
+            ObservableChatMessage errorMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now);
+            errorMessage.Contents.Add(ObservableTextContent.Create($"Error: {ex.Message}"));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);
         }
     }
 
     private static ObservableChatMessage CreateObservableChatMessage(ChatMessage chatMessage)
     {
-        ObservableChatMessage observableMessage = new()
-        {
-            AuthorName = chatMessage.AuthorName,
-            CreatedAt = chatMessage.CreatedAt,
-            Role = chatMessage.Role,
-            MessageId = chatMessage.MessageId,
-            RawRepresentation = chatMessage.RawRepresentation,
-        };
-
+        ObservableChatMessage observableMessage = ObservableChatMessage.Create(chatMessage);
         foreach (AIContent content in chatMessage.Contents)
         {
-            ObservableAIContent? observableContent = CreateObservableContent(content);
-            if (observableContent is not null)
+            if (CreateObservableContent(content) is { } observableContent)
             {
                 AppendContent(observableMessage.Contents, observableContent);
             }
@@ -127,7 +112,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
     private static void AppendContent(ObservableAIContentCollection contents, ObservableAIContent content)
     {
-        if (contents.Count == 0)
+        if (contents.Count is 0)
         {
             contents.Add(content);
             return;
@@ -143,20 +128,16 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         {
             case ObservableTextContent lastText when content is ObservableTextContent newText:
                 lastText.Text += newText.Text;
-                lastText.RawRepresentation = newText.RawRepresentation ?? lastText.RawRepresentation;
                 return;
             case ObservableTextReasoningContent lastReasoning when content is ObservableTextReasoningContent newReasoning:
                 lastReasoning.Text += newReasoning.Text;
-                lastReasoning.RawRepresentation = newReasoning.RawRepresentation ?? lastReasoning.RawRepresentation;
                 return;
             case ObservableFunctionCallContent lastFunctionCall when content is ObservableFunctionCallContent newFunctionCall && lastFunctionCall.CallId == newFunctionCall.CallId:
                 lastFunctionCall.Name = newFunctionCall.Name;
                 lastFunctionCall.Arguments = newFunctionCall.Arguments;
-                lastFunctionCall.RawRepresentation = newFunctionCall.RawRepresentation ?? lastFunctionCall.RawRepresentation;
                 return;
             case ObservableFunctionResultContent lastFunctionResult when content is ObservableFunctionResultContent newFunctionResult && lastFunctionResult.CallId == newFunctionResult.CallId:
                 lastFunctionResult.Result = newFunctionResult.Result;
-                lastFunctionResult.RawRepresentation = newFunctionResult.RawRepresentation ?? lastFunctionResult.RawRepresentation;
                 return;
             case ObservableUsageContent lastUsage when content is ObservableUsageContent newUsage:
                 lastUsage.Update(newUsage);

@@ -18,7 +18,6 @@ internal sealed partial class ObservableFunctionResultContent : ObservableToolRe
             CallId = functionResultContent.CallId,
             Result = functionResultContent.Result,
             Exception = functionResultContent.Exception,
-            RawRepresentation = functionResultContent.RawRepresentation,
         };
     }
 }

@@ -32,7 +32,6 @@ internal sealed partial class ObservableFunctionCallContent : ObservableToolCall
             CallId = functionCallContent.CallId,
             Name = functionCallContent.Name,
             Arguments = SerializeArguments(functionCallContent.Arguments),
-            RawRepresentation = functionCallContent.RawRepresentation,
         };
     }
 

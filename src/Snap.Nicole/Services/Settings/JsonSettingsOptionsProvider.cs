@@ -191,6 +191,7 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
             return;
         }
 
+        UpdateObservableChildren();
         PersistObservedChange();
     }
 

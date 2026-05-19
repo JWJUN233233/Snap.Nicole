@@ -267,7 +267,77 @@
                                     Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}"
                                     PasswordChar="&#x2022;"
                                     PasswordRevealMode="Peek" />
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListDocumentationLink}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelListDocumentationLink, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <InfoBar
+                                    Title="{Binding ModelListStatusTitle}"
+                                    IsClosable="False"
+                                    IsOpen="{Binding IsModelListStatusOpen, Mode=TwoWay}"
+                                    Message="{Binding ModelListStatusMessage}"
+                                    Severity="{Binding ModelListInfoBarSeverity}" />
+                                <Grid ColumnSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <ComboBox
+                                        Grid.Column="0"
+                                        MinWidth="240"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        DisplayMemberPath="DisplayName"
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSelectedModel}"
+                                        ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
+                                        SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                    <Button
+                                        Grid.Column="1"
+                                        Margin="0,24,0,0"
+                                        VerticalAlignment="Top"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        Command="{Binding RefreshModelsCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE72C;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelFetchModels}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button
+                                        Grid.Column="2"
+                                        Margin="0,24,0,0"
+                                        VerticalAlignment="Top"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        Command="{Binding AddModelCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE710;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddModel}" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button
+                                        Grid.Column="3"
+                                        Margin="0,24,0,0"
+                                        VerticalAlignment="Top"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        Command="{Binding DeleteModelCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE74D;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteModel}" />
+                                        </StackPanel>
+                                    </Button>
+                                </Grid>
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox
+                                        Grid.Column="0"
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}"
+                                        Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox
+                                        Grid.Column="1"
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}"
+                                        Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
                             </StackPanel>
                         </Border>
                     </Grid>

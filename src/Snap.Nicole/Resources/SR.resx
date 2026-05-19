@@ -296,6 +296,9 @@
   <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
     <value>模型提供商配置</value>
   </data>
+  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
+    <value>模型</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
     <value>模型配置</value>
   </data>
@@ -316,6 +319,57 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
     <value>模型 ID</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelListDocumentationLink" xml:space="preserve">
+    <value>模型列表文档链接</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelSelectedModel" xml:space="preserve">
+    <value>当前模型</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelName" xml:space="preserve">
+    <value>模型名称</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelFetchModels" xml:space="preserve">
+    <value>获取</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelAddModel" xml:space="preserve">
+    <value>添加模型</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelDeleteModel" xml:space="preserve">
+    <value>删除模型</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusFetchingTitle" xml:space="preserve">
+    <value>正在获取模型</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusFetchingMessage" xml:space="preserve">
+    <value>正在从所选提供商请求模型列表。</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusSuccessTitle" xml:space="preserve">
+    <value>模型已更新</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusSuccessMessage" xml:space="preserve">
+    <value>已获取 {0} 个模型。</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusFailedTitle" xml:space="preserve">
+    <value>获取模型失败</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusNoProviderMessage" xml:space="preserve">
+    <value>请先选择一个模型提供商配置。</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusApiKeyMissingMessage" xml:space="preserve">
+    <value>获取模型前请先输入 API Key。</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusCanceledMessage" xml:space="preserve">
+    <value>模型获取已取消。</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusDocumentationOpenedTitle" xml:space="preserve">
+    <value>已打开文档</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusDocumentationOpenedMessage" xml:space="preserve">
+    <value>已在浏览器中打开提供商模型文档。请在下方列表中手动管理模型。</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageModelListStatusInvalidDocumentationLinkMessage" xml:space="preserve">
+    <value>请输入有效的 http 或 https 文档链接。</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelAddProfile" xml:space="preserve">
     <value>添加</value>
