@@ -193,18 +193,6 @@
   <data name="UIXamlPagesSettingsPageGitStatusOperationFailedTitle" xml:space="preserve">
     <value>Sync Failed</value>
   </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderSuccessTitle" xml:space="preserve">
-    <value>Folder Opened</value>
-  </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderSuccessMessage" xml:space="preserve">
-    <value>The local Settings folder was opened.</value>
-  </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderFailedTitle" xml:space="preserve">
-    <value>Open Folder Failed</value>
-  </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderFailedMessage" xml:space="preserve">
-    <value>The local Settings folder could not be opened.</value>
-  </data>
   <data name="UIXamlPagesSettingsPageGitErrorCanceled" xml:space="preserve">
     <value>The operation was canceled.</value>
   </data>

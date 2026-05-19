@@ -94,7 +94,7 @@
                             </TextBox.Header>
                             <TextBox.Description>
                                 <TextBlock
-                                    Margin="1,4,0,0"
+                                    Margin="1,3,0,0"
                                     FontSize="{ThemeResource CaptionTextBlockFontSize}"
                                     Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionCreateEmptyRepository}" />
                             </TextBox.Description>

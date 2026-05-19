@@ -106,12 +106,10 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
                 FileName = gitSyncService.RepositoryPath,
                 UseShellExecute = true,
             });
-
-            SetStatus(InfoBarSeverity.Success, SR.UIXamlPagesSettingsPageOpenSettingsFolderSuccessTitle, SR.UIXamlPagesSettingsPageOpenSettingsFolderSuccessMessage);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
         {
-            SetStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageOpenSettingsFolderFailedTitle, $"{SR.UIXamlPagesSettingsPageOpenSettingsFolderFailedMessage}{Environment.NewLine}{ex.Message}");
+            Debug.WriteLine(ex);
         }
     }
 

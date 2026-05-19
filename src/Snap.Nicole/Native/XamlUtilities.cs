@@ -1,5 +1,4 @@
-﻿using Snap.Nicole.Native.Foundation;
-using System.Runtime.CompilerServices;
+using Snap.Nicole.Native.Foundation;
 using System.Runtime.InteropServices;
 
 namespace Snap.Nicole.Native;

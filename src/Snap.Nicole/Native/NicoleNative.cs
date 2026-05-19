@@ -1,6 +1,5 @@
-﻿using Snap.Nicole.Core.Hosting;
+using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Native.Foundation;
-using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using WinRT;

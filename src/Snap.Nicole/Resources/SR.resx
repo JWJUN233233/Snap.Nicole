@@ -148,10 +148,12 @@
     <value>设置同步</value>
   </data>
   <data name="UIXamlPagesSettingsPageDescriptionSettingsSync" xml:space="preserve">
-    <value>使用本机 Git 命令行客户端同步应用 Settings 文件夹下的所有设置文件和子目录。</value>
+    <value>使用本机 Git 命令行客户端同步应用 Settings 文件夹下的所有设置文件和子目录</value>
   </data>
   <data name="UIXamlPagesSettingsPageDescriptionCreateEmptyRepository" xml:space="preserve">
-    <value>在 GitHub、GitLab、Gitee 或其他 Git 服务中创建一个新的空仓库，不要添加 README、.gitignore 或 License。复制仓库的 HTTPS 或 SSH 地址后在这里启用同步。</value>
+    <value>在任意 Git 服务中创建一个新的空仓库，或直接使用先前创建的设置仓库。
+由于设置包含敏感与隐私信息，在创建仓库时应调整可见性为私有。
+粘贴仓库的 HTTPS 或 SSH 地址到此处后即可启用同步。</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelRepositoryUrl" xml:space="preserve">
     <value>仓库地址</value>
@@ -187,7 +189,7 @@
     <value>正在检测 Git</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusCheckingMessage" xml:space="preserve">
-    <value>正在检查 Git 命令和 Settings 文件夹仓库状态。</value>
+    <value>正在检查 Git 命令和 Settings 文件夹仓库状态</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusUnavailableTitle" xml:space="preserve">
     <value>Git 不可用</value>
@@ -196,19 +198,19 @@
     <value>尚未启用同步</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusNotRepositoryMessage" xml:space="preserve">
-    <value>输入一个空仓库地址后，应用会把 Settings 文件夹初始化为独立 Git 仓库。</value>
+    <value>输入仓库地址后，应用会把 Settings 文件夹初始化为 Git 仓库以供拉取和推送设置</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRepositoryReadyTitle" xml:space="preserve">
     <value>同步就绪</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRepositoryReadyMessage" xml:space="preserve">
-    <value>Settings 文件夹已连接到远程仓库。</value>
+    <value>Settings 文件夹已连接到远程仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRemoteMissingTitle" xml:space="preserve">
     <value>缺少远程仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRemoteMissingMessage" xml:space="preserve">
-    <value>当前 Settings 文件夹已经是 Git 仓库，请提供仓库地址以继续同步。</value>
+    <value>当前 Settings 文件夹已经是 Git 仓库，请提供仓库地址以继续同步</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusInvalidRepositoryTitle" xml:space="preserve">
     <value>仓库状态异常</value>
@@ -229,7 +231,7 @@
     <value>同步已启用</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage" xml:space="preserve">
-    <value>Settings 文件夹已配置为 Git 仓库。</value>
+    <value>Settings 文件夹已配置为 Git 仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusPullSuccessTitle" xml:space="preserve">
     <value>拉取成功</value>
@@ -241,55 +243,43 @@
     <value>推送成功</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusPushSuccessMessage" xml:space="preserve">
-    <value>本地设置已推送到远程仓库。</value>
+    <value>本地设置已推送到远程仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRemoteEmptyMessage" xml:space="preserve">
-    <value>远程仓库还是空的，没有需要拉取的内容。</value>
+    <value>远程仓库还是空的，没有需要拉取的内容</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusNoLocalCommitsMessage" xml:space="preserve">
-    <value>当前没有可推送的设置文件。</value>
+    <value>当前没有可推送的设置文件</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusOperationFailedTitle" xml:space="preserve">
     <value>同步失败</value>
   </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderSuccessTitle" xml:space="preserve">
-    <value>已打开文件夹</value>
-  </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderSuccessMessage" xml:space="preserve">
-    <value>已打开本地 Settings 文件夹。</value>
-  </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderFailedTitle" xml:space="preserve">
-    <value>打开文件夹失败</value>
-  </data>
-  <data name="UIXamlPagesSettingsPageOpenSettingsFolderFailedMessage" xml:space="preserve">
-    <value>无法打开本地 Settings 文件夹。</value>
-  </data>
   <data name="UIXamlPagesSettingsPageGitErrorCanceled" xml:space="preserve">
-    <value>操作已取消。</value>
+    <value>操作已取消</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorGitUnavailable" xml:space="preserve">
-    <value>没有检测到可用的 git 命令。请安装 Git for Windows，并确认 git 已加入 PATH。</value>
+    <value>没有检测到可用的 git 命令。请安装 Git for Windows，并确认 git 已加入 PATH</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorNetwork" xml:space="preserve">
-    <value>网络连接失败，无法访问远程仓库。</value>
+    <value>网络连接失败，无法访问远程仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorPermission" xml:space="preserve">
-    <value>权限或认证失败，请检查仓库访问权限、凭据或 SSH Key。</value>
+    <value>权限或认证失败，请检查仓库访问权限、凭据或 SSH Key</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRemote" xml:space="preserve">
-    <value>远程仓库配置异常，请确认仓库地址存在且是空仓库或可访问仓库。</value>
+    <value>远程仓库配置异常，请确认仓库地址存在且是空仓库或可访问仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepository" xml:space="preserve">
-    <value>本地仓库状态异常，请检查 Settings 文件夹中的 Git 仓库。</value>
+    <value>本地仓库状态异常，请检查 Settings 文件夹中的 Git 仓库</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorConflict" xml:space="preserve">
-    <value>仓库存在冲突或非快进推送，需要手动解决后再同步。</value>
+    <value>仓库存在冲突或非快进推送，需要手动解决后再同步</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorCommand" xml:space="preserve">
-    <value>Git 命令执行失败。</value>
+    <value>Git 命令执行失败</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
-    <value>检测到未完成的合并、变基或锁文件，请先完成或清理该 Git 操作。</value>
+    <value>检测到未完成的合并、变基或锁文件，请先完成或清理该 Git 操作</value>
   </data>
   <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
     <value>AI 对话</value>
@@ -337,7 +327,7 @@
     <value>删除</value>
   </data>
   <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
-    <value>请先在设置中配置 API Key。</value>
+    <value>请先在设置中配置模型供应商</value>
   </data>
   <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
     <value>已思考</value>
