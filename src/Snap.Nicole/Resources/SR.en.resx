@@ -88,6 +88,9 @@
   <data name="UIXamlPagesSettingsPageLabelSettingsSync" xml:space="preserve">
     <value>Settings Sync</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelGitSync" xml:space="preserve">
+    <value>Git Sync</value>
+  </data>
   <data name="UIXamlPagesSettingsPageDescriptionSettingsSync" xml:space="preserve">
     <value>Use the local Git command line client to sync every settings file and subfolder under the app Settings folder.</value>
   </data>
@@ -262,6 +265,9 @@
   <data name="UIXamlPagesSettingsPageLabelModelListDocumentationLink" xml:space="preserve">
     <value>Model List Documentation Link</value>
   </data>
+  <data name="UIXamlPagesSettingsPageDescriptionModelListDocumentationLink" xml:space="preserve">
+    <value>Some model providers may not expose a model list API. Enter a documentation link to override the default model fetch behavior.</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelSelectedModel" xml:space="preserve">
     <value>Selected Model</value>
   </data>
@@ -270,6 +276,9 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelFetchModels" xml:space="preserve">
     <value>Fetch</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelListActions" xml:space="preserve">
+    <value>Actions</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelAddModel" xml:space="preserve">
     <value>Add Model</value>

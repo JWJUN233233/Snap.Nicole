@@ -147,6 +147,9 @@
   <data name="UIXamlPagesSettingsPageLabelSettingsSync" xml:space="preserve">
     <value>设置同步</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelGitSync" xml:space="preserve">
+    <value>Git 同步</value>
+  </data>
   <data name="UIXamlPagesSettingsPageDescriptionSettingsSync" xml:space="preserve">
     <value>使用本机 Git 命令行客户端同步应用 Settings 文件夹下的所有设置文件和子目录</value>
   </data>
@@ -323,6 +326,9 @@
   <data name="UIXamlPagesSettingsPageLabelModelListDocumentationLink" xml:space="preserve">
     <value>模型列表文档链接</value>
   </data>
+  <data name="UIXamlPagesSettingsPageDescriptionModelListDocumentationLink" xml:space="preserve">
+    <value>某些模型供应商可能不会提供模型列表接口，填入文档链接以覆盖默认的获取模型行为</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelSelectedModel" xml:space="preserve">
     <value>当前模型</value>
   </data>
@@ -331,6 +337,9 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelFetchModels" xml:space="preserve">
     <value>获取</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelListActions" xml:space="preserve">
+    <value>操作</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelAddModel" xml:space="preserve">
     <value>添加模型</value>
