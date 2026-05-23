@@ -6,6 +6,7 @@ using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,7 +20,12 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
     // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
     public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
-        ObservableChatMessage inputMessage = CreateObservableChatMessage(message);
+        ObservableChatMessage inputMessage = ObservableChatMessage.Create(message);
+        foreach (AIContent content in message.Contents)
+        {
+            inputMessage.Contents.Append(ObservableAIContent.Create(content));
+        }
+
         await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(options.ApiKey))
@@ -43,14 +49,14 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 List<ObservableAIContent> observableContents = [];
                 foreach (AIContent content in update.Contents)
                 {
-                    ObservableAIContent? observableContent = CreateObservableContent(content);
-                    if (observableContent is not null)
+                    if (ObservableAIContent.Create(content) is { } observableContent)
                     {
                         observableContents.Add(observableContent);
                     }
                 }
 
-                if (observableContents.Count == 0)
+                // Fast path for updates that do not contain any content, which are common when the agent is thinking. This avoids unnecessary dispatching to the UI thread.
+                if (observableContents.Count is 0)
                 {
                     continue;
                 }
@@ -67,7 +73,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
                     foreach (ObservableAIContent observableContent in observableContents)
                     {
-                        AppendContent(responseMessage.Contents, observableContent);
+                        responseMessage.Contents.Append(observableContent);
                     }
                 }, cancellationToken);
             }
@@ -80,71 +86,6 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             ObservableChatMessage errorMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now);
             errorMessage.Contents.Add(ObservableTextContent.Create($"Error: {ex.Message}"));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);
-        }
-    }
-
-    private static ObservableChatMessage CreateObservableChatMessage(ChatMessage chatMessage)
-    {
-        ObservableChatMessage observableMessage = ObservableChatMessage.Create(chatMessage);
-        foreach (AIContent content in chatMessage.Contents)
-        {
-            if (CreateObservableContent(content) is { } observableContent)
-            {
-                AppendContent(observableMessage.Contents, observableContent);
-            }
-        }
-
-        return observableMessage;
-    }
-
-    private static ObservableAIContent? CreateObservableContent(AIContent content)
-    {
-        return content switch
-        {
-            TextContent textContent when !string.IsNullOrEmpty(textContent.Text) => ObservableTextContent.Create(textContent),
-            TextReasoningContent reasoningContent when !string.IsNullOrEmpty(reasoningContent.Text) => ObservableTextReasoningContent.Create(reasoningContent),
-            FunctionCallContent functionCallContent => ObservableFunctionCallContent.Create(functionCallContent),
-            FunctionResultContent functionResultContent => ObservableFunctionResultContent.Create(functionResultContent),
-            UsageContent usageContent => ObservableUsageContent.Create(usageContent),
-            _ => null,
-        };
-    }
-
-    private static void AppendContent(ObservableAIContentCollection contents, ObservableAIContent content)
-    {
-        if (contents.Count is 0)
-        {
-            contents.Add(content);
-            return;
-        }
-
-        ObservableAIContent last = contents[^1];
-        if (last is ObservableTextReasoningContent lastReasoningContent && content is not ObservableTextReasoningContent)
-        {
-            lastReasoningContent.IsCompleted = true;
-        }
-
-        switch (last)
-        {
-            case ObservableTextContent lastText when content is ObservableTextContent newText:
-                lastText.Text += newText.Text;
-                return;
-            case ObservableTextReasoningContent lastReasoning when content is ObservableTextReasoningContent newReasoning:
-                lastReasoning.Text += newReasoning.Text;
-                return;
-            case ObservableFunctionCallContent lastFunctionCall when content is ObservableFunctionCallContent newFunctionCall && lastFunctionCall.CallId == newFunctionCall.CallId:
-                lastFunctionCall.Name = newFunctionCall.Name;
-                lastFunctionCall.Arguments = newFunctionCall.Arguments;
-                return;
-            case ObservableFunctionResultContent lastFunctionResult when content is ObservableFunctionResultContent newFunctionResult && lastFunctionResult.CallId == newFunctionResult.CallId:
-                lastFunctionResult.Result = newFunctionResult.Result;
-                return;
-            case ObservableUsageContent lastUsage when content is ObservableUsageContent newUsage:
-                lastUsage.Update(newUsage);
-                return;
-            default:
-                contents.Add(content);
-                return;
         }
     }
 }
