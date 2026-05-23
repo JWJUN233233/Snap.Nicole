@@ -10,6 +10,7 @@
 
     <UserControl.Resources>
         <snuxcc:ReasoningContentTitleConverter x:Key="ReasoningContentTitleConverter" />
+        <snuxcc:UsageCacheHitRateTextConverter x:Key="UsageCacheHitRateTextConverter" />
         <snuxcc:UsageCountVisibilityConverter x:Key="UsageCountVisibilityConverter" />
 
         <DataTemplate x:Key="TextContentTemplate">
@@ -36,169 +37,77 @@
         </DataTemplate>
 
         <DataTemplate x:Key="UsageContentTemplate">
-            <StackPanel Spacing="2">
-                <TextBlock
-                    FontSize="12"
-                    FontWeight="SemiBold"
-                    Opacity="0.7"
-                    Text="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelUsage}" />
+            <StackPanel
+                Opacity="0.7"
+                Orientation="Horizontal"
+                Spacing="6">
 
-                <Grid ColumnSpacing="12" RowSpacing="6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlControlsChatMessageViewToolTipTotalTokenCount}"
+                    Visibility="{Binding TotalTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
+                    <FontIcon FontSize="14" Glyph="&#xE8A9;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding TotalTokenCount}" />
+                </StackPanel>
 
-                    <StackPanel
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Total"
-                        Visibility="{Binding TotalTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Calculator" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding TotalTokenCount}" />
-                    </StackPanel>
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlControlsChatMessageViewToolTipInputTokenCount}"
+                    Visibility="{Binding InputTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
+                    <FontIcon FontSize="14" Glyph="&#xE70E;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding InputTokenCount}" />
+                </StackPanel>
 
-                    <StackPanel
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Input"
-                        Visibility="{Binding InputTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Download" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding InputTokenCount}" />
-                    </StackPanel>
+                <StackPanel
+                    Grid.Column="2"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlControlsChatMessageViewToolTipOutputTokenCount}"
+                    Visibility="{Binding OutputTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
+                    <FontIcon FontSize="14" Glyph="&#xE70D;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding OutputTokenCount}" />
+                </StackPanel>
 
-                    <StackPanel
-                        Grid.Row="0"
-                        Grid.Column="2"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Output"
-                        Visibility="{Binding OutputTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Upload" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding OutputTokenCount}" />
-                    </StackPanel>
+                <StackPanel
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlControlsChatMessageViewToolTipReasoningTokenCount}"
+                    Visibility="{Binding ReasoningTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
+                    <FontIcon FontSize="14" Glyph="&#xE794;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding ReasoningTokenCount}" />
+                </StackPanel>
 
-                    <StackPanel
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Reasoning"
-                        Visibility="{Binding ReasoningTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Help" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding ReasoningTokenCount}" />
-                    </StackPanel>
-
-                    <StackPanel
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Cached Input"
-                        Visibility="{Binding CachedInputTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="SaveLocal" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding CachedInputTokenCount}" />
-                    </StackPanel>
-
-                    <StackPanel
-                        Grid.Row="1"
-                        Grid.Column="2"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Input Text"
-                        Visibility="{Binding InputTextTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Font" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding InputTextTokenCount}" />
-                    </StackPanel>
-
-                    <StackPanel
-                        Grid.Row="2"
-                        Grid.Column="0"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Output Text"
-                        Visibility="{Binding OutputTextTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Document" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding OutputTextTokenCount}" />
-                    </StackPanel>
-
-                    <StackPanel
-                        Grid.Row="2"
-                        Grid.Column="1"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Input Audio"
-                        Visibility="{Binding InputAudioTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Audio" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding InputAudioTokenCount}" />
-                    </StackPanel>
-
-                    <StackPanel
-                        Grid.Row="2"
-                        Grid.Column="2"
-                        Orientation="Horizontal"
-                        Spacing="4"
-                        ToolTipService.ToolTip="Output Audio"
-                        Visibility="{Binding OutputAudioTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
-                        <SymbolIcon Symbol="Volume" />
-                        <TextBlock
-                            FontFamily="Cascadia Code, Consolas, Courier New"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            IsTextSelectionEnabled="True"
-                            Text="{Binding OutputAudioTokenCount}" />
-                    </StackPanel>
-                </Grid>
+                <StackPanel
+                    Grid.Column="4"
+                    Orientation="Horizontal"
+                    Spacing="4"
+                    ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlControlsChatMessageViewToolTipCachedInputTokenCount}"
+                    Visibility="{Binding CachedInputTokenCount, Converter={StaticResource UsageCountVisibilityConverter}}">
+                    <FontIcon FontSize="14" Glyph="&#xE950;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding CachedInputTokenCount}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource CaptionTextBlockStyle}"
+                        Text="{Binding CacheHitRate, Converter={StaticResource UsageCacheHitRateTextConverter}}"
+                        Visibility="{Binding CacheHitRate, Converter={StaticResource UsageCountVisibilityConverter}}" />
+                </StackPanel>
             </StackPanel>
         </DataTemplate>
 

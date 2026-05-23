@@ -337,6 +337,21 @@
   <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
     <value>Thinking</value>
   </data>
+  <data name="UIXamlControlsChatMessageViewToolTipTotalTokenCount" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipInputTokenCount" xml:space="preserve">
+    <value>Input</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipOutputTokenCount" xml:space="preserve">
+    <value>Output</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipReasoningTokenCount" xml:space="preserve">
+    <value>Reasoning</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipCachedInputTokenCount" xml:space="preserve">
+    <value>Cached Input / Cache Hit Rate</value>
+  </data>
   <data name="UIXamlControlsChatMessageViewLabelUsage" xml:space="preserve">
     <value>Usage</value>
   </data>

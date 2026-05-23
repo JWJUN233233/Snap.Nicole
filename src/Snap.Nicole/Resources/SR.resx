@@ -398,6 +398,21 @@
   <data name="UIXamlControlsChatMessageViewLabelReasoningInProgress" xml:space="preserve">
     <value>思考中</value>
   </data>
+  <data name="UIXamlControlsChatMessageViewToolTipTotalTokenCount" xml:space="preserve">
+    <value>总计</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipInputTokenCount" xml:space="preserve">
+    <value>输入</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipOutputTokenCount" xml:space="preserve">
+    <value>输出</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipReasoningTokenCount" xml:space="preserve">
+    <value>思考</value>
+  </data>
+  <data name="UIXamlControlsChatMessageViewToolTipCachedInputTokenCount" xml:space="preserve">
+    <value>缓存输入 / 缓存命中率</value>
+  </data>
   <data name="UIXamlControlsChatMessageViewLabelUsage" xml:space="preserve">
     <value>用量</value>
   </data>

@@ -17,6 +17,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
     private const string CommitAuthorEmail = "snap-nicole@local";
 
     private static readonly string[] BlockingFiles = ["CHERRY_PICK_HEAD", "MERGE_HEAD", "REBASE_HEAD", "REVERT_HEAD", "index.lock"];
+    private static readonly string[] GetUpstreamArguments = ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"];
 
     public string RepositoryPath { get => WellKnownLocations.Settings; }
 
@@ -172,12 +173,12 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
             return SettingsGitOperationResult.Success("RemoteEmpty");
         }
 
-        SettingsGitCommandResult upstream = await RunGitAsync(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], RepositoryPath, cancellationToken);
-        SettingsGitCommandResult pull = upstream.Succeeded
-            ? await RunGitAsync(["pull", "--rebase", "--autostash"], RepositoryPath, cancellationToken)
-            : await PullFromDefaultRemoteBranchAsync(cancellationToken);
+        if (await PullWithMergeAsync(cancellationToken) is { Succeeded: true } pull)
+        {
+            return SettingsGitOperationResult.Command(pull);
+        }
 
-        return SettingsGitOperationResult.Command(pull);
+        return await ForcePullAsync(cancellationToken);
     }
 
     public async Task<SettingsGitOperationResult> PushAsync(CancellationToken cancellationToken = default)
@@ -202,12 +203,13 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
             return SettingsGitOperationResult.Success("NoLocalCommits");
         }
 
-        SettingsGitCommandResult upstream = await RunGitAsync(["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"], RepositoryPath, cancellationToken);
-        SettingsGitCommandResult push = upstream.Succeeded
-            ? await RunGitAsync(["push"], RepositoryPath, cancellationToken)
-            : await RunGitAsync(["push", "-u", RemoteName, "HEAD"], RepositoryPath, cancellationToken);
+        if (await PushNormallyAsync(cancellationToken) is { Succeeded: true } push)
+        {
+            return SettingsGitOperationResult.Command(push);
+        }
 
-        return SettingsGitOperationResult.Command(push);
+        SettingsGitCommandResult forcePush = await ForcePushAsync(cancellationToken);
+        return SettingsGitOperationResult.Command(forcePush);
     }
 
     private async Task<SettingsGitOperationResult> EnsureRepositoryReadyAsync(CancellationToken cancellationToken)
@@ -229,6 +231,14 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
 
         return SettingsGitOperationResult.Success();
+    }
+
+    private static string GetBranchNameFromRemoteReference(string remoteReference)
+    {
+        int separatorIndex = remoteReference.IndexOf('/');
+        return separatorIndex >= 0
+            ? remoteReference[(separatorIndex + 1)..]
+            : remoteReference;
     }
 
     private SettingsGitOperationResult EnsureNoRepositoryOperationInProgress()
@@ -273,7 +283,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
     private async Task<SettingsGitCommandResult> PullFromDefaultRemoteBranchAsync(CancellationToken cancellationToken)
     {
         string remoteBranch = await GetDefaultRemoteBranchAsync(cancellationToken);
-        SettingsGitCommandResult pull = await RunGitAsync(["pull", "--rebase", "--autostash", RemoteName, remoteBranch], RepositoryPath, cancellationToken);
+        SettingsGitCommandResult pull = await RunGitAsync(["pull", "--autostash", RemoteName, remoteBranch], RepositoryPath, cancellationToken);
         if (!pull.Succeeded)
         {
             return pull;
@@ -286,6 +296,74 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
 
         return pull;
+    }
+
+    private async Task<SettingsGitCommandResult> PullWithMergeAsync(CancellationToken cancellationToken)
+    {
+        return (await RunGitAsync(GetUpstreamArguments, RepositoryPath, cancellationToken)).Succeeded
+            ? await RunGitAsync(["pull", "--autostash"], RepositoryPath, cancellationToken)
+            : await PullFromDefaultRemoteBranchAsync(cancellationToken);
+    }
+
+    private async Task<SettingsGitCommandResult> PushNormallyAsync(CancellationToken cancellationToken)
+    {
+        SettingsGitCommandResult upstream = await RunGitAsync(GetUpstreamArguments, RepositoryPath, cancellationToken);
+        return upstream.Succeeded
+            ? await RunGitAsync(["push"], RepositoryPath, cancellationToken)
+            : await RunGitAsync(["push", "-u", RemoteName, "HEAD"], RepositoryPath, cancellationToken);
+    }
+
+    private async Task<SettingsGitCommandResult> ForcePushAsync(CancellationToken cancellationToken)
+    {
+        SettingsGitCommandResult upstream = await RunGitAsync(GetUpstreamArguments, RepositoryPath, cancellationToken);
+        if (upstream.Succeeded && !string.IsNullOrWhiteSpace(upstream.Output))
+        {
+            string remoteBranch = GetBranchNameFromRemoteReference(upstream.Output.Trim());
+            return await RunGitAsync(["push", "--force", RemoteName, $"HEAD:{remoteBranch}"], RepositoryPath, cancellationToken);
+        }
+
+        return await RunGitAsync(["push", "--force", "-u", RemoteName, "HEAD"], RepositoryPath, cancellationToken);
+    }
+
+    private async Task<SettingsGitOperationResult> ForcePullAsync(CancellationToken cancellationToken)
+    {
+        string remoteReference = await GetPullRemoteReferenceAsync(cancellationToken);
+        string remoteBranch = GetBranchNameFromRemoteReference(remoteReference);
+
+        if (await RunGitAsync(["fetch", "--prune", RemoteName], RepositoryPath, cancellationToken) is { Succeeded: false } fetch)
+        {
+            return SettingsGitOperationResult.CommandFailure(fetch);
+        }
+
+        if (await RunGitAsync(["reset", "--hard", remoteReference], RepositoryPath, cancellationToken) is { Succeeded: false } reset)
+        {
+            return SettingsGitOperationResult.CommandFailure(reset);
+        }
+
+        if (await RunGitAsync(["clean", "-d", "--force", "-x"], RepositoryPath, cancellationToken) is { Succeeded: false } clean)
+        {
+            return SettingsGitOperationResult.CommandFailure(clean);
+        }
+
+        SettingsGitCommandResult currentBranch = await RunGitAsync(["branch", "--show-current"], RepositoryPath, cancellationToken);
+        if (currentBranch.Succeeded && string.Equals(currentBranch.Output.Trim(), remoteBranch, StringComparison.Ordinal))
+        {
+            _ = await RunGitAsync(["branch", "--set-upstream-to", remoteReference], RepositoryPath, cancellationToken);
+        }
+
+        return SettingsGitOperationResult.Success();
+    }
+
+    private async Task<string> GetPullRemoteReferenceAsync(CancellationToken cancellationToken)
+    {
+        SettingsGitCommandResult upstream = await RunGitAsync(GetUpstreamArguments, RepositoryPath, cancellationToken);
+        if (upstream.Succeeded && !string.IsNullOrWhiteSpace(upstream.Output))
+        {
+            return upstream.Output.Trim();
+        }
+
+        string remoteBranch = await GetDefaultRemoteBranchAsync(cancellationToken);
+        return $"{RemoteName}/{remoteBranch}";
     }
 
     private async Task<string> GetDefaultRemoteBranchAsync(CancellationToken cancellationToken)

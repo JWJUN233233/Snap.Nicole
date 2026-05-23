@@ -12,6 +12,7 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCounts))]
+    [NotifyPropertyChangedFor(nameof(CacheHitRate))]
     public partial long? InputTokenCount { get; set; }
 
     [ObservableProperty]
@@ -40,7 +41,22 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasCounts))]
+    [NotifyPropertyChangedFor(nameof(CacheHitRate))]
     public partial long? CachedInputTokenCount { get; set; }
+
+    public double? CacheHitRate
+    {
+        get
+        {
+            if (InputTokenCount is not long inputTokenCount || inputTokenCount <= 0 ||
+                CachedInputTokenCount is not long cachedInputTokenCount || cachedInputTokenCount <= 0)
+            {
+                return null;
+            }
+
+            return (double)cachedInputTokenCount / inputTokenCount;
+        }
+    }
 
     public bool HasCounts
     {

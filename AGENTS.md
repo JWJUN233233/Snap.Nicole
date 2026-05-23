@@ -42,6 +42,16 @@ No information provided yet.
 
 No information provided yet.
 
+# Encoding
+
+Windows PowerShell reads files using the active ANSI code page when no encoding is specified.
+Files that contain non-ASCII text, may display as mojibake and XML parsing can report false structural errors.
+
+- Prefer `rg` for searching text because it reads UTF-8 correctly in this repo.
+- When using PowerShell to read or parse text files, specify UTF-8 explicitly, for example `Get-Content -Raw -Encoding UTF8 src\Snap.Nicole\Resources\SR.resx`.
+- When parsing XML resources in PowerShell, use `[xml]$doc = Get-Content -Raw -Encoding UTF8 path\to\file.resx` instead of relying on the default encoding.
+- When writing files from PowerShell, specify the intended encoding explicitly to avoid accidental re-encoding.
+
 # Line Ending Normalization
 
 `normalize-line-endings` skill requires be load into your context and you may follow the instructions in that skill before completing the givin task.
