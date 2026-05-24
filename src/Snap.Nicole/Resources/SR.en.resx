@@ -92,10 +92,10 @@
     <value>Git Sync</value>
   </data>
   <data name="UIXamlPagesSettingsPageDescriptionSettingsSync" xml:space="preserve">
-    <value>Use the local Git command line client to sync every settings file and subfolder under the app Settings folder.</value>
+    <value>Use the local Git command line client to sync every settings file and subfolder under the app Settings folder</value>
   </data>
   <data name="UIXamlPagesSettingsPageDescriptionCreateEmptyRepository" xml:space="preserve">
-    <value>Create a new empty repository on GitHub, GitLab, Gitee, or another Git service. Do not add a README, .gitignore, or License. Copy the HTTPS or SSH URL here to enable sync.</value>
+    <value>Create a new empty repository on GitHub, GitLab, Gitee, or another Git service. Do not add a README, .gitignore, or License. Copy the HTTPS or SSH URL here to enable sync</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelRepositoryUrl" xml:space="preserve">
     <value>Repository URL</value>
@@ -131,7 +131,7 @@
     <value>Checking Git</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusCheckingMessage" xml:space="preserve">
-    <value>Checking the git command and the Settings folder repository state.</value>
+    <value>Checking the git command and the Settings folder repository state</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusUnavailableTitle" xml:space="preserve">
     <value>Git Unavailable</value>
@@ -140,19 +140,19 @@
     <value>Sync Not Enabled</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusNotRepositoryMessage" xml:space="preserve">
-    <value>Enter an empty repository URL and the app will initialize the Settings folder as an independent Git repository.</value>
+    <value>Enter an empty repository URL and the app will initialize the Settings folder as an independent Git repository</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRepositoryReadyTitle" xml:space="preserve">
     <value>Sync Ready</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRepositoryReadyMessage" xml:space="preserve">
-    <value>The Settings folder is connected to a remote repository.</value>
+    <value>The Settings folder is connected to a remote repository</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRemoteMissingTitle" xml:space="preserve">
     <value>Remote Repository Missing</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRemoteMissingMessage" xml:space="preserve">
-    <value>The Settings folder is already a Git repository. Provide a repository URL to continue syncing.</value>
+    <value>The Settings folder is already a Git repository. Provide a repository URL to continue syncing</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusInvalidRepositoryTitle" xml:space="preserve">
     <value>Repository State Error</value>
@@ -173,55 +173,55 @@
     <value>Sync Enabled</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage" xml:space="preserve">
-    <value>The Settings folder has been configured as a Git repository.</value>
+    <value>The Settings folder has been configured as a Git repository</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusPullSuccessTitle" xml:space="preserve">
     <value>Pull Succeeded</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusPullSuccessMessage" xml:space="preserve">
-    <value>Remote settings have been synced locally.</value>
+    <value>Remote settings have been synced locally</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusPushSuccessTitle" xml:space="preserve">
     <value>Push Succeeded</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusPushSuccessMessage" xml:space="preserve">
-    <value>Local settings have been pushed to the remote repository.</value>
+    <value>Local settings have been pushed to the remote repository</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusRemoteEmptyMessage" xml:space="preserve">
-    <value>The remote repository is empty; there is nothing to pull yet.</value>
+    <value>The remote repository is empty; there is nothing to pull yet</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusNoLocalCommitsMessage" xml:space="preserve">
-    <value>There are no settings files to push yet.</value>
+    <value>There are no settings files to push yet</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitStatusOperationFailedTitle" xml:space="preserve">
     <value>Sync Failed</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorCanceled" xml:space="preserve">
-    <value>The operation was canceled.</value>
+    <value>The operation was canceled</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorGitUnavailable" xml:space="preserve">
-    <value>No usable git command was found. Install Git for Windows and make sure git is available in PATH.</value>
+    <value>No usable git command was found. Install Git for Windows and make sure git is available in PATH</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorNetwork" xml:space="preserve">
-    <value>The network connection failed, so the remote repository could not be reached.</value>
+    <value>The network connection failed, so the remote repository could not be reached</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorPermission" xml:space="preserve">
-    <value>Permission or authentication failed. Check repository access, credentials, or your SSH key.</value>
+    <value>Permission or authentication failed. Check repository access, credentials, or your SSH key</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRemote" xml:space="preserve">
-    <value>The remote repository configuration is invalid. Confirm the URL exists and points to an empty or accessible repository.</value>
+    <value>The remote repository configuration is invalid. Confirm the URL exists and points to an empty or accessible repository</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepository" xml:space="preserve">
-    <value>The local repository state is invalid. Check the Git repository under the Settings folder.</value>
+    <value>The local repository state is invalid. Check the Git repository under the Settings folder</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorConflict" xml:space="preserve">
-    <value>The repository has conflicts or a non-fast-forward push. Resolve it manually, then sync again.</value>
+    <value>The repository has conflicts or a non-fast-forward push. Resolve it manually, then sync again</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorCommand" xml:space="preserve">
-    <value>The Git command failed.</value>
+    <value>The Git command failed</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
-    <value>An unfinished merge, rebase, or lock file was detected. Complete or clean up that Git operation first.</value>
+    <value>An unfinished merge, rebase, or lock file was detected. Complete or clean up that Git operation first</value>
   </data>
   <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
     <value>Chat</value>
@@ -244,6 +244,12 @@
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
     <value>Model Provider Profiles</value>
   </data>
+  <data name="UIXamlPagesSettingsPageDescriptionSelectModelProviderProfileToEdit" xml:space="preserve">
+    <value>Select a model provider profile on the left to edit it</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageDescriptionAddModelProviderProfileToEdit" xml:space="preserve">
+    <value>Add a model provider profile first</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelProfileName" xml:space="preserve">
     <value>Profile Name</value>
   </data>
@@ -257,7 +263,7 @@
     <value>API Key</value>
   </data>
   <data name="UIXamlPagesSettingsPageDescriptionProfileApiKey" xml:space="preserve">
-    <value>You can only view the original API Key when first entering it, or after clearing and entering it again.</value>
+    <value>You can only view the original API Key when first entering it, or after clearing and entering it again</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelProfileModelId" xml:space="preserve">
     <value>Model ID</value>
@@ -266,7 +272,7 @@
     <value>Model List Documentation Link</value>
   </data>
   <data name="UIXamlPagesSettingsPageDescriptionModelListDocumentationLink" xml:space="preserve">
-    <value>Some model providers may not expose a model list API. Enter a documentation link to override the default model fetch behavior.</value>
+    <value>Some model providers may not expose a model list API. Enter a documentation link to override the default model fetch behavior</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelSelectedModel" xml:space="preserve">
     <value>Selected Model</value>
@@ -290,34 +296,34 @@
     <value>Fetching models</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusFetchingMessage" xml:space="preserve">
-    <value>Requesting the model list from the selected provider.</value>
+    <value>Requesting the model list from the selected provider</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusSuccessTitle" xml:space="preserve">
     <value>Models updated</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusSuccessMessage" xml:space="preserve">
-    <value>Fetched {0} models.</value>
+    <value>Fetched {0} models</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusFailedTitle" xml:space="preserve">
     <value>Model fetch failed</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusNoProviderMessage" xml:space="preserve">
-    <value>Select a model provider profile first.</value>
+    <value>Select a model provider profile first</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusApiKeyMissingMessage" xml:space="preserve">
-    <value>Enter an API key before fetching models.</value>
+    <value>Enter an API key before fetching models</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusCanceledMessage" xml:space="preserve">
-    <value>The model fetch was canceled.</value>
+    <value>The model fetch was canceled</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusDocumentationOpenedTitle" xml:space="preserve">
     <value>Documentation opened</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusDocumentationOpenedMessage" xml:space="preserve">
-    <value>The provider model documentation was opened in your browser. Manage models manually in the list below.</value>
+    <value>The provider model documentation was opened in your browser. Manage models manually in the list below</value>
   </data>
   <data name="UIXamlPagesSettingsPageModelListStatusInvalidDocumentationLinkMessage" xml:space="preserve">
-    <value>Enter a valid http or https documentation link.</value>
+    <value>Enter a valid http or https documentation link</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelAddProfile" xml:space="preserve">
     <value>Add</value>
@@ -329,7 +335,7 @@
     <value>Delete</value>
   </data>
   <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
-    <value>Please configure your API key in Settings.</value>
+    <value>Please configure your API key in Settings</value>
   </data>
   <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
     <value>Thought</value>

@@ -2,16 +2,21 @@
     x:Class="Snap.Nicole.UI.Xaml.Controls.ChatElements.ChatMessageView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cvt="using:CommunityToolkit.WinUI.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     mc:Ignorable="d">
 
     <UserControl.Resources>
-        <snuxcc:ReasoningContentTitleConverter x:Key="ReasoningContentTitleConverter" />
-        <snuxcc:UsageCacheHitRateTextConverter x:Key="UsageCacheHitRateTextConverter" />
-        <snuxcc:UsageCountVisibilityConverter x:Key="UsageCountVisibilityConverter" />
+        <cvt:BoolToObjectConverter
+            x:Key="ReasoningContentTitleConverter"
+            FalseValue="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelReasoningInProgress}"
+            TrueValue="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelReasoningCompleted}" />
+        <cvt:IFormattableToStringConverter x:Key="UsageCacheHitRateTextConverter" />
+        <snuxc:EmptyObjectToVisibilityConverter x:Key="UsageCountVisibilityConverter" />
 
         <DataTemplate x:Key="TextContentTemplate">
             <snuxcc:ChatMarkdownSegmentView Markdown="{Binding Text}" />
@@ -105,7 +110,7 @@
                     <TextBlock
                         VerticalAlignment="Center"
                         Style="{ThemeResource CaptionTextBlockStyle}"
-                        Text="{Binding CacheHitRate, Converter={StaticResource UsageCacheHitRateTextConverter}}"
+                        Text="{Binding CacheHitRate, Converter={StaticResource UsageCacheHitRateTextConverter}, ConverterParameter=P0}"
                         Visibility="{Binding CacheHitRate, Converter={StaticResource UsageCountVisibilityConverter}}" />
                 </StackPanel>
             </StackPanel>

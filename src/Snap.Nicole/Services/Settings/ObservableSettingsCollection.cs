@@ -162,7 +162,7 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
     {
         if (!value.HasValue)
         {
-            SetCurrentItemCore(this.FirstOrDefault(), null);
+            SetCurrentItemCore(null, null);
             return;
         }
 
@@ -196,7 +196,12 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
 
     private TItem? CoerceCurrentItem(TItem? value)
     {
-        if (value is not null && Contains(value))
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (Contains(value))
         {
             return value;
         }

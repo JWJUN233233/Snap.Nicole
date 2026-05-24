@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Snap.Nicole.UI.Xaml;
+﻿namespace Snap.Nicole.UI.Xaml;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
 internal sealed class GeneratedDependencyPropertyAttribute<T>(string name) : Attribute

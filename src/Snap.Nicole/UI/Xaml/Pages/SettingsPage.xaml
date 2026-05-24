@@ -6,12 +6,20 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mxi="using:Microsoft.Xaml.Interactivity"
+    xmlns:snr="using:Snap.Nicole.Resources"
     xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
     xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snvs="using:Snap.Nicole.ViewModels.Settings"
     d:DataContext="{d:DesignInstance snvs:SettingsViewModel}"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <snuxc:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
+        <snuxc:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
+        <snuxc:ModelProviderProfileEmptyStateResourceNameConverter x:Key="ModelProviderProfileEmptyStateResourceNameConverter" />
+        <snr:StringResourceConverter x:Key="StringResourceConverter" />
+    </Page.Resources>
 
     <ScrollViewer Padding="24">
         <mxi:Interaction.Behaviors>
@@ -228,95 +236,115 @@
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                             BorderThickness="0,1,1,1"
                             CornerRadius="{Binding Source={ThemeResource ControlCornerRadius}, Converter={StaticResource RightCornerRadiusFilterConverter}}">
-                            <StackPanel Spacing="16">
-                                <TextBox
-                                    Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}"
-                                    IsSpellCheckEnabled="False"
-                                    Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <ComboBox
-                                    MinWidth="240"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                    DisplayMemberPath="Label"
-                                    Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}"
-                                    ItemsSource="{Binding ModelProviderTypes}"
-                                    SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
-                                    SelectedValuePath="Value" />
-                                <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                <PasswordBox
-                                    snuxc:PasswordBoxExtensions.Password="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                    Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionProfileApiKey}"
-                                    Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}"
-                                    PasswordChar="&#x2022;"
-                                    PasswordRevealMode="Peek" />
+                            <Grid>
+                                <StackPanel Spacing="16" Visibility="{Binding Settings.ModelProviderProfiles.CurrentItem, Converter={StaticResource ModelProviderProfileEditorVisibilityConverter}}">
+                                    <TextBox
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileName}"
+                                        IsSpellCheckEnabled="False"
+                                        Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <ComboBox
+                                        MinWidth="240"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        DisplayMemberPath="Label"
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}"
+                                        ItemsSource="{Binding ModelProviderTypes}"
+                                        SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
+                                        SelectedValuePath="Value" />
+                                    <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <PasswordBox
+                                        snuxc:PasswordBoxExtensions.Password="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionProfileApiKey}"
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}"
+                                        PasswordChar="&#x2022;"
+                                        PasswordRevealMode="Peek" />
 
-                                <Border
-                                    Padding="16"
-                                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="{ThemeResource ControlCornerRadius}">
-                                    <StackPanel Spacing="3">
-                                        <cwc:SettingsCard Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionModelListDocumentationLink}" Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListDocumentationLink}">
-                                            <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelListDocumentationLink, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                        </cwc:SettingsCard>
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListActions}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Top"
+                                    <Border
+                                        Padding="16"
+                                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="{ThemeResource ControlCornerRadius}">
+                                        <StackPanel Spacing="3">
+                                            <cwc:SettingsCard Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionModelListDocumentationLink}" Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListDocumentationLink}">
+                                                <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelListDocumentationLink, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </cwc:SettingsCard>
+                                            <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListActions}">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <Button
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Top"
+                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        Command="{Binding RefreshModelsCommand}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <FontIcon FontSize="16" Glyph="&#xE72C;" />
+                                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelFetchModels}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="2"
+                                                        VerticalAlignment="Top"
+                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        Command="{Binding AddModelCommand}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <FontIcon FontSize="16" Glyph="&#xE710;" />
+                                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddModel}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                    <Button
+                                                        Grid.Column="3"
+                                                        VerticalAlignment="Top"
+                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        Command="{Binding DeleteModelCommand}">
+                                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                                            <FontIcon FontSize="16" Glyph="&#xE74D;" />
+                                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteModel}" />
+                                                        </StackPanel>
+                                                    </Button>
+                                                </StackPanel>
+                                            </cwc:SettingsCard>
+                                            <InfoBar
+                                                Title="{Binding ModelListStatusTitle}"
+                                                IsClosable="False"
+                                                IsOpen="{Binding IsModelListStatusOpen, Mode=TwoWay}"
+                                                Message="{Binding ModelListStatusMessage}"
+                                                Severity="{Binding ModelListInfoBarSeverity}"
+                                                Visibility="{Binding IsModelListStatusOpen, Mode=OneWay}" />
+                                            <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSelectedModel}">
+                                                <ComboBox
+                                                    MinWidth="240"
                                                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                    Command="{Binding RefreshModelsCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon FontSize="16" Glyph="&#xE72C;" />
-                                                        <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelFetchModels}" />
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button
-                                                    Grid.Column="2"
-                                                    VerticalAlignment="Top"
-                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                    Command="{Binding AddModelCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon FontSize="16" Glyph="&#xE710;" />
-                                                        <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAddModel}" />
-                                                    </StackPanel>
-                                                </Button>
-                                                <Button
-                                                    Grid.Column="3"
-                                                    VerticalAlignment="Top"
-                                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                    Command="{Binding DeleteModelCommand}">
-                                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon FontSize="16" Glyph="&#xE74D;" />
-                                                        <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelDeleteModel}" />
-                                                    </StackPanel>
-                                                </Button>
-                                            </StackPanel>
-                                        </cwc:SettingsCard>
-                                        <InfoBar
-                                            Title="{Binding ModelListStatusTitle}"
-                                            IsClosable="False"
-                                            IsOpen="{Binding IsModelListStatusOpen, Mode=TwoWay}"
-                                            Message="{Binding ModelListStatusMessage}"
-                                            Severity="{Binding ModelListInfoBarSeverity}"
-                                            Visibility="{Binding IsModelListStatusOpen, Mode=OneWay}" />
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSelectedModel}">
-                                            <ComboBox
-                                                MinWidth="240"
-                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                DisplayMemberPath="DisplayName"
-                                                ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
-                                                SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
-                                        </cwc:SettingsCard>
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}">
-                                            <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                        </cwc:SettingsCard>
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}">
-                                            <TextBox Grid.Column="1" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                        </cwc:SettingsCard>
-                                    </StackPanel>
-                                </Border>
-                            </StackPanel>
+                                                    DisplayMemberPath="DisplayName"
+                                                    ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
+                                                    SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                            </cwc:SettingsCard>
+                                            <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}">
+                                                <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </cwc:SettingsCard>
+                                            <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}">
+                                                <TextBox Grid.Column="1" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            </cwc:SettingsCard>
+                                        </StackPanel>
+                                    </Border>
+                                </StackPanel>
+                                <StackPanel
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="8"
+                                    Visibility="{Binding Settings.ModelProviderProfiles.CurrentItem, Converter={StaticResource ModelProviderProfileEmptyStateVisibilityConverter}}">
+                                    <FontIcon
+                                        HorizontalAlignment="Center"
+                                        FontSize="24"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Glyph="&#xE70F;" />
+                                    <TextBlock
+                                        MaxWidth="320"
+                                        HorizontalAlignment="Center"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding Settings.ModelProviderProfiles.Count, Converter={StaticResource StringResourceConverter}, ConverterParameter={StaticResource ModelProviderProfileEmptyStateResourceNameConverter}}"
+                                        TextAlignment="Center"
+                                        TextWrapping="WrapWholeWords" />
+                                </StackPanel>
+                            </Grid>
                         </Border>
                     </Grid>
                 </StackPanel>

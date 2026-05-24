@@ -23,6 +23,7 @@ src
 - Do not use expression-bodied syntax for methods, constructors, operators, or conversions. Lambdas or expressions inside method/property bodies are unaffected.
 - For read-only properties, do not use direct expression-bodied declarations like `Property => value;`; use an accessor body instead, for example `Property { get => value; }`.
 - For non-constant `string` or `string?` values that need an empty string, use `string.Empty` instead of `""`. Empty string literals are allowed only for constants or the `is pattern`.
+- In `.resx` resources, single-line user-visible text should not end with a sentence-ending period. Preserve meaningful punctuation such as ellipses, URLs, file extensions, or multi-line prose.
 
 ### How to build `Snap.Nicole`
 
