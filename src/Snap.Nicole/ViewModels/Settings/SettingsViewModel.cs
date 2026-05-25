@@ -108,6 +108,12 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
         modelProfiles.Remove(selected);
     }
 
+    [RelayCommand]
+    private void ClearModels()
+    {
+        Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles?.Clear();
+    }
+
     [RelayCommand(CanExecute = nameof(CanRefreshModels))]
     private async Task RefreshModelsAsync(CancellationToken cancellationToken)
     {

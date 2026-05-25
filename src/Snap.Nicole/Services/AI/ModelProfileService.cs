@@ -1,8 +1,6 @@
 using Anthropic;
 using Anthropic.Core;
-using AnthropicModelInfo = Anthropic.Models.Models.ModelInfo;
-using AnthropicModelListPage = Anthropic.Models.Models.ModelListPage;
-using AnthropicModelListParams = Anthropic.Models.Models.ModelListParams;
+using Anthropic.Models.Models;
 using OpenAI;
 using OpenAI.Models;
 using Snap.Nicole.Core;
@@ -10,6 +8,7 @@ using Snap.Nicole.Services.AI.Models;
 using System.ClientModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,8 +22,7 @@ internal sealed class ModelProfileService : IModelProfileService
 
         return providerProfile.ProviderType.Value switch
         {
-            ModelProviderType.OpenAIChatCompletion => GetOpenAIModelsAsync(providerProfile, cancellationToken),
-            ModelProviderType.OpenAIResponses => GetOpenAIModelsAsync(providerProfile, cancellationToken),
+            ModelProviderType.OpenAIChatCompletion or ModelProviderType.OpenAIResponses => GetOpenAIModelsAsync(providerProfile, cancellationToken),
             ModelProviderType.Anthropic => GetAnthropicModelsAsync(providerProfile, cancellationToken),
             _ => throw new NotSupportedException($"Unsupported model provider type: {providerProfile.ProviderType.Value}"),
         };
@@ -42,8 +40,22 @@ internal sealed class ModelProfileService : IModelProfileService
         ClientResult<OpenAIModelCollection> result = await client.GetModelsAsync(cancellationToken);
 
         IEnumerable<ModelProfile> models = result.Value
-            .Where(static model => !string.IsNullOrWhiteSpace(model.Id))
-            .Select(static model => ModelProfile.Create(model.Id));
+            .Where(static model => string.IsNotNullOrWhiteSpace(model.Id))
+            .Where(static model =>
+            {
+                IDictionary<string, BinaryData> additionalRawData = GetSerializedAdditionalRawData(model);
+                if (additionalRawData.TryGetValue("status", out BinaryData? statusData))
+                {
+                    string? status = statusData.ToObjectFromJson<string>();
+                    if (status is "Shutdown")
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+            })
+            .Select(ModelProfile.Create);
         return [.. models];
     }
 
@@ -58,37 +70,27 @@ internal sealed class ModelProfileService : IModelProfileService
         using (AnthropicClient client = new(clientOptions))
         {
             List<ModelProfile> result = [];
-            AnthropicModelListParams @params = new()
+            ModelListParams @params = new()
             {
                 Limit = 1000,
             };
 
-            // TODO: IPage can be adapted to an IAsyncEnumerable
-            AnthropicModelListPage page = await client.Models.List(@params, cancellationToken);
-
-            while (true)
+            ModelListPage page = await client.Models.List(@params, cancellationToken);
+            await foreach(ModelInfo model in page.Paginate(cancellationToken))
             {
-                result.AddRange(page.Items
-                    .Where(static model => !string.IsNullOrWhiteSpace(model.ID))
-                    .Select(CreateAnthropicModelProfile));
-
-                if (!page.HasNext())
+                if (string.IsNullOrWhiteSpace(model.ID))
                 {
-                    return result;
+                    continue;
                 }
 
-                page = await page.Next(cancellationToken);
+                result.Add(ModelProfile.Create(model));
             }
+
+            return result;
         }
     }
 
-    private static ModelProfile CreateAnthropicModelProfile(AnthropicModelInfo model)
-    {
-        string name = string.IsNullOrWhiteSpace(model.DisplayName) ? model.ID : model.DisplayName;
-        return new()
-        {
-            Name = name,
-            ModelId = model.ID,
-        };
-    }
+    // internal IDictionary<string, BinaryData> SerializedAdditionalRawData
+    [UnsafeAccessor(UnsafeAccessorKind.Method, Name = "get_SerializedAdditionalRawData")]
+    private static extern IDictionary<string, BinaryData> GetSerializedAdditionalRawData(OpenAIModel model);
 }

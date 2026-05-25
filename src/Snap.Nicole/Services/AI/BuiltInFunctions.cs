@@ -1,4 +1,3 @@
-//using OpenAI.Chat;
 using System.ComponentModel;
 
 namespace Snap.Nicole.Services.AI;

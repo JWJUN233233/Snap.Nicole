@@ -2,7 +2,7 @@ using Microsoft.UI.Xaml.Data;
 using Snap.Nicole.Resources;
 using System;
 
-namespace Snap.Nicole.UI.Xaml.Controls;
+namespace Snap.Nicole.UI.Xaml.Data.Specialized;
 
 internal sealed class ModelProviderProfileEmptyStateResourceNameConverter : IValueConverter
 {

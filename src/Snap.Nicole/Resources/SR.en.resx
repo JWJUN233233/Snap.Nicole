@@ -292,6 +292,9 @@
   <data name="UIXamlPagesSettingsPageLabelDeleteModel" xml:space="preserve">
     <value>Delete Model</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelClearModels" xml:space="preserve">
+    <value>Clear Models</value>
+  </data>
   <data name="UIXamlPagesSettingsPageModelListStatusFetchingTitle" xml:space="preserve">
     <value>Fetching models</value>
   </data>

@@ -353,6 +353,9 @@
   <data name="UIXamlPagesSettingsPageLabelDeleteModel" xml:space="preserve">
     <value>删除模型</value>
   </data>
+  <data name="UIXamlPagesSettingsPageLabelClearModels" xml:space="preserve">
+    <value>清空模型</value>
+  </data>
   <data name="UIXamlPagesSettingsPageModelListStatusFetchingTitle" xml:space="preserve">
     <value>正在获取模型</value>
   </data>

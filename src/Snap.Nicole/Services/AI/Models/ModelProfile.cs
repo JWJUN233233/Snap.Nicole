@@ -32,12 +32,21 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
         }
     }
 
-    public static ModelProfile Create(string modelId)
+    public static ModelProfile Create(OpenAI.Models.OpenAIModel model)
     {
         return new ModelProfile
         {
-            Name = modelId,
-            ModelId = modelId,
+            Name = string.IsNullOrEmpty(model.OwnedBy) ? model.Id : $"{model.OwnedBy}/{model.Id}",
+            ModelId = model.Id,
+        };
+    }
+
+    public static ModelProfile Create(Anthropic.Models.Models.ModelInfo model)
+    {
+        return new ModelProfile
+        {
+            Name = string.IsNullOrWhiteSpace(model.DisplayName) ? model.ID : model.DisplayName,
+            ModelId = model.ID,
         };
     }
 }

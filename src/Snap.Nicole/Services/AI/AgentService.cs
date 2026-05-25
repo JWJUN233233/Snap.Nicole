@@ -1,6 +1,5 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
-using Microsoft.Extensions.Logging;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
@@ -14,9 +13,7 @@ namespace Snap.Nicole.Services.AI;
 internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentService
 {
     private readonly IServiceProvider serviceProvider = serviceProvider;
-    private readonly ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-    // TODO: preserve AIAgent instance across multiple calls to RunStreamingAsync for the same conversation
     // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
     public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
