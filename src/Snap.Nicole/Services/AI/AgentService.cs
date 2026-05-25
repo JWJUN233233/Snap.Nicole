@@ -6,7 +6,6 @@ using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,9 +13,10 @@ namespace Snap.Nicole.Services.AI;
 
 internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentService
 {
+    private readonly IServiceProvider serviceProvider = serviceProvider;
     private readonly ILoggerFactory loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
 
-    // TODO: perserve AIAgent instance across multiple calls to RunStreamingAsync for the same conversation
+    // TODO: preserve AIAgent instance across multiple calls to RunStreamingAsync for the same conversation
     // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
     public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
@@ -30,14 +30,14 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
-            // Unfortunately, Text is not a dependency property, so we cannot localize this string here. 
+            // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
             ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now);
             configurationMessage.Contents.Add(ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
             return;
         }
 
-        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], loggerFactory);
+        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
 
         ObservableChatMessage? responseMessage = null;
         bool responseAdded = false;

@@ -1,23 +1,27 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.ObjectPool;
+using Snap.Nicole.Core.ObjectPool;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Text.Encodings.Web;
-using System.Text.Json;
+using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 
-// Specially designed ChatHistoryProvider to make sure that 'reasoning_content' can be round-tripped correctly in the chat history
-internal sealed class ReasoningContentRoundTripInMemoryChatHistoryProvider : ChatHistoryProvider
+// Specially designed ChatHistoryProvider to make sure that:
+// 1. 'reasoning_content' can be round-tripped correctly in the chat history
+// 2. 'content' can be round-tripped correctly in the chat history
+internal sealed class RoundTripInMemoryChatHistoryProvider : ChatHistoryProvider
 {
-    public ReasoningContentRoundTripInMemoryChatHistoryProvider()
+    private readonly ObjectPool<StringBuilder> stringBuilderPool;
+
+    public RoundTripInMemoryChatHistoryProvider(ObjectPool<StringBuilder> stringBuilderPool)
         : base(null, null, StoreInputResponseMessageFilter)
     {
+        this.stringBuilderPool = stringBuilderPool;
         sessionState = new ProviderSessionState<State>((_ => new()), GetType().Name, null);
     }
 
@@ -45,20 +49,35 @@ internal sealed class ReasoningContentRoundTripInMemoryChatHistoryProvider : Cha
             for (int i = 0; i < responseMessages.Count; i++)
             {
                 ChatMessage responseMessage = responseMessages[i];
+
+                using ObjectPoolLease<StringBuilder> reasoningContentBuilderLease = stringBuilderPool.Rent();
                 foreach (AIContent content in responseMessage.Contents)
                 {
                     if (content is TextReasoningContent reasoningContent)
                     {
-                        OpenAI.Chat.ChatMessage rawRepresentation = rawRepresentations[i];
-                        rawRepresentation.Patch.Set("$.reasoning_content"u8, reasoningContent.Text);
-                        responseMessage.RawRepresentation = rawRepresentation;
-
-                        // There should only be one reasoning content per message
-                        break;
+                        reasoningContentBuilderLease.Value.Append(reasoningContent.Text);
                     }
                 }
+
+                OpenAI.Chat.ChatMessage rawRepresentation = rawRepresentations[i];
+                rawRepresentation.Patch.Set("$.reasoning_content"u8, reasoningContentBuilderLease.Value.ToString());
+                responseMessage.RawRepresentation = rawRepresentation;
             }
 
+            foreach (OpenAI.Chat.ChatMessage rawRepresentation in rawRepresentations)
+            {
+                if (rawRepresentation is OpenAI.Chat.AssistantChatMessage { Content.Count: > 1 } assistantChatMessage)
+                {
+                    using ObjectPoolLease<StringBuilder> contentBuilderLease = stringBuilderPool.Rent();
+                    foreach (OpenAI.Chat.ChatMessageContentPart part in assistantChatMessage.Content)
+                    {
+                        contentBuilderLease.Value.Append(part.Text);
+                    }
+
+                    assistantChatMessage.Content.Clear();
+                    assistantChatMessage.Content.Add(OpenAI.Chat.ChatMessageContentPart.CreateTextPart(contentBuilderLease.Value.ToString()));
+                }
+            }
         }
 
         state.Messages.AddRange(context.RequestMessages.Concat(responseMessages));

@@ -1,7 +1,7 @@
 using CommunityToolkit.WinUI.Converters;
 using Microsoft.UI.Xaml;
 
-namespace Snap.Nicole.UI.Xaml.Controls;
+namespace Snap.Nicole.UI.Xaml.Data;
 
 internal sealed class EmptyObjectToVisibilityConverter : EmptyObjectToObjectConverter
 {

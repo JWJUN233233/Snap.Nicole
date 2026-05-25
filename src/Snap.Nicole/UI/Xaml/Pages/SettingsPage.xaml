@@ -9,14 +9,15 @@
     xmlns:snr="using:Snap.Nicole.Resources"
     xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
     xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
+    xmlns:snuxd="using:Snap.Nicole.UI.Xaml.Data"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snvs="using:Snap.Nicole.ViewModels.Settings"
     d:DataContext="{d:DesignInstance snvs:SettingsViewModel}"
     mc:Ignorable="d">
 
     <Page.Resources>
-        <snuxc:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
-        <snuxc:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
+        <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
+        <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
         <snuxc:ModelProviderProfileEmptyStateResourceNameConverter x:Key="ModelProviderProfileEmptyStateResourceNameConverter" />
         <snr:StringResourceConverter x:Key="StringResourceConverter" />
     </Page.Resources>

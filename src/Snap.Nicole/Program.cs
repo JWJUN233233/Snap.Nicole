@@ -19,6 +19,8 @@ using System.Threading;
 using WinRT;
 using CommunityToolkit.Mvvm.Messaging;
 using Snap.Nicole.Services.Git;
+using Microsoft.Extensions.ObjectPool;
+using System.Text;
 
 [assembly: DisableRuntimeMarshalling]
 
@@ -57,6 +59,15 @@ internal static class Program
                 .AddTransient<SettingsGitSyncViewModel>()
                 .AddTransient<SettingsViewModel>()
                 .AddTransient<ChatViewModel>();
+
+            services
+                .AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>()
+                .AddSingleton(serviceProvider =>
+                {
+                    ObjectPoolProvider poolProvider = serviceProvider.GetRequiredService<ObjectPoolProvider>();
+                    return poolProvider.CreateStringBuilderPool(initialCapacity: 256, maximumRetainedCapacity: 4096);
+                });
+
         });
 
         App.Host = hostBuilder.Build();

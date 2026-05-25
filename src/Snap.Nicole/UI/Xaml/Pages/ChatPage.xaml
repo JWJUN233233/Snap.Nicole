@@ -4,6 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mxi="using:Microsoft.Xaml.Interactivity"
+    xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
     xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snv="using:Snap.Nicole.ViewModels"
@@ -45,18 +47,15 @@
         </Grid>
 
         <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
-            <ItemsControl
-                x:Name="MessagesItemsControl"
-                ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
-                ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+            <ItemsControl ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}" ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <snuxcc:ChatMessageView Message="{Binding}" />
+                        <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <StackPanel Spacing="8" />
+                        <ItemsStackPanel ItemsUpdatingScrollMode="KeepLastItemInView" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
@@ -79,7 +78,11 @@
                 AcceptsReturn="True"
                 IsSpellCheckEnabled="False"
                 PlaceholderText="{snuxm:StringResource Name=UIXamlPagesChatPageLabelPlaceholder}"
-                Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <mxi:Interaction.Behaviors>
+                    <snuxb:SubmitOnEnterTextBoxBehavior Command="{x:Bind ViewModel.SendMessageCommand}" />
+                </mxi:Interaction.Behaviors>
+            </TextBox>
 
             <Button
                 x:Name="SendButton"

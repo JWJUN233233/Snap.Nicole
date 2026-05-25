@@ -1,0 +1,70 @@
+using CommunityToolkit.WinUI.Behaviors;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using System.Windows.Input;
+using Windows.System;
+using Windows.UI.Core;
+
+namespace Snap.Nicole.UI.Xaml.Behaviors;
+
+[GeneratedDependencyProperty<ICommand>("Command")]
+[GeneratedDependencyProperty<object>("CommandParameter")]
+internal sealed partial class SubmitOnEnterTextBoxBehavior : BehaviorBase<TextBox>
+{
+    protected override void OnAttached()
+    {
+        base.OnAttached();
+        AssociatedObject.PreviewKeyDown += OnPreviewKeyDown;
+    }
+
+    protected override bool Uninitialize()
+    {
+        AssociatedObject.PreviewKeyDown -= OnPreviewKeyDown;
+        return base.Uninitialize();
+    }
+
+    private void OnPreviewKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key is not VirtualKey.Enter)
+        {
+            return;
+        }
+
+        if (IsLineBreakModifierDown())
+        {
+            InsertLineBreak(AssociatedObject);
+            e.Handled = true;
+            return;
+        }
+
+        if (Command is not null && Command.CanExecute(CommandParameter))
+        {
+            Command.Execute(CommandParameter);
+        }
+
+        e.Handled = true;
+    }
+
+    private static bool IsLineBreakModifierDown()
+    {
+        return IsKeyDown(VirtualKey.Shift) || IsKeyDown(VirtualKey.Control);
+    }
+
+    private static bool IsKeyDown(VirtualKey key)
+    {
+        return InputKeyboardSource.GetKeyStateForCurrentThread(key).HasFlag(CoreVirtualKeyStates.Down);
+    }
+
+    private static void InsertLineBreak(TextBox textBox)
+    {
+        string text = textBox.Text ?? string.Empty;
+        int selectionStart = textBox.SelectionStart;
+        int selectionLength = textBox.SelectionLength;
+        string newLine = Environment.NewLine;
+
+        textBox.Text = text[..selectionStart] + newLine + text[(selectionStart + selectionLength)..];
+        textBox.SelectionStart = selectionStart + newLine.Length;
+        textBox.SelectionLength = 0;
+    }
+}

@@ -3,6 +3,7 @@ using Anthropic.Core;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ObjectPool;
 using OpenAI;
 using OpenAI.Chat;
 using OpenAI.Responses;
@@ -10,6 +11,7 @@ using Snap.Nicole.Core;
 using Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 using System.ClientModel;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Snap.Nicole.Services.AI.Models;
 
@@ -61,18 +63,18 @@ internal sealed class ExtendedAgentOptions
         return new(chatOptions);
     }
 
-    public ChatClientAgent CreateAIAgent(IList<AITool>? tools = default, ILoggerFactory? loggerFactory = default)
+    public ChatClientAgent CreateAIAgent(IList<AITool>? tools, IServiceProvider serviceProvider)
     {
         return ProviderType switch
         {
-            ModelProviderType.OpenAIChatCompletion => CreateOpenAIChatCompletionAgent(tools, loggerFactory),
-            ModelProviderType.OpenAIResponses => CreateOpenAIResponsesAgent(tools, loggerFactory),
-            ModelProviderType.Anthropic => CreateAnthropicAgent(tools, loggerFactory),
+            ModelProviderType.OpenAIChatCompletion => CreateOpenAIChatCompletionAgent(tools, serviceProvider),
+            ModelProviderType.OpenAIResponses => CreateOpenAIResponsesAgent(tools, serviceProvider),
+            ModelProviderType.Anthropic => CreateAnthropicAgent(tools, serviceProvider),
             _ => throw new NotSupportedException($"Unsupported model provider type: {ProviderType}"),
         };
     }
 
-    private ChatClientAgent CreateOpenAIChatCompletionAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
+    private ChatClientAgent CreateOpenAIChatCompletionAgent(IList<AITool>? tools, IServiceProvider serviceProvider)
     {
         string? thinkingEnabled = ThinkingEnabled.HasValue
             ? ThinkingEnabled.Value ? "enabled" : "disabled"
@@ -84,7 +86,7 @@ internal sealed class ExtendedAgentOptions
             Endpoint = Endpoint.ToUri(),
             ClientLoggingOptions = new()
             {
-                LoggerFactory = loggerFactory,
+                LoggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>(),
                 EnableMessageContentLogging = true,
             },
         };
@@ -112,21 +114,21 @@ internal sealed class ExtendedAgentOptions
                     Instructions = SystemPrompt,
                     Tools = tools,
                 },
-                ChatHistoryProvider = new ReasoningContentRoundTripInMemoryChatHistoryProvider(),
+                ChatHistoryProvider = new RoundTripInMemoryChatHistoryProvider(serviceProvider.GetRequiredService<ObjectPool<StringBuilder>>()),
                 RequirePerServiceCallChatHistoryPersistence = true,
-            }, loggerFactory: loggerFactory);
+            }, loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
     }
 
-    private ChatClientAgent CreateOpenAIResponsesAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
+    private ChatClientAgent CreateOpenAIResponsesAgent(IList<AITool>? tools, IServiceProvider serviceProvider)
     {
         ResponsesClient client = new OpenAIClient(new ApiKeyCredential(ApiKey!), new OpenAIClientOptions()
         {
             Endpoint = Endpoint.ToUri(),
         }).GetResponsesClient();
-        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: ModelId, loggerFactory: loggerFactory);
+        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: ModelId, loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
     }
 
-    private ChatClientAgent CreateAnthropicAgent(IList<AITool>? tools, ILoggerFactory? loggerFactory)
+    private ChatClientAgent CreateAnthropicAgent(IList<AITool>? tools, IServiceProvider serviceProvider)
     {
         AnthropicClient client = new(new ClientOptions
         {
@@ -134,7 +136,7 @@ internal sealed class ExtendedAgentOptions
             BaseUrl = string.IsNullOrWhiteSpace(Endpoint) ? EnvironmentUrl.Production : Endpoint,
         });
 
-        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), loggerFactory: loggerFactory);
+        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
     }
 
     private ChatClientAgentOptions CreateAgentOptions(IList<AITool>? tools, ChatHistoryProvider chatHistoryProvider)
