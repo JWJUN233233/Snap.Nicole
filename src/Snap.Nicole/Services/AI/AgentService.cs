@@ -52,10 +52,10 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                     continue;
                 }
 
+                responseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, options.ModelId);
+
                 await taskScheduler.Run(() =>
                 {
-                    responseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, options.ModelId);
-
                     if (!responseAdded)
                     {
                         collection.Add(responseMessage);
