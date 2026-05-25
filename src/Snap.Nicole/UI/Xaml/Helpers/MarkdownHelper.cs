@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Snap.Nicole.UI.Xaml.Controls.ChatElements;
 using System.Collections.Generic;
 using System.Text;
@@ -75,17 +76,9 @@ internal static partial class MarkdownHelper
                 continue;
             }
 
-            if (line.StartsWith("### ", StringComparison.Ordinal))
+            if (TryParseHeading(line, out StringSegment headingText, out double headingFontSize))
             {
-                AddHeading(richText, Slice(line, 4), 18);
-            }
-            else if (line.StartsWith("## ", StringComparison.Ordinal))
-            {
-                AddHeading(richText, Slice(line, 3), 20);
-            }
-            else if (line.StartsWith("# ", StringComparison.Ordinal))
-            {
-                AddHeading(richText, Slice(line, 2), 24);
+                AddHeading(richText, headingText, headingFontSize);
             }
             else if (IsHorizontalRule(line))
             {
@@ -95,7 +88,7 @@ internal static partial class MarkdownHelper
             {
                 if (IsTableSeparator(separatorLine))
                 {
-                    AddTable(richText, line, ref enumerator, ref hasPendingLine, ref pendingLine);
+                    AddTable(richText, line, separatorLine, ref enumerator, ref hasPendingLine, ref pendingLine);
                 }
                 else
                 {
@@ -104,13 +97,17 @@ internal static partial class MarkdownHelper
                     AddParagraph(richText, line);
                 }
             }
-            else if (line.StartsWith("> ", StringComparison.Ordinal))
+            else if (TryParseBlockquote(line, out int blockquoteDepth, out StringSegment blockquoteText))
             {
-                AddBlockquote(richText, Slice(line, 2));
+                AddBlockquote(richText, blockquoteDepth, blockquoteText);
             }
-            else if (line.StartsWith("- ", StringComparison.Ordinal) || line.StartsWith("* ", StringComparison.Ordinal))
+            else if (TryParseTaskListItem(line, out bool isTaskChecked, out StringSegment taskText))
             {
-                AddListItem(richText, Slice(line, 2), "- ");
+                AddTaskListItem(richText, isTaskChecked, taskText);
+            }
+            else if (TryParseUnorderedListItem(line, out StringSegment listItemText))
+            {
+                AddListItem(richText, listItemText, "- ");
             }
             else if (TryParseOrderedListItem(line, out StringSegment listNumber, out StringSegment listText))
             {
@@ -193,6 +190,42 @@ internal static partial class MarkdownHelper
         return segment.Subsegment(offset, length);
     }
 
+    private static bool TryParseHeading(StringSegment line, out StringSegment text, out double fontSize)
+    {
+        StringSegment trimmed = line.TrimStart();
+        int level = 0;
+
+        while (level < trimmed.Length && trimmed[level] == '#')
+        {
+            level++;
+        }
+
+        if (level is < 1 or > 6 || level >= trimmed.Length || !char.IsWhiteSpace(trimmed[level]))
+        {
+            text = default;
+            fontSize = 0;
+            return false;
+        }
+
+        int textOffset = level;
+        while (textOffset < trimmed.Length && char.IsWhiteSpace(trimmed[textOffset]))
+        {
+            textOffset++;
+        }
+
+        text = Slice(trimmed, textOffset);
+        fontSize = level switch
+        {
+            1 => 24,
+            2 => 20,
+            3 => 18,
+            4 => 16,
+            5 => 15,
+            _ => 14,
+        };
+        return true;
+    }
+
     private static bool IsWhiteSpace(StringSegment text)
     {
         ReadOnlySpan<char> span = text.AsSpan();
@@ -249,9 +282,88 @@ internal static partial class MarkdownHelper
         return true;
     }
 
+    private static bool TryParseBlockquote(StringSegment line, out int depth, out StringSegment text)
+    {
+        StringSegment trimmed = line.TrimStart();
+
+        if (trimmed.Length == 0 || trimmed[0] != '>')
+        {
+            depth = 0;
+            text = default;
+            return false;
+        }
+
+        int textOffset = 0;
+        depth = 0;
+        while (textOffset < trimmed.Length && trimmed[textOffset] == '>')
+        {
+            textOffset++;
+            depth++;
+
+            while (textOffset < trimmed.Length && char.IsWhiteSpace(trimmed[textOffset]))
+            {
+                textOffset++;
+            }
+        }
+
+        text = Slice(trimmed, textOffset);
+        return true;
+    }
+
+    private static bool TryParseTaskListItem(StringSegment line, out bool isChecked, out StringSegment text)
+    {
+        if (!TryParseUnorderedListItem(line, out StringSegment listText))
+        {
+            isChecked = false;
+            text = default;
+            return false;
+        }
+
+        StringSegment trimmed = listText.TrimStart();
+        if (trimmed.Length < 3 || trimmed[0] != '[' || trimmed[2] != ']')
+        {
+            isChecked = false;
+            text = default;
+            return false;
+        }
+
+        char marker = trimmed[1];
+        if (marker is not ' ' and not 'x' and not 'X')
+        {
+            isChecked = false;
+            text = default;
+            return false;
+        }
+
+        int textOffset = 3;
+        while (textOffset < trimmed.Length && char.IsWhiteSpace(trimmed[textOffset]))
+        {
+            textOffset++;
+        }
+
+        isChecked = marker is 'x' or 'X';
+        text = Slice(trimmed, textOffset);
+        return true;
+    }
+
+    private static bool TryParseUnorderedListItem(StringSegment line, out StringSegment text)
+    {
+        StringSegment trimmed = line.TrimStart();
+
+        if (trimmed.Length < 2 || trimmed[0] is not '-' and not '*' and not '+' || !char.IsWhiteSpace(trimmed[1]))
+        {
+            text = default;
+            return false;
+        }
+
+        text = Slice(trimmed, 2);
+        return true;
+    }
+
     private static bool TryParseOrderedListItem(StringSegment line, out StringSegment number, out StringSegment text)
     {
-        ReadOnlySpan<char> span = line.AsSpan();
+        StringSegment trimmed = line.TrimStart();
+        ReadOnlySpan<char> span = trimmed.AsSpan();
         int index = 0;
 
         while (index < span.Length && char.IsDigit(span[index]))
@@ -266,8 +378,8 @@ internal static partial class MarkdownHelper
             return false;
         }
 
-        number = Slice(line, 0, index);
-        text = Slice(line, index + 2);
+        number = Slice(trimmed, 0, index);
+        text = Slice(trimmed, index + 2);
         return true;
     }
 
@@ -303,14 +415,60 @@ internal static partial class MarkdownHelper
         richText.Blocks.Add(paragraph);
     }
 
-    private static void AddBlockquote(RichTextBlock richText, StringSegment text)
+    private static void AddBlockquote(RichTextBlock richText, int depth, StringSegment text)
     {
-        Paragraph paragraph = new()
+        RichTextBlock quoteText = new()
         {
-            Margin = new Thickness(12, 2, 0, 2),
+            TextWrapping = TextWrapping.Wrap,
+            FontSize = 14,
+            IsTextSelectionEnabled = true,
+        };
+
+        Paragraph quoteParagraph = new()
+        {
+            Margin = new Thickness(0),
             Foreground = GetThemeBrush("TextFillColorSecondaryBrush", "SystemControlForegroundBaseMediumBrush"),
         };
-        paragraph.Inlines.Add(new Run { Text = "> " });
+        AddInlineMarkdown(quoteParagraph.Inlines, text);
+        quoteText.Blocks.Add(quoteParagraph);
+
+        Brush borderBrush = GetThemeBrush("TextFillColorSecondaryBrush", "SystemControlForegroundBaseMediumBrush");
+        UIElement quoteElement = quoteText;
+        for (int i = 0; i < depth; i++)
+        {
+            quoteElement = new Border
+            {
+                Padding = new Thickness(8, i == 0 ? 2 : 0, 0, i == 0 ? 2 : 0),
+                BorderBrush = borderBrush,
+                BorderThickness = new Thickness(2, 0, 0, 0),
+                Child = quoteElement,
+            };
+        }
+
+        Paragraph container = new() { Margin = new Thickness(0, 2, 0, 2) };
+        container.Inlines.Add(new InlineUIContainer
+        {
+            Child = quoteElement,
+        });
+        richText.Blocks.Add(container);
+    }
+
+    private static void AddTaskListItem(RichTextBlock richText, bool isChecked, StringSegment text)
+    {
+        Paragraph paragraph = new() { Margin = new Thickness(16, 1, 0, 1) };
+        paragraph.Inlines.Add(new InlineUIContainer
+        {
+            Child = new CheckBox
+            {
+                IsChecked = isChecked,
+                IsHitTestVisible = false,
+                IsTabStop = false,
+                Margin = new Thickness(0, 0, 4, 0),
+                MinWidth = 0,
+                Padding = new Thickness(0),
+                VerticalAlignment = VerticalAlignment.Center,
+            },
+        });
         AddInlineMarkdown(paragraph.Inlines, text);
         richText.Blocks.Add(paragraph);
     }
@@ -387,6 +545,44 @@ internal static partial class MarkdownHelper
         return cells;
     }
 
+    private static List<global::Microsoft.UI.Xaml.TextAlignment> ParseTableColumnAlignments(StringSegment line, int columnCount)
+    {
+        StringSegment trimmed = TrimTableCellBounds(line);
+        List<global::Microsoft.UI.Xaml.TextAlignment> alignments = [];
+        StringTokenizer tokenizer = new(trimmed, TableCellSeparators);
+
+        foreach (StringSegment cell in tokenizer)
+        {
+            alignments.Add(ParseTableColumnAlignment(cell));
+        }
+
+        while (alignments.Count < columnCount)
+        {
+            alignments.Add(global::Microsoft.UI.Xaml.TextAlignment.Left);
+        }
+
+        return alignments;
+    }
+
+    private static global::Microsoft.UI.Xaml.TextAlignment ParseTableColumnAlignment(StringSegment cell)
+    {
+        StringSegment trimmed = cell.Trim();
+        bool hasLeftMarker = trimmed.Length > 0 && trimmed[0] == ':';
+        bool hasRightMarker = trimmed.Length > 0 && trimmed[trimmed.Length - 1] == ':';
+
+        if (hasLeftMarker && hasRightMarker)
+        {
+            return global::Microsoft.UI.Xaml.TextAlignment.Center;
+        }
+
+        if (hasRightMarker)
+        {
+            return global::Microsoft.UI.Xaml.TextAlignment.Right;
+        }
+
+        return global::Microsoft.UI.Xaml.TextAlignment.Left;
+    }
+
     private static StringSegment TrimTableCellBounds(StringSegment line)
     {
         StringSegment trimmed = line.Trim();
@@ -410,12 +606,14 @@ internal static partial class MarkdownHelper
     private static void AddTable(
         RichTextBlock richText,
         StringSegment headerLine,
+        StringSegment separatorLine,
         ref StringTokenizer.Enumerator enumerator,
         ref bool hasPendingLine,
         ref StringSegment pendingLine)
     {
         List<string> headerCells = ParseTableCells(headerLine);
         int columnCount = headerCells.Count;
+        List<global::Microsoft.UI.Xaml.TextAlignment> columnAlignments = ParseTableColumnAlignments(separatorLine, columnCount);
         List<IReadOnlyList<string>> rows = [headerCells];
 
         while (TryReadLine(ref enumerator, ref hasPendingLine, ref pendingLine, out StringSegment line))
@@ -441,6 +639,7 @@ internal static partial class MarkdownHelper
         {
             Child = new MarkdownTableView
             {
+                ColumnAlignments = columnAlignments,
                 Rows = rows,
             },
         });
@@ -488,6 +687,14 @@ internal static partial class MarkdownHelper
             {
                 inlines.Add(new Italic { Inlines = { new Run { Text = match.Groups["italic"].Value } } });
             }
+            else if (match.Groups["strikethrough"].Success)
+            {
+                inlines.Add(new Run { Text = match.Groups["strikethrough"].Value, TextDecorations = global::Windows.UI.Text.TextDecorations.Strikethrough });
+            }
+            else if (match.Groups["highlight"].Success)
+            {
+                AddHighlight(inlines, match.Groups["highlight"].Value);
+            }
             else if (match.Groups["code"].Success)
             {
                 inlines.Add(new InlineUIContainer
@@ -500,21 +707,19 @@ internal static partial class MarkdownHelper
             }
             else if (match.Groups["linktext"].Success)
             {
-                try
-                {
-                    Hyperlink link = new();
-                    link.Inlines.Add(new Run { Text = match.Groups["linktext"].Value });
-                    link.NavigateUri = new Uri(match.Groups["linkurl"].Value);
-                    inlines.Add(link);
-                }
-                catch
-                {
-                    inlines.Add(new Run { Text = $"[{match.Groups["linktext"].Value}]({match.Groups["linkurl"].Value})" });
-                }
+                AddLink(
+                    inlines,
+                    match.Groups["linktext"].Value,
+                    match.Groups["linkurl"].Value,
+                    match.Groups["linktitle"].Value);
             }
             else if (match.Groups["imgalt"].Success)
             {
-                inlines.Add(new Run { Text = $"[Image: {match.Groups["imgalt"].Value}]", FontStyle = global::Windows.UI.Text.FontStyle.Italic });
+                AddImage(
+                    inlines,
+                    match.Groups["imgalt"].Value,
+                    match.Groups["imgurl"].Value,
+                    match.Groups["imgtitle"].Value);
             }
 
             lastIndex = match.Index + match.Length;
@@ -528,6 +733,107 @@ internal static partial class MarkdownHelper
         {
             inlines.Add(new Run { Text = text[lastIndex..] });
         }
+    }
+
+    private static void AddHighlight(InlineCollection inlines, string text)
+    {
+        inlines.Add(new InlineUIContainer
+        {
+            Child = new Border
+            {
+                Padding = new Thickness(2, 0, 2, 0),
+                CornerRadius = new CornerRadius(2),
+                Background = GetThemeBrush("SystemFillColorCautionBackgroundBrush", "SystemControlHighlightAccentBrush"),
+                Child = new TextBlock
+                {
+                    Foreground = GetThemeBrush("TextFillColorPrimaryBrush", "SystemControlForegroundBaseHighBrush"),
+                    Text = text,
+                    TextWrapping = TextWrapping.NoWrap,
+                },
+            },
+        });
+    }
+
+    private static void AddLink(InlineCollection inlines, string text, string url, string title)
+    {
+        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
+        {
+            inlines.Add(new Run { Text = CreateLinkFallback(text, url, title) });
+            return;
+        }
+
+        Hyperlink link = new()
+        {
+            NavigateUri = uri,
+        };
+        link.Inlines.Add(new Run { Text = text });
+
+        if (!string.IsNullOrEmpty(title))
+        {
+            ToolTipService.SetToolTip(link, title);
+        }
+
+        inlines.Add(link);
+    }
+
+    private static void AddImage(InlineCollection inlines, string altText, string url, string title)
+    {
+        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
+        {
+            AddImageFallback(inlines, altText, url, title);
+            return;
+        }
+
+        Image image = new()
+        {
+            MaxHeight = 240,
+            MaxWidth = 360,
+            Source = new BitmapImage
+            {
+                UriSource = uri,
+            },
+            Stretch = Stretch.Uniform,
+        };
+
+        string tooltip = string.IsNullOrEmpty(title) ? altText : title;
+        if (!string.IsNullOrEmpty(tooltip))
+        {
+            ToolTipService.SetToolTip(image, tooltip);
+        }
+
+        inlines.Add(new InlineUIContainer
+        {
+            Child = image,
+        });
+    }
+
+    private static void AddImageFallback(InlineCollection inlines, string altText, string url, string title)
+    {
+        inlines.Add(new Run
+        {
+            Text = CreateImageFallback(altText, url, title),
+            FontStyle = global::Windows.UI.Text.FontStyle.Italic,
+        });
+    }
+
+    private static string CreateLinkFallback(string text, string url, string title)
+    {
+        if (string.IsNullOrEmpty(title))
+        {
+            return $"[{text}]({url})";
+        }
+
+        return $"[{text}]({url} \"{title}\")";
+    }
+
+    private static string CreateImageFallback(string altText, string url, string title)
+    {
+        if (string.IsNullOrEmpty(title))
+        {
+            return $"![{altText}]({url})";
+        }
+
+        return $"![{altText}]({url} \"{title}\")";
     }
 
     internal static Brush GetThemeBrush(string resourceKey, string fallbackResourceKey)
@@ -549,6 +855,6 @@ internal static partial class MarkdownHelper
         }
     }
 
-    [GeneratedRegex(@"\*\*\*(?<bolditalic>.+?)\*\*\*|\*\*(?<bold>.+?)\*\*|(?<!\*)\*(?!\*)(?<italic>.+?)(?<!\*)\*(?!\*)|`(?<code>.+?)`|!\[(?<imgalt>.+?)\]\((?<imgurl>.+?)\)|\[(?<linktext>.+?)\]\((?<linkurl>.+?)\)")]
+    [GeneratedRegex(@"\*\*\*(?<bolditalic>.+?)\*\*\*|\*\*(?<bold>.+?)\*\*|(?<!\*)\*(?!\*)(?<italic>.+?)(?<!\*)\*(?!\*)|~~(?<strikethrough>.+?)~~|==(?<highlight>.+?)==|`(?<code>.+?)`|!\[(?<imgalt>.*?)\]\((?<imgurl>\S+?)(?:\s+""(?<imgtitle>[^""]*?)"")?\)|\[(?<linktext>.+?)\]\((?<linkurl>\S+?)(?:\s+""(?<linktitle>[^""]*?)"")?\)")]
     private static partial Regex InlineMarkdownPattern();
 }

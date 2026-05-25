@@ -37,6 +37,11 @@ internal sealed partial class ObservableFunctionCallContent : ObservableToolCall
 
     private static string? SerializeArguments(IDictionary<string, object?>? value)
     {
+        if (value is null or { Count: 0 })
+        {
+            return null;
+        }
+
         try
         {
             return JsonSerializer.Serialize(value, JsonOptions);

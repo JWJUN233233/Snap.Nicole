@@ -22,22 +22,36 @@ internal sealed partial class ObservableChatMessage : ObservableObject
 
     public static ObservableChatMessage Create(ChatMessage chatMessage)
     {
-        return new()
+        ObservableChatMessage observableChatMessage = new()
         {
             Role = chatMessage.Role,
             CreatedAt = chatMessage.CreatedAt,
             AuthorName = chatMessage.AuthorName,
             MessageId = chatMessage.MessageId,
         };
+
+        foreach (AIContent content in chatMessage.Contents)
+        {
+            observableChatMessage.Contents.Append(ObservableAIContent.Create(content));
+        }
+
+        return observableChatMessage;
     }
 
-    public static ObservableChatMessage Create(ChatRole role, DateTimeOffset? createdAt, string? authorName = default)
+    public static ObservableChatMessage Create(ChatRole role, DateTimeOffset? createdAt, string? authorName = default, ObservableAIContent? content = default)
     {
-        return new ObservableChatMessage
+        ObservableChatMessage observableChatMessage = new()
         {
             Role = role,
             CreatedAt = createdAt,
             AuthorName = authorName,
         };
+
+        if (content is not null)
+        {
+            observableChatMessage.Contents.Add(content);
+        }
+
+        return observableChatMessage;
     }
 }

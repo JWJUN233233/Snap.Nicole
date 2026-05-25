@@ -26,9 +26,21 @@ internal sealed partial class MarkdownTableView : UserControl
         nameof(Rows),
         typeof(IReadOnlyList<IReadOnlyList<string>>),
         typeof(MarkdownTableView),
-        new PropertyMetadata(null, OnRowsChanged));
+        new PropertyMetadata(null, OnTableChanged));
 
-    private static void OnRowsChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    public IReadOnlyList<global::Microsoft.UI.Xaml.TextAlignment>? ColumnAlignments
+    {
+        get => (IReadOnlyList<global::Microsoft.UI.Xaml.TextAlignment>?)GetValue(ColumnAlignmentsProperty);
+        set => SetValue(ColumnAlignmentsProperty, value);
+    }
+
+    public static readonly DependencyProperty ColumnAlignmentsProperty = DependencyProperty.Register(
+        nameof(ColumnAlignments),
+        typeof(IReadOnlyList<global::Microsoft.UI.Xaml.TextAlignment>),
+        typeof(MarkdownTableView),
+        new PropertyMetadata(null, OnTableChanged));
+
+    private static void OnTableChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is MarkdownTableView view)
         {
@@ -71,6 +83,7 @@ internal sealed partial class MarkdownTableView : UserControl
         {
             FontSize = 13,
             IsTextSelectionEnabled = true,
+            TextAlignment = GetCellTextAlignment(columnIndex),
             TextWrapping = TextWrapping.Wrap,
         };
 
@@ -98,5 +111,15 @@ internal sealed partial class MarkdownTableView : UserControl
         Grid.SetRow(cellBorder, rowIndex);
         Grid.SetColumn(cellBorder, columnIndex);
         TableGrid.Children.Add(cellBorder);
+    }
+
+    private global::Microsoft.UI.Xaml.TextAlignment GetCellTextAlignment(int columnIndex)
+    {
+        if (ColumnAlignments is not null && columnIndex < ColumnAlignments.Count)
+        {
+            return ColumnAlignments[columnIndex];
+        }
+
+        return global::Microsoft.UI.Xaml.TextAlignment.Left;
     }
 }

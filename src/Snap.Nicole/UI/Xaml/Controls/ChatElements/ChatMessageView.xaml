@@ -19,7 +19,7 @@
         <snuxd:EmptyObjectToVisibilityConverter x:Key="UsageCountVisibilityConverter" />
 
         <DataTemplate x:Key="TextContentTemplate">
-            <snuxcc:ChatMarkdownSegmentView Markdown="{Binding Text}" />
+            <snuxcc:ChatMarkdownSegmentView Margin="1,0,0,0" Markdown="{Binding Text}" />
         </DataTemplate>
 
         <DataTemplate x:Key="ReasoningContentTemplate">
@@ -43,6 +43,7 @@
 
         <DataTemplate x:Key="UsageContentTemplate">
             <StackPanel
+                Margin="1,0,0,0"
                 Opacity="0.7"
                 Orientation="Horizontal"
                 Spacing="6">
@@ -141,6 +142,7 @@
         <StackPanel HorizontalAlignment="Stretch" Spacing="4">
             <TextBlock
                 x:Name="HeaderTextBlock"
+                Margin="1,0,0,0"
                 FontSize="12"
                 FontWeight="SemiBold"
                 Opacity="0.7" />

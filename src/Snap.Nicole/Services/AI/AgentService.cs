@@ -18,18 +18,12 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
     public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
         ObservableChatMessage inputMessage = ObservableChatMessage.Create(message);
-        foreach (AIContent content in message.Contents)
-        {
-            inputMessage.Contents.Append(ObservableAIContent.Create(content));
-        }
-
         await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
 
         if (string.IsNullOrWhiteSpace(options.ApiKey))
         {
             // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
-            ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now);
-            configurationMessage.Contents.Add(ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
+            ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
             return;
         }
@@ -52,7 +46,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                     }
                 }
 
-                // Fast path for updates that do not contain any content, which are common when the agent is thinking. This avoids unnecessary dispatching to the UI thread.
+                // Fast path for updates that do not contain any content. This avoids unnecessary dispatching to the UI thread.
                 if (observableContents.Count is 0)
                 {
                     continue;
@@ -80,8 +74,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
         catch (Exception ex)
         {
-            ObservableChatMessage errorMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now);
-            errorMessage.Contents.Add(ObservableTextContent.Create($"Error: {ex.Message}"));
+            ObservableChatMessage errorMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create($"Error: {ex.Message}"));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);
         }
     }

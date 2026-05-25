@@ -4,6 +4,43 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup">
+    <Border
+        Padding="8"
+        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+        BorderThickness="1"
+        CornerRadius="{ThemeResource ControlCornerRadius}">
+        <Grid ColumnSpacing="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <FontIcon
+                Grid.Column="0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Glyph="&#xEC7A;" />
 
-    <snuxcc:ChatPlainTextSegmentView x:Name="Segment" Title="{snuxm:StringResource Name=UIXamlControlsChatFunctionCallSegmentViewLabelTitle}" />
+            <FontIcon
+                Grid.Column="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="12"
+                Glyph="&#xE76C;" />
+
+            <TextBlock
+                Grid.Column="2"
+                Opacity="0.8"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Text="{x:Bind FunctionCall.Name}" />
+            <TextBlock
+                Grid.Column="3"
+                Opacity="0.6"
+                Style="{ThemeResource CaptionTextBlockStyle}"
+                Text="{x:Bind FunctionCall.Arguments}" />
+        </Grid>
+    </Border>
 </UserControl>
