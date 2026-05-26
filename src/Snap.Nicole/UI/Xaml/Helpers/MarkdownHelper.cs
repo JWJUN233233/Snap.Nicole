@@ -456,13 +456,14 @@ internal static partial class MarkdownHelper
 
     private static void AddHorizontalRule(RichTextBlock richText)
     {
-        Paragraph paragraph = new() { Margin = new Thickness(0, 4, 0, 4) };
+        Paragraph paragraph = new() { Margin = new Thickness(0) };
         paragraph.Inlines.Add(new InlineUIContainer
         {
             Child = new Border
             {
+                Margin = new Thickness(0, 4, 0, 4),
                 Height = 1,
-                MinWidth = 120,
+                MinWidth = 100000,
                 Background = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
             },
         });
@@ -568,7 +569,8 @@ internal static partial class MarkdownHelper
 
         return trimmed.Length > 2
             && trimmed[0] == '|'
-            && trimmed[trimmed.Length - 1] == '|';
+            && trimmed[trimmed.Length - 1] == '|'
+            && !IsEscaped(trimmed, trimmed.Length - 1);
     }
 
     private static bool IsTableSeparator(StringSegment line)
@@ -595,13 +597,20 @@ internal static partial class MarkdownHelper
     {
         StringSegment trimmed = TrimTableCellBounds(line);
         List<string> cells = [];
-        StringTokenizer tokenizer = new(trimmed, TableCellSeparators);
+        int cellStart = 0;
 
-        foreach (StringSegment cell in tokenizer)
+        for (int i = 0; i < trimmed.Length; i++)
         {
-            cells.Add(cell.Trim().ToString());
+            if (trimmed[i] != '|' || IsEscaped(trimmed, i))
+            {
+                continue;
+            }
+
+            cells.Add(Slice(trimmed, cellStart, i - cellStart).Trim().ToString());
+            cellStart = i + 1;
         }
 
+        cells.Add(Slice(trimmed, cellStart, trimmed.Length - cellStart).Trim().ToString());
         return cells;
     }
 
@@ -725,35 +734,70 @@ internal static partial class MarkdownHelper
 
         Regex pattern = InlineMarkdownPattern();
         int lastIndex = 0;
+        int searchIndex = 0;
 
-        foreach (Match match in pattern.Matches(text))
+        while (searchIndex < text.Length)
         {
+            Match match = pattern.Match(text, searchIndex);
+            if (!match.Success)
+            {
+                break;
+            }
+
+            if (IsInlineMarkdownMatchEscaped(text, match))
+            {
+                searchIndex = match.Index + 1;
+                continue;
+            }
+
             if (match.Index > lastIndex)
             {
-                inlines.Add(new Run { Text = text[lastIndex..match.Index] });
+                AddTextRun(inlines, text[lastIndex..match.Index]);
             }
 
             if (match.Groups["bolditalic"].Success)
             {
                 Bold bold = new();
-                bold.Inlines.Add(new Italic { Inlines = { new Run { Text = match.Groups["bolditalic"].Value } } });
+                bold.Inlines.Add(new Italic
+                {
+                    Inlines =
+                    {
+                        new Run { Text = UnescapeMarkdownText(match.Groups["bolditalic"].Value) },
+                    },
+                });
                 inlines.Add(bold);
             }
             else if (match.Groups["bold"].Success)
             {
-                inlines.Add(new Bold { Inlines = { new Run { Text = match.Groups["bold"].Value } } });
+                inlines.Add(new Bold
+                {
+                    Inlines =
+                    {
+                        new Run { Text = UnescapeMarkdownText(match.Groups["bold"].Value) },
+                    },
+                });
             }
             else if (match.Groups["italic"].Success)
             {
-                inlines.Add(new Italic { Inlines = { new Run { Text = match.Groups["italic"].Value } } });
+                inlines.Add(new Italic
+                {
+                    Inlines =
+                    {
+                        new Run { Text = UnescapeMarkdownText(match.Groups["italic"].Value) },
+                    },
+                });
             }
             else if (match.Groups["strikethrough"].Success)
             {
-                inlines.Add(new Run { Text = match.Groups["strikethrough"].Value, TextDecorations = global::Windows.UI.Text.TextDecorations.Strikethrough });
+                inlines.Add(new Run
+                {
+                    Text = UnescapeMarkdownText(match.Groups["strikethrough"].Value),
+                    TextDecorations = global::Windows.UI.Text.TextDecorations.Strikethrough,
+                });
             }
             else if (match.Groups["highlight"].Success)
             {
-                AddHighlight(inlines, match.Groups["highlight"].Value);
+                AddHighlight(inlines, UnescapeMarkdownText(match.Groups["highlight"].Value));
             }
             else if (match.Groups["code"].Success)
             {
@@ -769,7 +813,7 @@ internal static partial class MarkdownHelper
             {
                 AddLink(
                     inlines,
-                    match.Groups["linktext"].Value,
+                    UnescapeMarkdownText(match.Groups["linktext"].Value),
                     match.Groups["linkurl"].Value,
                     match.Groups["linktitle"].Value);
             }
@@ -777,22 +821,122 @@ internal static partial class MarkdownHelper
             {
                 AddImage(
                     inlines,
-                    match.Groups["imgalt"].Value,
+                    UnescapeMarkdownText(match.Groups["imgalt"].Value),
                     match.Groups["imgurl"].Value,
                     match.Groups["imgtitle"].Value);
             }
 
             lastIndex = match.Index + match.Length;
+            searchIndex = lastIndex;
         }
 
         if (lastIndex == 0)
         {
-            inlines.Add(new Run { Text = text });
+            AddTextRun(inlines, text);
         }
         else if (lastIndex < text.Length)
         {
-            inlines.Add(new Run { Text = text[lastIndex..] });
+            AddTextRun(inlines, text[lastIndex..]);
         }
+    }
+
+    private static void AddTextRun(InlineCollection inlines, string text)
+    {
+        string unescapedText = UnescapeMarkdownText(text);
+        if (unescapedText.Length == 0)
+        {
+            return;
+        }
+
+        inlines.Add(new Run { Text = unescapedText });
+    }
+
+    private static bool IsInlineMarkdownMatchEscaped(string text, Match match)
+    {
+        if (IsEscaped(text, match.Index))
+        {
+            return true;
+        }
+
+        if (match.Groups["bolditalic"].Success)
+        {
+            return IsEscaped(text, match.Index + match.Length - 3);
+        }
+
+        if (match.Groups["bold"].Success
+            || match.Groups["strikethrough"].Success
+            || match.Groups["highlight"].Success)
+        {
+            return IsEscaped(text, match.Index + match.Length - 2);
+        }
+
+        if (match.Groups["italic"].Success)
+        {
+            return IsEscaped(text, match.Index + match.Length - 1);
+        }
+
+        return false;
+    }
+
+    private static bool IsEscaped(string text, int index)
+    {
+        int backslashCount = 0;
+        for (int i = index - 1; i >= 0 && text[i] == '\\'; i--)
+        {
+            backslashCount++;
+        }
+
+        return backslashCount % 2 != 0;
+    }
+
+    private static bool IsEscaped(StringSegment text, int index)
+    {
+        int backslashCount = 0;
+        for (int i = index - 1; i >= 0 && text[i] == '\\'; i--)
+        {
+            backslashCount++;
+        }
+
+        return backslashCount % 2 != 0;
+    }
+
+    private static string UnescapeMarkdownText(string text)
+    {
+        if (!text.Contains('\\'))
+        {
+            return text;
+        }
+
+        StringBuilder? builder = null;
+        int textStart = 0;
+
+        for (int i = 0; i < text.Length - 1; i++)
+        {
+            if (text[i] != '\\' || !IsMarkdownEscapableCharacter(text[i + 1]))
+            {
+                continue;
+            }
+
+            builder ??= new StringBuilder(text.Length);
+            builder.Append(text.AsSpan(textStart, i - textStart));
+            builder.Append(text[i + 1]);
+            i++;
+            textStart = i + 1;
+        }
+
+        if (builder is null)
+        {
+            return text;
+        }
+
+        builder.Append(text.AsSpan(textStart));
+        return builder.ToString();
+    }
+
+    private static bool IsMarkdownEscapableCharacter(char character)
+    {
+        return character is >= '!' and <= '~'
+            && (char.IsPunctuation(character) || char.IsSymbol(character));
     }
 
     private static void AddHighlight(InlineCollection inlines, string text)
@@ -816,7 +960,7 @@ internal static partial class MarkdownHelper
 
     private static void AddLink(InlineCollection inlines, string text, string url, string title)
     {
-        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
         {
             inlines.Add(new Run { Text = CreateLinkFallback(text, url, title) });
             return;
@@ -838,7 +982,7 @@ internal static partial class MarkdownHelper
 
     private static void AddImage(InlineCollection inlines, string altText, string url, string title)
     {
-        if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out Uri? uri))
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri))
         {
             AddImageFallback(inlines, altText, url, title);
             return;
@@ -915,6 +1059,6 @@ internal static partial class MarkdownHelper
         }
     }
 
-    [GeneratedRegex(@"\*\*\*(?<bolditalic>.+?)\*\*\*|\*\*(?<bold>.+?)\*\*|(?<!\*)\*(?!\*)(?<italic>.+?)(?<!\*)\*(?!\*)|~~(?<strikethrough>.+?)~~|==(?<highlight>.+?)==|`(?<code>.+?)`|!\[(?<imgalt>.*?)\]\((?<imgurl>\S+?)(?:\s+""(?<imgtitle>[^""]*?)"")?\)|\[(?<linktext>.+?)\]\((?<linkurl>\S+?)(?:\s+""(?<linktitle>[^""]*?)"")?\)")]
+    [GeneratedRegex(@"\*\*\*(?<bolditalic>(?:\\.|.)+?)\*\*\*|\*\*(?<bold>(?:\\.|.)+?)\*\*|(?<!\*)\*(?!\*)(?<italic>(?:\\.|.)+?)(?<!\*)\*(?!\*)|~~(?<strikethrough>(?:\\.|.)+?)~~|==(?<highlight>(?:\\.|.)+?)==|`(?<code>.+?)`|!\[(?<imgalt>(?:\\.|[^\]])*?)\]\((?<imgurl>\S+?)(?:\s+""(?<imgtitle>[^""]*?)"")?\)|\[(?<linktext>(?:\\.|[^\]])+?)\]\((?<linkurl>\S+?)(?:\s+""(?<linktitle>[^""]*?)"")?\)")]
     private static partial Regex InlineMarkdownPattern();
 }

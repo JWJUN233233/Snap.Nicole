@@ -178,7 +178,8 @@ internal static class MarkdownBlockPartitioner
 
         return end - start > 2
             && markdown[start] == '|'
-            && markdown[end - 1] == '|';
+            && markdown[end - 1] == '|'
+            && !IsEscaped(markdown, end - 1);
     }
 
     private static bool IsTableSeparator(string markdown, MarkdownLine line)
@@ -249,6 +250,17 @@ internal static class MarkdownBlockPartitioner
         }
 
         return true;
+    }
+
+    private static bool IsEscaped(string markdown, int index)
+    {
+        int backslashCount = 0;
+        for (int i = index - 1; i >= 0 && markdown[i] == '\\'; i--)
+        {
+            backslashCount++;
+        }
+
+        return backslashCount % 2 != 0;
     }
 
     private sealed class MarkdownLine
