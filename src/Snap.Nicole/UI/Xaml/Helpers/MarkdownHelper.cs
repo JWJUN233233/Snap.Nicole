@@ -18,6 +18,13 @@ internal static partial class MarkdownHelper
     private static readonly char[] LineFeedSeparators = ['\n'];
     private static readonly char[] CarriageReturnSeparators = ['\r'];
     private static readonly char[] TableCellSeparators = ['|'];
+    private const int ListIndentColumnsPerLevel = 2;
+    private const int TabIndentColumns = 4;
+    private const double ListItemIndent = 16;
+    private const double NestedListItemIndent = 20;
+    private const string TaskListIconFontFamilyName = "Segoe Fluent Icons";
+    private const string TaskListUncheckedGlyph = "\uE739";
+    private const string TaskListCheckedGlyph = "\uE73A";
 
     public static RichTextBlock CreateMarkdownBlock(string? markdown)
     {
@@ -101,17 +108,17 @@ internal static partial class MarkdownHelper
             {
                 AddBlockquote(richText, blockquoteDepth, blockquoteText);
             }
-            else if (TryParseTaskListItem(line, out bool isTaskChecked, out StringSegment taskText))
+            else if (TryParseTaskListItem(line, out bool isTaskChecked, out StringSegment taskText, out int taskListDepth))
             {
-                AddTaskListItem(richText, isTaskChecked, taskText);
+                AddTaskListItem(richText, isTaskChecked, taskText, taskListDepth);
             }
-            else if (TryParseUnorderedListItem(line, out StringSegment listItemText))
+            else if (TryParseUnorderedListItem(line, out StringSegment listItemText, out int unorderedListDepth))
             {
-                AddListItem(richText, listItemText, "- ");
+                AddListItem(richText, listItemText, "- ", unorderedListDepth);
             }
-            else if (TryParseOrderedListItem(line, out StringSegment listNumber, out StringSegment listText))
+            else if (TryParseOrderedListItem(line, out StringSegment listNumber, out StringSegment listText, out int orderedListDepth))
             {
-                AddListItem(richText, listText, CreateOrderedListBullet(listNumber));
+                AddListItem(richText, listText, CreateOrderedListBullet(listNumber), orderedListDepth);
             }
             else
             {
@@ -162,7 +169,7 @@ internal static partial class MarkdownHelper
 
     private static StringSegment TrimTrailingCarriageReturn(StringSegment line)
     {
-        if (line.Length > 0 && line[line.Length - 1] == '\r')
+        if (line.Length > 0 && line[^1] == '\r')
         {
             return Slice(line, 0, line.Length - 1);
         }
@@ -216,11 +223,12 @@ internal static partial class MarkdownHelper
         text = Slice(trimmed, textOffset);
         fontSize = level switch
         {
-            1 => 24,
-            2 => 20,
-            3 => 18,
-            4 => 16,
-            5 => 15,
+            1 => 28,
+            2 => 21,
+            3 => 17.5,
+            4 => 14,
+            5 => 12.25,
+            6 => 11.9,
             _ => 14,
         };
         return true;
@@ -310,12 +318,13 @@ internal static partial class MarkdownHelper
         return true;
     }
 
-    private static bool TryParseTaskListItem(StringSegment line, out bool isChecked, out StringSegment text)
+    private static bool TryParseTaskListItem(StringSegment line, out bool isChecked, out StringSegment text, out int depth)
     {
-        if (!TryParseUnorderedListItem(line, out StringSegment listText))
+        if (!TryParseUnorderedListItem(line, out StringSegment listText, out depth))
         {
             isChecked = false;
             text = default;
+            depth = 0;
             return false;
         }
 
@@ -324,6 +333,7 @@ internal static partial class MarkdownHelper
         {
             isChecked = false;
             text = default;
+            depth = 0;
             return false;
         }
 
@@ -332,6 +342,7 @@ internal static partial class MarkdownHelper
         {
             isChecked = false;
             text = default;
+            depth = 0;
             return false;
         }
 
@@ -346,21 +357,29 @@ internal static partial class MarkdownHelper
         return true;
     }
 
-    private static bool TryParseUnorderedListItem(StringSegment line, out StringSegment text)
+    private static bool TryParseUnorderedListItem(StringSegment line, out StringSegment text, out int depth)
     {
         StringSegment trimmed = line.TrimStart();
 
         if (trimmed.Length < 2 || trimmed[0] is not '-' and not '*' and not '+' || !char.IsWhiteSpace(trimmed[1]))
         {
             text = default;
+            depth = 0;
             return false;
         }
 
-        text = Slice(trimmed, 2);
+        int textOffset = 2;
+        while (textOffset < trimmed.Length && char.IsWhiteSpace(trimmed[textOffset]))
+        {
+            textOffset++;
+        }
+
+        text = Slice(trimmed, textOffset);
+        depth = GetListDepth(line);
         return true;
     }
 
-    private static bool TryParseOrderedListItem(StringSegment line, out StringSegment number, out StringSegment text)
+    private static bool TryParseOrderedListItem(StringSegment line, out StringSegment number, out StringSegment text, out int depth)
     {
         StringSegment trimmed = line.TrimStart();
         ReadOnlySpan<char> span = trimmed.AsSpan();
@@ -375,12 +394,47 @@ internal static partial class MarkdownHelper
         {
             number = default;
             text = default;
+            depth = 0;
             return false;
         }
 
+        int textOffset = index + 2;
+        while (textOffset < trimmed.Length && char.IsWhiteSpace(trimmed[textOffset]))
+        {
+            textOffset++;
+        }
+
         number = Slice(trimmed, 0, index);
-        text = Slice(trimmed, index + 2);
+        text = Slice(trimmed, textOffset);
+        depth = GetListDepth(line);
         return true;
+    }
+
+    private static int GetListDepth(StringSegment line)
+    {
+        int columns = 0;
+        for (int i = 0; i < line.Length; i++)
+        {
+            char current = line[i];
+            if (current == ' ')
+            {
+                columns++;
+            }
+            else if (current == '\t')
+            {
+                columns += TabIndentColumns - columns % TabIndentColumns;
+            }
+            else if (char.IsWhiteSpace(current))
+            {
+                columns++;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return columns / ListIndentColumnsPerLevel;
     }
 
     private static string CreateOrderedListBullet(StringSegment number)
@@ -453,32 +507,38 @@ internal static partial class MarkdownHelper
         richText.Blocks.Add(container);
     }
 
-    private static void AddTaskListItem(RichTextBlock richText, bool isChecked, StringSegment text)
+    private static void AddTaskListItem(RichTextBlock richText, bool isChecked, StringSegment text, int depth)
     {
-        Paragraph paragraph = new() { Margin = new Thickness(16, 1, 0, 1) };
+        Paragraph paragraph = new() { Margin = CreateListItemMargin(depth) };
         paragraph.Inlines.Add(new InlineUIContainer
         {
-            Child = new CheckBox
+            Child = new FontIcon
             {
-                IsChecked = isChecked,
+                FontFamily = new FontFamily(TaskListIconFontFamilyName),
+                FontSize = 14,
+                Glyph = isChecked ? TaskListCheckedGlyph : TaskListUncheckedGlyph,
+                Height = 16,
                 IsHitTestVisible = false,
-                IsTabStop = false,
-                Margin = new Thickness(0, 0, 4, 0),
-                MinWidth = 0,
-                Padding = new Thickness(0),
+                Margin = new Thickness(0, 0, 6, 0),
                 VerticalAlignment = VerticalAlignment.Center,
+                Width = 16,
             },
         });
         AddInlineMarkdown(paragraph.Inlines, text);
         richText.Blocks.Add(paragraph);
     }
 
-    private static void AddListItem(RichTextBlock richText, StringSegment text, string bullet)
+    private static void AddListItem(RichTextBlock richText, StringSegment text, string bullet, int depth)
     {
-        Paragraph paragraph = new() { Margin = new Thickness(16, 1, 0, 1) };
+        Paragraph paragraph = new() { Margin = CreateListItemMargin(depth) };
         paragraph.Inlines.Add(new Run { Text = bullet });
         AddInlineMarkdown(paragraph.Inlines, text);
         richText.Blocks.Add(paragraph);
+    }
+
+    private static Thickness CreateListItemMargin(int depth)
+    {
+        return new Thickness(ListItemIndent + depth * NestedListItemIndent, 1, 0, 1);
     }
 
     private static void AddParagraph(RichTextBlock richText, StringSegment text)
@@ -545,10 +605,10 @@ internal static partial class MarkdownHelper
         return cells;
     }
 
-    private static List<global::Microsoft.UI.Xaml.TextAlignment> ParseTableColumnAlignments(StringSegment line, int columnCount)
+    private static List<TextAlignment> ParseTableColumnAlignments(StringSegment line, int columnCount)
     {
         StringSegment trimmed = TrimTableCellBounds(line);
-        List<global::Microsoft.UI.Xaml.TextAlignment> alignments = [];
+        List<TextAlignment> alignments = [];
         StringTokenizer tokenizer = new(trimmed, TableCellSeparators);
 
         foreach (StringSegment cell in tokenizer)
@@ -558,13 +618,13 @@ internal static partial class MarkdownHelper
 
         while (alignments.Count < columnCount)
         {
-            alignments.Add(global::Microsoft.UI.Xaml.TextAlignment.Left);
+            alignments.Add(TextAlignment.Left);
         }
 
         return alignments;
     }
 
-    private static global::Microsoft.UI.Xaml.TextAlignment ParseTableColumnAlignment(StringSegment cell)
+    private static TextAlignment ParseTableColumnAlignment(StringSegment cell)
     {
         StringSegment trimmed = cell.Trim();
         bool hasLeftMarker = trimmed.Length > 0 && trimmed[0] == ':';
@@ -572,15 +632,15 @@ internal static partial class MarkdownHelper
 
         if (hasLeftMarker && hasRightMarker)
         {
-            return global::Microsoft.UI.Xaml.TextAlignment.Center;
+            return TextAlignment.Center;
         }
 
         if (hasRightMarker)
         {
-            return global::Microsoft.UI.Xaml.TextAlignment.Right;
+            return TextAlignment.Right;
         }
 
-        return global::Microsoft.UI.Xaml.TextAlignment.Left;
+        return TextAlignment.Left;
     }
 
     private static StringSegment TrimTableCellBounds(StringSegment line)

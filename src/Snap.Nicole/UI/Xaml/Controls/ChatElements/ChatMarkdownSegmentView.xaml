@@ -4,19 +4,37 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxd="using:Snap.Nicole.UI.Xaml.Data"
+    xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     x:Name="Root">
 
     <UserControl.Resources>
+        <snuxd:EmptyStringToVisibilityConverter x:Key="MarkdownActionsVisibilityConverter" />
         <snuxd:EmptyStringToVisibilityConverter x:Key="TitleVisibilityConverter" />
     </UserControl.Resources>
 
-    <StackPanel Spacing="2">
+    <StackPanel Spacing="4">
         <TextBlock
             FontSize="12"
             FontWeight="SemiBold"
             Opacity="0.7"
             Text="{Binding Title, ElementName=Root}"
             Visibility="{Binding Title, ElementName=Root, Converter={StaticResource TitleVisibilityConverter}}" />
-        <snuxcc:MarkdownTextBlock Markdown="{Binding Markdown, ElementName=Root}" />
+        <snuxcc:MarkdownTextBlock Markdown="{Binding Markdown, ElementName=Root}" Opacity="{Binding MarkdownOpacity, ElementName=Root}" />
+        <StackPanel
+            HorizontalAlignment="Left"
+            Orientation="Horizontal"
+            Spacing="4"
+            Visibility="{Binding Markdown, ElementName=Root, Converter={StaticResource MarkdownActionsVisibilityConverter}}">
+            <Button
+                Width="24"
+                Height="24"
+                MinWidth="0"
+                Padding="0"
+                AutomationProperties.Name="{snuxm:StringResource Name=UIXamlControlsChatMarkdownSegmentViewToolTipCopyText}"
+                Command="{x:Bind CopyMarkdownCommand}"
+                ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlControlsChatMarkdownSegmentViewToolTipCopyText}">
+                <FontIcon FontSize="13" Glyph="&#xE8C8;" />
+            </Button>
+        </StackPanel>
     </StackPanel>
 </UserControl>

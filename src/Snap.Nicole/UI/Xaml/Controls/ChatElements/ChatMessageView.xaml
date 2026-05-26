@@ -29,7 +29,10 @@
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                 BorderThickness="1"
                 CornerRadius="{ThemeResource ControlCornerRadius}">
-                <snuxcc:ChatMarkdownSegmentView Title="{Binding IsCompleted, Converter={StaticResource ReasoningContentTitleConverter}}" Markdown="{Binding Text}" />
+                <snuxcc:ChatMarkdownSegmentView
+                    Title="{Binding IsCompleted, Converter={StaticResource ReasoningContentTitleConverter}}"
+                    Markdown="{Binding Text}"
+                    MarkdownOpacity="0.7" />
             </Border>
         </DataTemplate>
 

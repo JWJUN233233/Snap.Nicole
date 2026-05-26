@@ -437,4 +437,7 @@
   <data name="UIXamlControlsChatFunctionResultSegmentViewLabelTitle" xml:space="preserve">
     <value>工具结果</value>
   </data>
+  <data name="UIXamlControlsChatMarkdownSegmentViewToolTipCopyText" xml:space="preserve">
+    <value>复制文本</value>
+  </data>
 </root>
