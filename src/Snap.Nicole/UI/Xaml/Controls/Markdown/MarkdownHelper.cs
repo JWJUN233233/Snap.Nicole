@@ -485,7 +485,7 @@ internal static partial class MarkdownHelper
                 Margin = new Thickness(0, 4, 0, 4),
                 Height = 1,
                 MinWidth = 100000,
-                Background = GetThemeBrush("CardStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
+                Background = GetThemeBrush("ControlStrokeColorDefaultBrush", "SystemControlForegroundBaseLowBrush"),
             },
         });
         richText.Blocks.Add(paragraph);

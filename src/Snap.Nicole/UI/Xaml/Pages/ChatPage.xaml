@@ -12,42 +12,51 @@
     d:DataContext="{d:DesignInstance snv:ChatViewModel}"
     mc:Ignorable="d">
 
-    <Grid Padding="24">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid
+        <Border
             Grid.Row="0"
-            Margin="0,0,0,12"
-            ColumnSpacing="12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,0,0,1">
+            <CommandBar>
+                <CommandBar.Content>
+                    <Grid Margin="13,8,0,0" ColumnSpacing="8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
 
-            <ComboBox
-                Grid.Column="0"
-                MinWidth="240"
-                DisplayMemberPath="Name"
-                Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProviderProfile}"
-                ItemsSource="{Binding Settings.ModelProviderProfiles}"
-                SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                        <ComboBox
+                            Grid.Column="0"
+                            MinWidth="240"
+                            DisplayMemberPath="Name"
+                            ItemsSource="{Binding Settings.ModelProviderProfiles}"
+                            SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
 
-            <ComboBox
-                Grid.Column="1"
-                MinWidth="240"
-                DisplayMemberPath="DisplayName"
-                Header="{snuxm:StringResource Name=UIXamlPagesChatPageLabelModelProfile}"
-                ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
-                SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
-        </Grid>
+                        <ComboBox
+                            Grid.Column="1"
+                            MinWidth="240"
+                            DisplayMemberPath="DisplayName"
+                            ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
+                            SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                    </Grid>
+                </CommandBar.Content>
+
+            </CommandBar>
+        </Border>
+
 
         <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
-            <ItemsControl ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}" ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+            <ItemsControl
+                Margin="16,16,16,8"
+                ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
+                ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
@@ -63,7 +72,10 @@
 
         <Grid
             Grid.Row="2"
-            Margin="0,12,0,0"
+            Padding="16"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0"
             ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
