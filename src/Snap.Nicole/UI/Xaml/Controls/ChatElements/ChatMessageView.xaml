@@ -9,6 +9,7 @@
     xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxd="using:Snap.Nicole.UI.Xaml.Data"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
+    x:Name="Root"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -17,7 +18,15 @@
             FalseValue="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelReasoningInProgress}"
             TrueValue="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelReasoningCompleted}" />
         <cvt:IFormattableToStringConverter x:Key="UsageCacheHitRateTextConverter" />
+        <snuxcc:ChatRoleToVisibilityConverter x:Key="UserMessageVisibilityConverter" Role="User" />
+        <snuxcc:ChatRoleToVisibilityConverter
+            x:Key="NonUserMessageVisibilityConverter"
+            IsInverted="True"
+            Role="User" />
+        <snuxd:EmptyObjectToVisibilityConverter x:Key="MessageVisibilityConverter" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="UsageCountVisibilityConverter" />
+        <snuxd:EmptyStringToVisibilityConverter x:Key="AuthorNameVisibilityConverter" />
+        <snuxd:EmptyStringToVisibilityConverter x:Key="EmptyAuthorNameVisibilityConverter" IsInverted="True" />
 
         <DataTemplate x:Key="TextContentTemplate" x:DataType="snsao:ObservableTextContent">
             <snuxcc:ChatMarkdownSegmentView Margin="1,0,0,0" Markdown="{Binding Text}" />
@@ -142,22 +151,36 @@
         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
-        CornerRadius="{ThemeResource ControlCornerRadius}">
+        CornerRadius="{ThemeResource ControlCornerRadius}"
+        Visibility="{Binding Message, ElementName=Root, Converter={StaticResource MessageVisibilityConverter}}">
         <StackPanel HorizontalAlignment="Stretch" Spacing="4">
-            <TextBlock
-                x:Name="HeaderTextBlock"
-                Margin="1,0,0,0"
-                FontSize="12"
-                FontWeight="SemiBold"
-                Opacity="0.7" />
+            <Grid Margin="1,0,0,0">
+                <TextBlock
+                    FontSize="12"
+                    FontWeight="SemiBold"
+                    Opacity="0.7"
+                    Text="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelUser}"
+                    Visibility="{Binding Message.Role, ElementName=Root, Converter={StaticResource UserMessageVisibilityConverter}}" />
+                <Grid Visibility="{Binding Message.Role, ElementName=Root, Converter={StaticResource NonUserMessageVisibilityConverter}}">
+                    <TextBlock
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        Opacity="0.7"
+                        Text="{Binding Message.AuthorName, ElementName=Root}"
+                        Visibility="{Binding Message.AuthorName, ElementName=Root, Converter={StaticResource AuthorNameVisibilityConverter}}" />
+                    <TextBlock
+                        FontSize="12"
+                        FontWeight="SemiBold"
+                        Opacity="0.7"
+                        Text="{snuxm:StringResource Name=UIXamlControlsChatMessageViewLabelAssistant}"
+                        Visibility="{Binding Message.AuthorName, ElementName=Root, Converter={StaticResource EmptyAuthorNameVisibilityConverter}}" />
+                </Grid>
+            </Grid>
 
-            <TextBlock
-                x:Name="UserMessageTextBlock"
-                FontSize="14"
-                IsTextSelectionEnabled="True"
-                TextWrapping="Wrap" />
-
-            <ItemsControl x:Name="ContentItemsControl" ItemTemplateSelector="{StaticResource ChatContentTemplateSelector}">
+            <ItemsControl
+                x:Name="ContentItemsControl"
+                ItemTemplateSelector="{StaticResource ChatContentTemplateSelector}"
+                ItemsSource="{Binding Message.Contents, ElementName=Root}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel Spacing="4" />
