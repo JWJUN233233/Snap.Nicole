@@ -52,7 +52,7 @@
         </Border>
 
 
-        <ScrollViewer x:Name="ChatScrollViewer" Grid.Row="1">
+        <ScrollViewer Grid.Row="1">
             <ItemsControl
                 Margin="16,16,16,8"
                 ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
@@ -84,7 +84,6 @@
             </Grid.ColumnDefinitions>
 
             <TextBox
-                x:Name="InputBox"
                 Grid.Column="0"
                 MaxHeight="120"
                 AcceptsReturn="True"
@@ -97,14 +96,12 @@
             </TextBox>
 
             <Button
-                x:Name="SendButton"
                 Grid.Column="1"
                 VerticalAlignment="Bottom"
                 Command="{x:Bind ViewModel.SendMessageCommand}"
                 Content="{snuxm:StringResource Name=UIXamlPagesChatPageLabelSend}" />
 
             <Button
-                x:Name="ClearButton"
                 Grid.Column="2"
                 VerticalAlignment="Bottom"
                 Command="{x:Bind ViewModel.ClearChatCommand}"
