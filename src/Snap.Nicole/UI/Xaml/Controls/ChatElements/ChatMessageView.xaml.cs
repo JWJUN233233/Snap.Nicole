@@ -10,6 +10,7 @@ using System.Linq;
 
 namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
+[GeneratedDependencyProperty<ObservableChatMessage>("Message", PropertyChangedCallbackName = nameof(OnMessageChanged))]
 internal sealed partial class ChatMessageView : UserControl
 {
     private ObservableChatMessage? subscribedMessage;
@@ -23,18 +24,6 @@ internal sealed partial class ChatMessageView : UserControl
         Unloaded += OnUnloaded;
         UpdateView();
     }
-
-    public ObservableChatMessage? Message
-    {
-        get => (ObservableChatMessage?)GetValue(MessageProperty);
-        set => SetValue(MessageProperty, value);
-    }
-
-    public static readonly DependencyProperty MessageProperty = DependencyProperty.Register(
-        nameof(Message),
-        typeof(ObservableChatMessage),
-        typeof(ChatMessageView),
-        new PropertyMetadata(null, OnMessageChanged));
 
     private static void OnMessageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {

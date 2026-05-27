@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
 
+[GeneratedDependencyProperty<object>("Value", PropertyChangedCallbackName = nameof(OnValueChanged))]
 internal sealed partial class ChatObjectSegmentView : UserControl
 {
     public ChatObjectSegmentView()
@@ -10,18 +11,6 @@ internal sealed partial class ChatObjectSegmentView : UserControl
         InitializeComponent();
         UpdateText();
     }
-
-    public object? Value
-    {
-        get => GetValue(ValueProperty);
-        set => SetValue(ValueProperty, value);
-    }
-
-    public static readonly DependencyProperty ValueProperty = DependencyProperty.Register(
-        nameof(Value),
-        typeof(object),
-        typeof(ChatObjectSegmentView),
-        new PropertyMetadata(null, OnValueChanged));
 
     private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
