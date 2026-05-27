@@ -3,11 +3,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Snap.Nicole.UI.Xaml.Helpers;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
+namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal sealed partial class MarkdownTableView : UserControl
 {

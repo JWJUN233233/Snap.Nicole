@@ -1,7 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
+namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal sealed partial class MarkdownCodeBlockView : UserControl
 {

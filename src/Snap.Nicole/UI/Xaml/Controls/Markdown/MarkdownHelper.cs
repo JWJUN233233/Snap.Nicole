@@ -6,12 +6,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Snap.Nicole.UI.Xaml.Controls.ChatElements;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Snap.Nicole.UI.Xaml.Helpers;
+namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal static partial class MarkdownHelper
 {
@@ -43,6 +42,7 @@ internal static partial class MarkdownHelper
         bool inCodeBlock = false;
         StringBuilder? codeBuffer = null;
         string codeLanguage = string.Empty;
+        int codeFenceLength = 0;
         StringTokenizer tokenizer = new(markdown, GetLineSeparators(markdown));
         StringTokenizer.Enumerator enumerator = tokenizer.GetEnumerator();
         bool hasPendingLine = false;
@@ -52,26 +52,28 @@ internal static partial class MarkdownHelper
         {
             StringSegment trimmedStart = line.TrimStart();
 
-            if (trimmedStart.StartsWith("```", StringComparison.Ordinal))
+            if (!inCodeBlock && TryParseBacktickCodeFence(trimmedStart, 3, out int openingFenceLength, out StringSegment fenceInfo))
             {
-                if (inCodeBlock)
-                {
-                    AddCodeBlock(richText, GetCodeBlockText(codeBuffer), codeLanguage);
-                    codeBuffer?.Clear();
-                    codeLanguage = string.Empty;
-                    inCodeBlock = false;
-                }
-                else
-                {
-                    inCodeBlock = true;
-                    codeLanguage = Slice(trimmedStart, 3).Trim().ToString();
-                }
+                inCodeBlock = true;
+                codeFenceLength = openingFenceLength;
+                codeLanguage = fenceInfo.Trim().ToString();
 
                 continue;
             }
 
             if (inCodeBlock)
             {
+                if (TryParseBacktickCodeFence(trimmedStart, codeFenceLength, out _, out StringSegment closingFenceInfo)
+                    && IsWhiteSpace(closingFenceInfo))
+                {
+                    AddCodeBlock(richText, GetCodeBlockText(codeBuffer), codeLanguage);
+                    codeBuffer?.Clear();
+                    codeLanguage = string.Empty;
+                    codeFenceLength = 0;
+                    inCodeBlock = false;
+                    continue;
+                }
+
                 codeBuffer ??= new StringBuilder();
                 codeBuffer.Append(line.AsSpan());
                 codeBuffer.Append('\n');
@@ -246,6 +248,25 @@ internal static partial class MarkdownHelper
             }
         }
 
+        return true;
+    }
+
+    private static bool TryParseBacktickCodeFence(StringSegment trimmedStart, int minimumFenceLength, out int fenceLength, out StringSegment fenceInfo)
+    {
+        fenceLength = 0;
+        fenceInfo = default;
+
+        while (fenceLength < trimmedStart.Length && trimmedStart[fenceLength] == '`')
+        {
+            fenceLength++;
+        }
+
+        if (fenceLength < minimumFenceLength)
+        {
+            return false;
+        }
+
+        fenceInfo = Slice(trimmedStart, fenceLength);
         return true;
     }
 
@@ -727,6 +748,11 @@ internal static partial class MarkdownHelper
 
     internal static void AddInlineMarkdown(InlineCollection inlines, string text)
     {
+        AddInlineMarkdown(inlines, text, null);
+    }
+
+    private static void AddInlineMarkdown(InlineCollection inlines, string text, global::Windows.UI.Text.TextDecorations? textDecorations)
+    {
         if (text.Length == 0)
         {
             return;
@@ -752,48 +778,35 @@ internal static partial class MarkdownHelper
 
             if (match.Index > lastIndex)
             {
-                AddTextRun(inlines, text[lastIndex..match.Index]);
+                AddTextRun(inlines, text[lastIndex..match.Index], textDecorations);
             }
 
             if (match.Groups["bolditalic"].Success)
             {
                 Bold bold = new();
-                bold.Inlines.Add(new Italic
-                {
-                    Inlines =
-                    {
-                        new Run { Text = UnescapeMarkdownText(match.Groups["bolditalic"].Value) },
-                    },
-                });
+                Italic italic = new();
+                AddInlineMarkdown(italic.Inlines, match.Groups["bolditalic"].Value, textDecorations);
+                bold.Inlines.Add(italic);
                 inlines.Add(bold);
             }
             else if (match.Groups["bold"].Success)
             {
-                inlines.Add(new Bold
-                {
-                    Inlines =
-                    {
-                        new Run { Text = UnescapeMarkdownText(match.Groups["bold"].Value) },
-                    },
-                });
+                Bold bold = new();
+                AddInlineMarkdown(bold.Inlines, match.Groups["bold"].Value, textDecorations);
+                inlines.Add(bold);
             }
             else if (match.Groups["italic"].Success)
             {
-                inlines.Add(new Italic
-                {
-                    Inlines =
-                    {
-                        new Run { Text = UnescapeMarkdownText(match.Groups["italic"].Value) },
-                    },
-                });
+                Italic italic = new();
+                AddInlineMarkdown(italic.Inlines, match.Groups["italic"].Value, textDecorations);
+                inlines.Add(italic);
             }
             else if (match.Groups["strikethrough"].Success)
             {
-                inlines.Add(new Run
-                {
-                    Text = UnescapeMarkdownText(match.Groups["strikethrough"].Value),
-                    TextDecorations = global::Windows.UI.Text.TextDecorations.Strikethrough,
-                });
+                AddInlineMarkdown(
+                    inlines,
+                    match.Groups["strikethrough"].Value,
+                    CombineTextDecorations(textDecorations, global::Windows.UI.Text.TextDecorations.Strikethrough));
             }
             else if (match.Groups["highlight"].Success)
             {
@@ -805,7 +818,7 @@ internal static partial class MarkdownHelper
                 {
                     Child = new MarkdownInlineCodeView
                     {
-                        Text = match.Groups["code"].Value,
+                        Text = NormalizeInlineCodeText(match.Groups["code"].Value),
                     },
                 });
             }
@@ -832,15 +845,46 @@ internal static partial class MarkdownHelper
 
         if (lastIndex == 0)
         {
-            AddTextRun(inlines, text);
+            AddTextRun(inlines, text, textDecorations);
         }
         else if (lastIndex < text.Length)
         {
-            AddTextRun(inlines, text[lastIndex..]);
+            AddTextRun(inlines, text[lastIndex..], textDecorations);
         }
     }
 
-    private static void AddTextRun(InlineCollection inlines, string text)
+    private static global::Windows.UI.Text.TextDecorations CombineTextDecorations(
+        global::Windows.UI.Text.TextDecorations? current,
+        global::Windows.UI.Text.TextDecorations additional)
+    {
+        if (current.HasValue)
+        {
+            return current.Value | additional;
+        }
+
+        return additional;
+    }
+
+    private static string NormalizeInlineCodeText(string code)
+    {
+        string normalized = code.ReplaceLineEndings(" ");
+        if (normalized.Length < 2 || normalized[0] != ' ' || normalized[^1] != ' ')
+        {
+            return normalized;
+        }
+
+        for (int i = 1; i < normalized.Length - 1; i++)
+        {
+            if (normalized[i] != ' ')
+            {
+                return normalized[1..^1];
+            }
+        }
+
+        return normalized;
+    }
+
+    private static void AddTextRun(InlineCollection inlines, string text, global::Windows.UI.Text.TextDecorations? textDecorations)
     {
         string unescapedText = UnescapeMarkdownText(text);
         if (unescapedText.Length == 0)
@@ -848,7 +892,17 @@ internal static partial class MarkdownHelper
             return;
         }
 
-        inlines.Add(new Run { Text = unescapedText });
+        Run run = new()
+        {
+            Text = unescapedText,
+        };
+
+        if (textDecorations.HasValue)
+        {
+            run.TextDecorations = textDecorations.Value;
+        }
+
+        inlines.Add(run);
     }
 
     private static bool IsInlineMarkdownMatchEscaped(string text, Match match)
@@ -1059,6 +1113,6 @@ internal static partial class MarkdownHelper
         }
     }
 
-    [GeneratedRegex(@"\*\*\*(?<bolditalic>(?:\\.|.)+?)\*\*\*|\*\*(?<bold>(?:\\.|.)+?)\*\*|(?<!\*)\*(?!\*)(?<italic>(?:\\.|.)+?)(?<!\*)\*(?!\*)|~~(?<strikethrough>(?:\\.|.)+?)~~|==(?<highlight>(?:\\.|.)+?)==|`(?<code>.+?)`|!\[(?<imgalt>(?:\\.|[^\]])*?)\]\((?<imgurl>\S+?)(?:\s+""(?<imgtitle>[^""]*?)"")?\)|\[(?<linktext>(?:\\.|[^\]])+?)\]\((?<linkurl>\S+?)(?:\s+""(?<linktitle>[^""]*?)"")?\)")]
+    [GeneratedRegex(@"\*\*\*(?<bolditalic>(?:\\.|.)+?)\*\*\*|\*\*(?<bold>(?:\\.|.)+?)\*\*|(?<!\*)\*(?!\*)(?<italic>(?:\\.|.)+?)(?<!\*)\*(?!\*)|~~(?<strikethrough>(?:\\.|.)+?)~~|==(?<highlight>(?:\\.|.)+?)==|(?<codeDelimiter>`+)(?<code>.*?)(?<!`)\k<codeDelimiter>(?!`)|!\[(?<imgalt>(?:\\.|[^\]])*?)\]\((?<imgurl>\S+?)(?:\s+""(?<imgtitle>[^""]*?)"")?\)|\[(?<linktext>(?:\\.|[^\]])+?)\]\((?<linkurl>\S+?)(?:\s+""(?<linktitle>[^""]*?)"")?\)")]
     private static partial Regex InlineMarkdownPattern();
 }

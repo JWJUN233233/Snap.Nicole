@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Snap.Nicole.UI.Xaml.Helpers;
+namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal static class MarkdownBlockPartitioner
 {
@@ -25,28 +25,31 @@ internal static class MarkdownBlockPartitioner
         List<MarkdownLine> lines = GetCompleteLines(markdown, startIndex);
         int stableEnd = startIndex;
         bool inCodeBlock = false;
+        int codeFenceLength = 0;
 
         for (int i = 0; i < lines.Count; i++)
         {
             MarkdownLine line = lines[i];
 
-            if (IsCodeFenceLine(markdown, line))
+            if (!inCodeBlock && TryGetCodeFenceLine(markdown, line, 3, out int openingFenceLength, out _))
             {
-                if (inCodeBlock)
-                {
-                    inCodeBlock = false;
-                    stableEnd = line.End;
-                }
-                else
-                {
-                    inCodeBlock = true;
-                }
+                inCodeBlock = true;
+                codeFenceLength = openingFenceLength;
 
                 continue;
             }
 
             if (inCodeBlock)
             {
+                if (TryGetCodeFenceLine(markdown, line, codeFenceLength, out _, out int closingFenceInfoStart)
+                    && !HasNonWhiteSpace(markdown, closingFenceInfoStart, line.ContentEnd))
+                {
+                    inCodeBlock = false;
+                    codeFenceLength = 0;
+                    stableEnd = line.End;
+                    continue;
+                }
+
                 continue;
             }
 
@@ -139,7 +142,7 @@ internal static class MarkdownBlockPartitioner
         return false;
     }
 
-    private static bool IsCodeFenceLine(string markdown, MarkdownLine line)
+    private static bool TryGetCodeFenceLine(string markdown, MarkdownLine line, int minimumFenceLength, out int fenceLength, out int fenceInfoStart)
     {
         int start = line.Start;
         while (start < line.ContentEnd && char.IsWhiteSpace(markdown[start]))
@@ -147,7 +150,20 @@ internal static class MarkdownBlockPartitioner
             start++;
         }
 
-        return HasPrefix(markdown, start, line.ContentEnd, "```");
+        fenceLength = 0;
+        fenceInfoStart = start;
+        while (start + fenceLength < line.ContentEnd && markdown[start + fenceLength] == '`')
+        {
+            fenceLength++;
+        }
+
+        if (fenceLength < minimumFenceLength)
+        {
+            return false;
+        }
+
+        fenceInfoStart = start + fenceLength;
+        return true;
     }
 
     private static bool IsHeadingLine(string markdown, MarkdownLine line)
@@ -232,24 +248,6 @@ internal static class MarkdownBlockPartitioner
         }
 
         return start < end;
-    }
-
-    private static bool HasPrefix(string markdown, int start, int end, string prefix)
-    {
-        if (end - start < prefix.Length)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < prefix.Length; i++)
-        {
-            if (markdown[start + i] != prefix[i])
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private static bool IsEscaped(string markdown, int index)

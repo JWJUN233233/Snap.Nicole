@@ -2,8 +2,8 @@
     x:Class="Snap.Nicole.UI.Xaml.Controls.ChatElements.ChatMarkdownSegmentView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:snuxcc="using:Snap.Nicole.UI.Xaml.Controls.ChatElements"
     xmlns:snuxd="using:Snap.Nicole.UI.Xaml.Data"
+    xmlns:snuxmd="using:Snap.Nicole.UI.Xaml.Controls.Markdown"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     x:Name="Root">
 
@@ -19,7 +19,7 @@
             Opacity="0.7"
             Text="{Binding Title, ElementName=Root}"
             Visibility="{Binding Title, ElementName=Root, Converter={StaticResource TitleVisibilityConverter}}" />
-        <snuxcc:MarkdownTextBlock Markdown="{Binding Markdown, ElementName=Root}" Opacity="{Binding MarkdownOpacity, ElementName=Root}" />
+        <snuxmd:MarkdownTextBlock Markdown="{Binding Markdown, ElementName=Root}" Opacity="{Binding MarkdownOpacity, ElementName=Root}" />
         <StackPanel
             HorizontalAlignment="Left"
             Orientation="Horizontal"

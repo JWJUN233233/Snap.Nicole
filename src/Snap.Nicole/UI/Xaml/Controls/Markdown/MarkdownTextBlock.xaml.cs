@@ -1,9 +1,8 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Snap.Nicole.UI.Xaml.Helpers;
 using System.Collections.Generic;
 
-namespace Snap.Nicole.UI.Xaml.Controls.ChatElements;
+namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 [GeneratedDependencyProperty<string>("Markdown", PropertyChangedCallbackName = nameof(OnMarkdownChanged))]
 internal sealed partial class MarkdownTextBlock : UserControl
