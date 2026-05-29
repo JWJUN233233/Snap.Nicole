@@ -1,12 +1,22 @@
 The user might execute `git add`/`git restore` actively to observable/review your working progress, so DO NOT only rely on git status or related command to check files edits.
 
+# Skills
+
+## Explore external C# symbols
+
+Extensively use/load the `ilspycmd-find-implementation` skill when writing C# codes and you are not sure about any external symbol's behavior
+
+## Line Ending Normalization
+
+`normalize-line-endings` skill requires be use/load and you may follow the instructions in that skill before completing the givin task.
+
 # Project Structure
 
 ```
 src
-├── Snap.Nicole
-├── Snap.Nicole.Native
-└── Snap.Nicole.SourceGeneration
++-- Snap.Nicole
++-- Snap.Nicole.Native
++-- Snap.Nicole.SourceGeneration
 ```
 
 - Snap.Nicole: The main project. It primarily uses C#/WinUI 3 to build an agentic, multifunctional toolbox application.
@@ -24,6 +34,7 @@ src
 - For read-only properties, do not use direct expression-bodied declarations like `Property => value;`; use an accessor body instead, for example `Property { get => value; }`.
 - For non-constant `string` or `string?` values that need an empty string, use `string.Empty` instead of `""`. Empty string literals are allowed only for constants or the `is pattern`.
 - In `.resx` resources, single-line user-visible text should not end with a sentence-ending period. Preserve meaningful punctuation such as ellipses, URLs, file extensions, or multi-line prose.
+- Do not reinvent the wheel when runtime libraries already provide equivalent functionality; use the `ilspycmd` command-line tool extensively to verify existing implementations before adding new code.
 
 ### How to build `Snap.Nicole`
 
@@ -52,8 +63,3 @@ Files that contain non-ASCII text, may display as mojibake and XML parsing can r
 - When using PowerShell to read or parse text files, specify UTF-8 explicitly, for example `Get-Content -Raw -Encoding UTF8 src\Snap.Nicole\Resources\SR.resx`.
 - When parsing XML resources in PowerShell, use `[xml]$doc = Get-Content -Raw -Encoding UTF8 path\to\file.resx` instead of relying on the default encoding.
 - When writing files from PowerShell, specify the intended encoding explicitly to avoid accidental re-encoding.
-
-# Line Ending Normalization
-
-`normalize-line-endings` skill requires be load into your context and you may follow the instructions in that skill before completing the givin task.
-If you can not load skill by tool call, you can read the skill spec in `.agents\skills\normalize-line-endings.md`.

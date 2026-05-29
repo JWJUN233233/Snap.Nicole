@@ -61,7 +61,7 @@ internal sealed partial class MarkdownTableView : UserControl
         int columnCount = Rows.Max(row => row.Count);
         for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
         {
-            TableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            TableGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new(1.0, GridUnitType.Star) });
         }
 
         for (int rowIndex = 0; rowIndex < Rows.Count; rowIndex++)

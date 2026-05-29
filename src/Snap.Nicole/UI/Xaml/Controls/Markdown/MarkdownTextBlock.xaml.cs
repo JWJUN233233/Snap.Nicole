@@ -1,7 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
@@ -11,9 +10,9 @@ internal sealed partial class MarkdownTextBlock : UserControl
     private const int PreferredStableChunkLength = 4096;
 
     private readonly List<MarkdownRenderChunk> stableChunks = [];
+    private readonly List<UIElement> tailElements = [];
     private string renderedMarkdown = string.Empty;
     private int stableLength;
-    private UIElement? tailElement;
 
     public MarkdownTextBlock()
     {
@@ -31,7 +30,6 @@ internal sealed partial class MarkdownTextBlock : UserControl
 
     private void RenderMarkdown(string? markdown)
     {
-        Debug.WriteLine($"RenderMarkdown: '{markdown}'");
         string nextMarkdown = markdown ?? string.Empty;
 
         if (!IsAppendUpdate(nextMarkdown))
@@ -55,7 +53,7 @@ internal sealed partial class MarkdownTextBlock : UserControl
         ContentHost.Children.Clear();
         renderedMarkdown = string.Empty;
         stableLength = 0;
-        tailElement = null;
+        tailElements.Clear();
     }
 
     private void RenderAppendUpdate(string markdown)
@@ -67,7 +65,7 @@ internal sealed partial class MarkdownTextBlock : UserControl
             nextStableLength = MarkdownBlockPartitioner.GetStablePrefixLength(markdown);
         }
 
-        RemoveTailElement();
+        RemoveTailElements();
 
         if (nextStableLength > stableLength)
         {
@@ -100,28 +98,21 @@ internal sealed partial class MarkdownTextBlock : UserControl
 
     private void AddStableChunk(string markdown)
     {
-        UIElement element = MarkdownHelper.CreateMarkdownBlock(markdown);
-        MarkdownRenderChunk chunk = new(markdown, element);
+        IReadOnlyList<UIElement> elements = MarkdownHelper.CreateMarkdownBlocks(markdown);
+        MarkdownRenderChunk chunk = new(markdown, elements);
         stableChunks.Add(chunk);
-        ContentHost.Children.Add(element);
+        AddContentElements(elements);
     }
 
     private void UpdateStableChunk(MarkdownRenderChunk chunk, string markdown)
     {
-        UIElement element = MarkdownHelper.CreateMarkdownBlock(markdown);
-        int index = ContentHost.Children.IndexOf(chunk.Element);
+        IReadOnlyList<UIElement> elements = MarkdownHelper.CreateMarkdownBlocks(markdown);
+        int index = GetChunkStartIndex(chunk);
+        RemoveContentElements(chunk.Elements);
         chunk.Markdown = markdown;
+        chunk.Elements = elements;
 
-        if (index < 0)
-        {
-            chunk.Element = element;
-            ContentHost.Children.Add(element);
-            return;
-        }
-
-        ContentHost.Children.RemoveAt(index);
-        ContentHost.Children.Insert(index, element);
-        chunk.Element = element;
+        InsertContentElements(index, elements);
     }
 
     private void RenderTailMarkdown(string markdown)
@@ -131,31 +122,85 @@ internal sealed partial class MarkdownTextBlock : UserControl
             return;
         }
 
-        tailElement = MarkdownHelper.CreateMarkdownBlock(markdown);
-        ContentHost.Children.Add(tailElement);
+        IReadOnlyList<UIElement> elements = MarkdownHelper.CreateMarkdownBlocks(markdown);
+        tailElements.AddRange(elements);
+        AddContentElements(elements);
     }
 
-    private void RemoveTailElement()
+    private void RemoveTailElements()
     {
-        if (tailElement is null)
+        if (tailElements.Count == 0)
         {
             return;
         }
 
-        ContentHost.Children.Remove(tailElement);
-        tailElement = null;
+        RemoveContentElements(tailElements);
+        tailElements.Clear();
+    }
+
+    private int GetChunkStartIndex(MarkdownRenderChunk chunk)
+    {
+        foreach (UIElement element in chunk.Elements)
+        {
+            int index = ContentHost.Children.IndexOf(element);
+            if (index >= 0)
+            {
+                return index;
+            }
+        }
+
+        int chunkIndex = stableChunks.IndexOf(chunk);
+        for (int i = chunkIndex - 1; i >= 0; i--)
+        {
+            IReadOnlyList<UIElement> previousElements = stableChunks[i].Elements;
+            for (int j = previousElements.Count - 1; j >= 0; j--)
+            {
+                int previousIndex = ContentHost.Children.IndexOf(previousElements[j]);
+                if (previousIndex >= 0)
+                {
+                    return previousIndex + 1;
+                }
+            }
+        }
+
+        return 0;
+    }
+
+    private void AddContentElements(IReadOnlyList<UIElement> elements)
+    {
+        foreach (UIElement element in elements)
+        {
+            ContentHost.Children.Add(element);
+        }
+    }
+
+    private void InsertContentElements(int index, IReadOnlyList<UIElement> elements)
+    {
+        int insertionIndex = Math.Min(index, ContentHost.Children.Count);
+        for (int i = 0; i < elements.Count; i++)
+        {
+            ContentHost.Children.Insert(insertionIndex + i, elements[i]);
+        }
+    }
+
+    private void RemoveContentElements(IReadOnlyList<UIElement> elements)
+    {
+        foreach (UIElement element in elements)
+        {
+            ContentHost.Children.Remove(element);
+        }
     }
 
     private sealed class MarkdownRenderChunk
     {
-        public MarkdownRenderChunk(string markdown, UIElement element)
+        public MarkdownRenderChunk(string markdown, IReadOnlyList<UIElement> elements)
         {
             Markdown = markdown;
-            Element = element;
+            Elements = elements;
         }
 
         public string Markdown { get; set; }
 
-        public UIElement Element { get; set; }
+        public IReadOnlyList<UIElement> Elements { get; set; }
     }
 }
