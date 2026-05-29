@@ -305,19 +305,11 @@ internal static partial class MarkdownHelper
     private static void AddTaskListItem(RichTextBlock richText, bool isChecked, ReadOnlySpan<char> text, int depth)
     {
         Paragraph paragraph = new() { Margin = CreateListItemMargin(depth) };
-        paragraph.Inlines.Add(new InlineUIContainer
+        paragraph.Inlines.Add(new Run
         {
-            Child = new FontIcon
-            {
-                FontFamily = new FontFamily(TaskListIconFontFamilyName),
-                FontSize = 14,
-                Glyph = isChecked ? TaskListCheckedGlyph : TaskListUncheckedGlyph,
-                Height = 16,
-                IsHitTestVisible = false,
-                Margin = new Thickness(0, 0, 6, 0),
-                VerticalAlignment = VerticalAlignment.Center,
-                Width = 16,
-            },
+            FontFamily = new FontFamily(TaskListIconFontFamilyName),
+            FontSize = 14,
+            Text = (isChecked ? TaskListCheckedGlyph : TaskListUncheckedGlyph) + " ",
         });
         AddInlineMarkdown(paragraph.Inlines, text);
         richText.Blocks.Add(paragraph);

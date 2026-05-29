@@ -6,7 +6,6 @@
     Margin="0,4,0,4">
 
     <Border
-        Padding="12"
         Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
         BorderThickness="1"
@@ -16,6 +15,7 @@
             HorizontalScrollBarVisibility="Auto"
             HorizontalScrollMode="Auto">
             <TextBlock
+                Margin="12"
                 FontFamily="Cascadia Code, Consolas, Courier New"
                 FontSize="13"
                 IsTextSelectionEnabled="True"
