@@ -2,7 +2,7 @@ namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal static class MarkdownBlockPartitioner
 {
-    public static int GetStablePrefixLength(string markdown)
+    public static int GetStablePrefixLength(ReadOnlySpan<char> markdown)
     {
         return GetStablePrefixLength(markdown, 0);
     }
@@ -21,18 +21,13 @@ internal static class MarkdownBlockPartitioner
         bool inCodeBlock = false;
         int codeFenceLength = 0;
         int nextLineStart = startIndex;
-        MarkdownSyntax.MarkdownLine? pendingLine = null;
+        MarkdownLine? pendingLine = null;
 
-        while (MarkdownSyntax.TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownSyntax.MarkdownLine line))
+        while (MarkdownSyntax.TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownLine line))
         {
             ReadOnlySpan<char> content = line.GetContent(markdown);
 
-            if (!inCodeBlock
-                && MarkdownSyntax.TryParseBacktickCodeFence(
-                    content,
-                    line.Start,
-                    MarkdownSyntax.MinimumCodeFenceLength,
-                    out MarkdownSyntax.MarkdownCodeFenceLine openingFenceLine))
+            if (!inCodeBlock && MarkdownSyntax.TryParseBacktickCodeFence(content, line.Start, MarkdownSyntax.MinimumCodeFenceLength, out MarkdownCodeFenceLine openingFenceLine))
             {
                 inCodeBlock = true;
                 codeFenceLength = openingFenceLine.FenceLength;
@@ -42,11 +37,7 @@ internal static class MarkdownBlockPartitioner
 
             if (inCodeBlock)
             {
-                if (MarkdownSyntax.TryParseBacktickCodeFence(
-                        content,
-                        line.Start,
-                        codeFenceLength,
-                        out MarkdownSyntax.MarkdownCodeFenceLine closingFenceLine)
+                if (MarkdownSyntax.TryParseBacktickCodeFence(content, line.Start, codeFenceLength, out MarkdownCodeFenceLine closingFenceLine)
                     && markdown[closingFenceLine.FenceInfoStart..line.ContentEnd].IsWhiteSpace())
                 {
                     inCodeBlock = false;
@@ -58,32 +49,22 @@ internal static class MarkdownBlockPartitioner
                 continue;
             }
 
-            if (MarkdownSyntax.IsHeadingLine(content)
-                && line.Start > startIndex
-                && !markdown[startIndex..line.Start].IsWhiteSpace())
+            if (MarkdownSyntax.IsHeadingLine(content) && line.Start > startIndex && !markdown[startIndex..line.Start].IsWhiteSpace())
             {
                 return line.Start;
             }
 
             if (MarkdownSyntax.IsTableLine(content))
             {
-                if (!MarkdownSyntax.TryReadCompleteLine(
-                    markdown,
-                    ref nextLineStart,
-                    ref pendingLine,
-                    out MarkdownSyntax.MarkdownLine nextLine))
+                if (!MarkdownSyntax.TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownLine nextLine))
                 {
                     break;
                 }
 
                 if (MarkdownSyntax.IsTableSeparator(nextLine.GetContent(markdown)))
                 {
-                    MarkdownSyntax.MarkdownLine tableEndLine = nextLine;
-                    while (MarkdownSyntax.TryReadCompleteLine(
-                        markdown,
-                        ref nextLineStart,
-                        ref pendingLine,
-                        out MarkdownSyntax.MarkdownLine tableLine))
+                    MarkdownLine tableEndLine = nextLine;
+                    while (MarkdownSyntax.TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownLine tableLine))
                     {
                         if (!MarkdownSyntax.IsTableLine(tableLine.GetContent(markdown)))
                         {
@@ -120,7 +101,7 @@ internal static class MarkdownBlockPartitioner
         }
 
         int nextLineStart = 0;
-        while (MarkdownSyntax.TryReadCompleteLine(markdown, ref nextLineStart, out MarkdownSyntax.MarkdownLine line))
+        while (MarkdownSyntax.TryReadCompleteLine(markdown, ref nextLineStart, out MarkdownLine line))
         {
             ReadOnlySpan<char> content = line.GetContent(markdown);
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Primitives;
 using Snap.Nicole.Core;
 using System.Buffers;
 using System.Text;
@@ -47,20 +46,10 @@ internal static class MarkdownSyntax
         return true;
     }
 
-    internal static StringSegment TrimTrailingCarriageReturn(StringSegment line)
+    internal static bool TryParseHeading(ReadOnlySpan<char> line, out ReadOnlySpan<char> text, out int level)
     {
-        if (line.Length > 0 && line[^1] is '\r')
-        {
-            return line.Subsegment(0, Math.Max(line.Length - 1, 0));
-        }
-
-        return line;
-    }
-
-    internal static bool TryParseHeading(StringSegment line, out StringSegment text, out int level)
-    {
-        StringSegment trimmed = line.TrimStart();
-        level = GetHeadingLevel(trimmed.AsSpan());
+        ReadOnlySpan<char> trimmed = line.TrimStart();
+        level = GetHeadingLevel(trimmed);
 
         if (level is 0)
         {
@@ -74,7 +63,7 @@ internal static class MarkdownSyntax
             textOffset++;
         }
 
-        text = trimmed.Subsegment(Math.Min(textOffset, trimmed.Length));
+        text = trimmed[Math.Min(textOffset, trimmed.Length)..];
         return true;
     }
 
@@ -83,9 +72,9 @@ internal static class MarkdownSyntax
         return GetHeadingLevel(content.TrimStart()) is not 0;
     }
 
-    internal static bool TryParseBacktickCodeFence(StringSegment trimmedStart, int minimumFenceLength, out MarkdownCodeFenceSegment codeFence)
+    internal static bool TryParseBacktickCodeFence(ReadOnlySpan<char> trimmedStart, int minimumFenceLength, out MarkdownCodeFenceSegment codeFence)
     {
-        int fenceLength = CountLeadingBackticks(trimmedStart.AsSpan());
+        int fenceLength = CountLeadingBackticks(trimmedStart);
 
         if (fenceLength < minimumFenceLength)
         {
@@ -93,7 +82,7 @@ internal static class MarkdownSyntax
             return false;
         }
 
-        codeFence = new(fenceLength, trimmedStart.Subsegment(Math.Min(fenceLength, trimmedStart.Length)));
+        codeFence = new(fenceLength, trimmedStart[Math.Min(fenceLength, trimmedStart.Length)..]);
         return true;
     }
 
@@ -112,9 +101,9 @@ internal static class MarkdownSyntax
         return true;
     }
 
-    internal static bool IsHorizontalRule(StringSegment line)
+    internal static bool IsHorizontalRule(ReadOnlySpan<char> line)
     {
-        ReadOnlySpan<char> span = line.Trim().AsSpan();
+        ReadOnlySpan<char> span = line.Trim();
 
         if (span.Length < 3)
         {
@@ -132,9 +121,9 @@ internal static class MarkdownSyntax
         return true;
     }
 
-    internal static bool TryParseBlockquote(StringSegment line, out int depth, out StringSegment text)
+    internal static bool TryParseBlockquote(ReadOnlySpan<char> line, out int depth, out ReadOnlySpan<char> text)
     {
-        StringSegment trimmed = line.TrimStart();
+        ReadOnlySpan<char> trimmed = line.TrimStart();
 
         if (trimmed.Length is 0 || trimmed[0] is not '>')
         {
@@ -156,13 +145,13 @@ internal static class MarkdownSyntax
             }
         }
 
-        text = trimmed.Subsegment(Math.Min(textOffset, trimmed.Length));
+        text = trimmed[Math.Min(textOffset, trimmed.Length)..];
         return true;
     }
 
-    internal static bool TryParseTaskListItem(StringSegment line, out bool isChecked, out StringSegment text, out int depth)
+    internal static bool TryParseTaskListItem(ReadOnlySpan<char> line, out bool isChecked, out ReadOnlySpan<char> text, out int depth)
     {
-        if (!TryParseUnorderedListItem(line, out StringSegment listText, out depth))
+        if (!TryParseUnorderedListItem(line, out ReadOnlySpan<char> listText, out depth))
         {
             isChecked = false;
             text = default;
@@ -170,7 +159,7 @@ internal static class MarkdownSyntax
             return false;
         }
 
-        StringSegment trimmed = listText.TrimStart();
+        ReadOnlySpan<char> trimmed = listText.TrimStart();
         if (trimmed.Length < 3 || trimmed[0] is not '[' || trimmed[2] is not ']')
         {
             isChecked = false;
@@ -195,13 +184,13 @@ internal static class MarkdownSyntax
         }
 
         isChecked = marker is 'x' or 'X';
-        text = trimmed.Subsegment(Math.Min(textOffset, trimmed.Length));
+        text = trimmed[Math.Min(textOffset, trimmed.Length)..];
         return true;
     }
 
-    internal static bool TryParseUnorderedListItem(StringSegment line, out StringSegment text, out int depth)
+    internal static bool TryParseUnorderedListItem(ReadOnlySpan<char> line, out ReadOnlySpan<char> text, out int depth)
     {
-        StringSegment trimmed = line.TrimStart();
+        ReadOnlySpan<char> trimmed = line.TrimStart();
 
         if (trimmed.Length < 2 || trimmed[0] is not ('-' or '*' or '+') || !char.IsWhiteSpace(trimmed[1]))
         {
@@ -216,15 +205,15 @@ internal static class MarkdownSyntax
             textOffset++;
         }
 
-        text = trimmed.Subsegment(Math.Min(textOffset, trimmed.Length));
+        text = trimmed[Math.Min(textOffset, trimmed.Length)..];
         depth = GetListDepth(line);
         return true;
     }
 
-    internal static bool TryParseOrderedListItem(StringSegment line, out StringSegment number, out StringSegment text, out int depth)
+    internal static bool TryParseOrderedListItem(ReadOnlySpan<char> line, out ReadOnlySpan<char> number, out ReadOnlySpan<char> text, out int depth)
     {
-        StringSegment trimmed = line.TrimStart();
-        ReadOnlySpan<char> span = trimmed.AsSpan();
+        ReadOnlySpan<char> trimmed = line.TrimStart();
+        ReadOnlySpan<char> span = trimmed;
         int index = 0;
 
         while (index < span.Length && char.IsDigit(span[index]))
@@ -246,15 +235,10 @@ internal static class MarkdownSyntax
             textOffset++;
         }
 
-        number = trimmed.Subsegment(0, Math.Max(index, 0));
-        text = trimmed.Subsegment(Math.Min(textOffset, trimmed.Length));
+        number = trimmed[..Math.Max(index, 0)];
+        text = trimmed[Math.Min(textOffset, trimmed.Length)..];
         depth = GetListDepth(line);
         return true;
-    }
-
-    internal static bool IsTableLine(StringSegment line)
-    {
-        return IsTableLine(line.Trim().AsSpan());
     }
 
     internal static bool IsTableLine(ReadOnlySpan<char> lineContent)
@@ -265,11 +249,6 @@ internal static class MarkdownSyntax
             && trimmed[0] == '|'
             && trimmed[^1] == '|'
             && !IsEscaped(trimmed, trimmed.Length - 1);
-    }
-
-    internal static bool IsTableSeparator(StringSegment line)
-    {
-        return IsTableSeparator(line.AsSpan());
     }
 
     internal static bool IsTableSeparator(ReadOnlySpan<char> lineContent)
@@ -292,9 +271,9 @@ internal static class MarkdownSyntax
         return true;
     }
 
-    internal static StringSegment TrimTableCellBounds(StringSegment line)
+    internal static ReadOnlySpan<char> TrimTableCellBounds(ReadOnlySpan<char> line)
     {
-        StringSegment trimmed = line.Trim();
+        ReadOnlySpan<char> trimmed = line.Trim();
         int start = 0;
         int length = trimmed.Length;
 
@@ -309,15 +288,10 @@ internal static class MarkdownSyntax
             length--;
         }
 
-        return trimmed.Subsegment(start, Math.Max(length, 0));
+        return trimmed.Slice(start, Math.Max(length, 0));
     }
 
     internal static bool IsEscaped(string text, int index)
-    {
-        return IsEscaped(text.AsSpan(), index);
-    }
-
-    internal static bool IsEscaped(StringSegment text, int index)
     {
         return IsEscaped(text.AsSpan(), index);
     }
@@ -403,7 +377,7 @@ internal static class MarkdownSyntax
         return length < 0 ? text.Length : length;
     }
 
-    private static int GetListDepth(StringSegment line)
+    private static int GetListDepth(ReadOnlySpan<char> line)
     {
         int columns = 0;
         for (int i = 0; i < line.Length; i++)
@@ -433,52 +407,5 @@ internal static class MarkdownSyntax
     private static bool IsMarkdownEscapableCharacter(char character)
     {
         return character is (>= '!' and <= '~') && (char.IsPunctuation(character) || char.IsSymbol(character));
-    }
-
-    internal readonly struct MarkdownCodeFenceSegment
-    {
-        public MarkdownCodeFenceSegment(int fenceLength, StringSegment fenceInfo)
-        {
-            FenceLength = fenceLength;
-            FenceInfo = fenceInfo;
-        }
-
-        public int FenceLength { get; }
-
-        public StringSegment FenceInfo { get; }
-    }
-
-    internal readonly struct MarkdownCodeFenceLine
-    {
-        public MarkdownCodeFenceLine(int fenceLength, int fenceInfoStart)
-        {
-            FenceLength = fenceLength;
-            FenceInfoStart = fenceInfoStart;
-        }
-
-        public int FenceLength { get; }
-
-        public int FenceInfoStart { get; }
-    }
-
-    internal readonly struct MarkdownLine
-    {
-        public MarkdownLine(int start, int contentEnd, int end)
-        {
-            Start = start;
-            ContentEnd = contentEnd;
-            End = end;
-        }
-
-        public int Start { get; }
-
-        public int ContentEnd { get; }
-
-        public int End { get; }
-
-        public ReadOnlySpan<char> GetContent(ReadOnlySpan<char> markdown)
-        {
-            return markdown[Start..ContentEnd];
-        }
     }
 }

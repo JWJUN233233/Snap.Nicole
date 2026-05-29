@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Primitives;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -6,7 +5,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Snap.Nicole.Core.Primitives;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -15,9 +13,6 @@ namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal static partial class MarkdownHelper
 {
-    private static readonly char[] LineFeedSeparators = ['\n'];
-    private static readonly char[] CarriageReturnSeparators = ['\r'];
-    private static readonly char[] TableCellSeparators = ['|'];
     private const double ListItemIndent = 16;
     private const double NestedListItemIndent = 20;
     private const string TaskListIconFontFamilyName = "Segoe Fluent Icons";
@@ -38,19 +33,15 @@ internal static partial class MarkdownHelper
         StringBuilder? codeBuffer = null;
         string codeLanguage = string.Empty;
         int codeFenceLength = 0;
-        StringTokenizer tokenizer = new(markdown, GetLineSeparators(markdown));
-        StringTokenizer.Enumerator enumerator = tokenizer.GetEnumerator();
-        StringSegment? pendingLine = null;
+        SpanLineEnumerator enumerator = markdown.AsSpan().EnumerateLines();
+        int lineStart = 0;
+        MarkdownLine? pendingLine = null;
 
-        while (TryReadLine(ref enumerator, ref pendingLine, out StringSegment line))
+        while (TryReadLine(markdown, ref enumerator, ref lineStart, ref pendingLine, out ReadOnlySpan<char> line, out MarkdownLine markdownLine))
         {
-            StringSegment trimmedStart = line.TrimStart();
+            ReadOnlySpan<char> trimmedStart = line.TrimStart();
 
-            if (!inCodeBlock
-                && MarkdownSyntax.TryParseBacktickCodeFence(
-                    trimmedStart,
-                    MarkdownSyntax.MinimumCodeFenceLength,
-                    out MarkdownSyntax.MarkdownCodeFenceSegment openingFence))
+            if (!inCodeBlock && MarkdownSyntax.TryParseBacktickCodeFence(trimmedStart, MarkdownSyntax.MinimumCodeFenceLength, out MarkdownCodeFenceSegment openingFence))
             {
                 inCodeBlock = true;
                 codeFenceLength = openingFence.FenceLength;
@@ -61,11 +52,7 @@ internal static partial class MarkdownHelper
 
             if (inCodeBlock)
             {
-                if (MarkdownSyntax.TryParseBacktickCodeFence(
-                        trimmedStart,
-                        codeFenceLength,
-                        out MarkdownSyntax.MarkdownCodeFenceSegment closingFence)
-                    && closingFence.FenceInfo.IsWhiteSpace())
+                if (MarkdownSyntax.TryParseBacktickCodeFence(trimmedStart, codeFenceLength, out MarkdownCodeFenceSegment closingFence) && closingFence.FenceInfo.IsWhiteSpace())
                 {
                     AddCodeBlock(blocks, GetCodeBlockText(codeBuffer), codeLanguage);
                     codeBuffer?.Clear();
@@ -77,7 +64,7 @@ internal static partial class MarkdownHelper
                 }
 
                 codeBuffer ??= new StringBuilder();
-                codeBuffer.Append(line.AsSpan());
+                codeBuffer.Append(line);
                 codeBuffer.Append('\n');
                 continue;
             }
@@ -87,21 +74,22 @@ internal static partial class MarkdownHelper
                 continue;
             }
 
-            if (MarkdownSyntax.IsTableLine(line) && TryReadLine(ref enumerator, ref pendingLine, out StringSegment separatorLine))
+            if (MarkdownSyntax.IsTableLine(line)
+                && TryReadLine(markdown, ref enumerator, ref lineStart, ref pendingLine, out ReadOnlySpan<char> separatorLine, out MarkdownLine separatorMarkdownLine))
             {
                 if (MarkdownSyntax.IsTableSeparator(separatorLine))
                 {
-                    AddTable(blocks, line, separatorLine, ref enumerator, ref pendingLine);
+                    AddTable(blocks, markdown, markdownLine, separatorMarkdownLine, ref enumerator, ref lineStart, ref pendingLine);
                     richText = null;
                     continue;
                 }
 
-                pendingLine = separatorLine;
+                pendingLine = separatorMarkdownLine;
             }
 
             richText = EnsureRichTextBlock(blocks, richText);
 
-            if (MarkdownSyntax.TryParseHeading(line, out StringSegment headingText, out int headingLevel))
+            if (MarkdownSyntax.TryParseHeading(line, out ReadOnlySpan<char> headingText, out int headingLevel))
             {
                 AddHeading(richText, headingText, headingLevel);
             }
@@ -109,19 +97,19 @@ internal static partial class MarkdownHelper
             {
                 AddHorizontalRule(richText);
             }
-            else if (MarkdownSyntax.TryParseBlockquote(line, out int blockquoteDepth, out StringSegment blockquoteText))
+            else if (MarkdownSyntax.TryParseBlockquote(line, out int blockquoteDepth, out ReadOnlySpan<char> blockquoteText))
             {
                 AddBlockquote(richText, blockquoteDepth, blockquoteText);
             }
-            else if (MarkdownSyntax.TryParseTaskListItem(line, out bool isTaskChecked, out StringSegment taskText, out int taskListDepth))
+            else if (MarkdownSyntax.TryParseTaskListItem(line, out bool isTaskChecked, out ReadOnlySpan<char> taskText, out int taskListDepth))
             {
                 AddTaskListItem(richText, isTaskChecked, taskText, taskListDepth);
             }
-            else if (MarkdownSyntax.TryParseUnorderedListItem(line, out StringSegment listItemText, out int unorderedListDepth))
+            else if (MarkdownSyntax.TryParseUnorderedListItem(line, out ReadOnlySpan<char> listItemText, out int unorderedListDepth))
             {
                 AddListItem(richText, listItemText, "- ", unorderedListDepth);
             }
-            else if (MarkdownSyntax.TryParseOrderedListItem(line, out StringSegment listNumber, out StringSegment listText, out int orderedListDepth))
+            else if (MarkdownSyntax.TryParseOrderedListItem(line, out ReadOnlySpan<char> listNumber, out ReadOnlySpan<char> listText, out int orderedListDepth))
             {
                 AddListItem(richText, listText, CreateOrderedListBullet(listNumber), orderedListDepth);
             }
@@ -157,24 +145,18 @@ internal static partial class MarkdownHelper
         return richText;
     }
 
-    private static char[] GetLineSeparators(string markdown)
-    {
-        if (!markdown.Contains('\n') && markdown.Contains('\r'))
-        {
-            return CarriageReturnSeparators;
-        }
-
-        return LineFeedSeparators;
-    }
-
     private static bool TryReadLine(
-        ref StringTokenizer.Enumerator enumerator,
-        ref StringSegment? pendingLine,
-        out StringSegment line)
+        string markdown,
+        ref SpanLineEnumerator enumerator,
+        ref int lineStart,
+        ref MarkdownLine? pendingLine,
+        out ReadOnlySpan<char> line,
+        out MarkdownLine markdownLine)
     {
         if (pendingLine.HasValue)
         {
-            line = pendingLine.GetValueOrDefault();
+            markdownLine = pendingLine.GetValueOrDefault();
+            line = markdownLine.GetContent(markdown.AsSpan());
             pendingLine = null;
             return true;
         }
@@ -182,11 +164,41 @@ internal static partial class MarkdownHelper
         if (!enumerator.MoveNext())
         {
             line = default;
+            markdownLine = default;
             return false;
         }
 
-        line = MarkdownSyntax.TrimTrailingCarriageReturn(enumerator.Current);
+        line = enumerator.Current;
+        int contentEnd = lineStart + line.Length;
+        int lineEnd = GetNextLineStart(markdown, contentEnd);
+        markdownLine = new(lineStart, contentEnd, lineEnd);
+        lineStart = lineEnd;
         return true;
+    }
+
+    private static int GetNextLineStart(string markdown, int lineEnd)
+    {
+        if ((uint)lineEnd >= (uint)markdown.Length)
+        {
+            return lineEnd;
+        }
+
+        if (markdown[lineEnd] is '\r' && lineEnd + 1 < markdown.Length && markdown[lineEnd + 1] is '\n')
+        {
+            return lineEnd + 2;
+        }
+
+        if (IsLineEnding(markdown[lineEnd]))
+        {
+            return lineEnd + 1;
+        }
+
+        return lineEnd;
+    }
+
+    private static bool IsLineEnding(char character)
+    {
+        return character is '\r' or '\n' or '\f' or '\u0085' or '\u2028' or '\u2029';
     }
 
     private static string GetCodeBlockText(StringBuilder? codeBuffer)
@@ -210,17 +222,12 @@ internal static partial class MarkdownHelper
         return codeBuffer.ToString(0, length);
     }
 
-    private static string CreateOrderedListBullet(StringSegment number)
+    private static string CreateOrderedListBullet(ReadOnlySpan<char> number)
     {
-        return string.Create(number.Length + 2, number, static (destination, segment) =>
-        {
-            segment.AsSpan().CopyTo(destination);
-            destination[segment.Length] = '.';
-            destination[segment.Length + 1] = ' ';
-        });
+        return string.Concat(number, ". ".AsSpan());
     }
 
-    private static void AddHeading(RichTextBlock richText, StringSegment text, int level)
+    private static void AddHeading(RichTextBlock richText, ReadOnlySpan<char> text, int level)
     {
         Paragraph paragraph = new() { FontSize = GetHeadingFontSize(level), FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 4, 0, 2) };
         AddInlineMarkdown(paragraph.Inlines, text);
@@ -257,7 +264,7 @@ internal static partial class MarkdownHelper
         richText.Blocks.Add(paragraph);
     }
 
-    private static void AddBlockquote(RichTextBlock richText, int depth, StringSegment text)
+    private static void AddBlockquote(RichTextBlock richText, int depth, ReadOnlySpan<char> text)
     {
         RichTextBlock quoteText = new()
         {
@@ -295,7 +302,7 @@ internal static partial class MarkdownHelper
         richText.Blocks.Add(container);
     }
 
-    private static void AddTaskListItem(RichTextBlock richText, bool isChecked, StringSegment text, int depth)
+    private static void AddTaskListItem(RichTextBlock richText, bool isChecked, ReadOnlySpan<char> text, int depth)
     {
         Paragraph paragraph = new() { Margin = CreateListItemMargin(depth) };
         paragraph.Inlines.Add(new InlineUIContainer
@@ -316,7 +323,7 @@ internal static partial class MarkdownHelper
         richText.Blocks.Add(paragraph);
     }
 
-    private static void AddListItem(RichTextBlock richText, StringSegment text, string bullet, int depth)
+    private static void AddListItem(RichTextBlock richText, ReadOnlySpan<char> text, string bullet, int depth)
     {
         Paragraph paragraph = new() { Margin = CreateListItemMargin(depth) };
         paragraph.Inlines.Add(new Run { Text = bullet });
@@ -329,7 +336,7 @@ internal static partial class MarkdownHelper
         return new Thickness(ListItemIndent + depth * NestedListItemIndent, 1, 0, 1);
     }
 
-    private static void AddParagraph(RichTextBlock richText, StringSegment text)
+    private static void AddParagraph(RichTextBlock richText, ReadOnlySpan<char> text)
     {
         Paragraph paragraph = new() { Margin = new Thickness(0, 2, 0, 2) };
         AddInlineMarkdown(paragraph.Inlines, text);
@@ -345,9 +352,9 @@ internal static partial class MarkdownHelper
         });
     }
 
-    private static List<string> ParseTableCells(StringSegment line)
+    private static List<string> ParseTableCells(ReadOnlySpan<char> line)
     {
-        StringSegment trimmed = MarkdownSyntax.TrimTableCellBounds(line);
+        ReadOnlySpan<char> trimmed = MarkdownSyntax.TrimTableCellBounds(line);
         List<string> cells = [];
         int cellStart = 0;
 
@@ -358,27 +365,19 @@ internal static partial class MarkdownHelper
                 continue;
             }
 
-            cells.Add(trimmed
-                .Subsegment(cellStart, Math.Max(i - cellStart, 0))
-                .Trim()
-                .ToString());
+            cells.Add(trimmed.Slice(cellStart, Math.Max(i - cellStart, 0)).Trim().ToString());
             cellStart = i + 1;
         }
 
-        cells.Add(trimmed
-            .Subsegment(cellStart, Math.Max(trimmed.Length - cellStart, 0))
-            .Trim()
-            .ToString());
+        cells.Add(trimmed.Slice(cellStart, Math.Max(trimmed.Length - cellStart, 0)).Trim().ToString());
         return cells;
     }
 
-    private static List<TextAlignment> ParseTableColumnAlignments(StringSegment line, int columnCount)
+    private static List<TextAlignment> ParseTableColumnAlignments(ReadOnlySpan<char> line, int columnCount)
     {
-        StringSegment trimmed = MarkdownSyntax.TrimTableCellBounds(line);
         List<TextAlignment> alignments = [];
-        StringTokenizer tokenizer = new(trimmed, TableCellSeparators);
 
-        foreach (StringSegment cell in tokenizer)
+        foreach (string cell in ParseTableCells(line))
         {
             alignments.Add(ParseTableColumnAlignment(cell));
         }
@@ -391,9 +390,9 @@ internal static partial class MarkdownHelper
         return alignments;
     }
 
-    private static TextAlignment ParseTableColumnAlignment(StringSegment cell)
+    private static TextAlignment ParseTableColumnAlignment(string cell)
     {
-        StringSegment trimmed = cell.Trim();
+        ReadOnlySpan<char> trimmed = cell.AsSpan().Trim();
         bool hasLeftMarker = trimmed.Length > 0 && trimmed[0] == ':';
         bool hasRightMarker = trimmed.Length > 0 && trimmed[trimmed.Length - 1] == ':';
 
@@ -412,21 +411,24 @@ internal static partial class MarkdownHelper
 
     private static void AddTable(
         List<UIElement> blocks,
-        StringSegment headerLine,
-        StringSegment separatorLine,
-        ref StringTokenizer.Enumerator enumerator,
-        ref StringSegment? pendingLine)
+        string markdown,
+        MarkdownLine headerLine,
+        MarkdownLine separatorLine,
+        ref SpanLineEnumerator enumerator,
+        ref int lineStart,
+        ref MarkdownLine? pendingLine)
     {
-        List<string> headerCells = ParseTableCells(headerLine);
+        ReadOnlySpan<char> markdownSpan = markdown.AsSpan();
+        List<string> headerCells = ParseTableCells(headerLine.GetContent(markdownSpan));
         int columnCount = headerCells.Count;
-        List<global::Microsoft.UI.Xaml.TextAlignment> columnAlignments = ParseTableColumnAlignments(separatorLine, columnCount);
+        List<global::Microsoft.UI.Xaml.TextAlignment> columnAlignments = ParseTableColumnAlignments(separatorLine.GetContent(markdownSpan), columnCount);
         List<IReadOnlyList<string>> rows = [headerCells];
 
-        while (TryReadLine(ref enumerator, ref pendingLine, out StringSegment line))
+        while (TryReadLine(markdown, ref enumerator, ref lineStart, ref pendingLine, out ReadOnlySpan<char> line, out MarkdownLine markdownLine))
         {
             if (!MarkdownSyntax.IsTableLine(line))
             {
-                pendingLine = line;
+                pendingLine = markdownLine;
                 break;
             }
 
@@ -446,7 +448,7 @@ internal static partial class MarkdownHelper
         });
     }
 
-    private static void AddInlineMarkdown(InlineCollection inlines, StringSegment text)
+    private static void AddInlineMarkdown(InlineCollection inlines, ReadOnlySpan<char> text)
     {
         if (text.Length == 0)
         {
