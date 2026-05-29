@@ -1,26 +1,24 @@
 global using Microsoft.Extensions.DependencyInjection;
 global using System;
-
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.ObjectPool;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
-using Snap.Nicole.Services.Settings;
 using Snap.Nicole.Core.Threading;
+using Snap.Nicole.Services.AI;
+using Snap.Nicole.Services.Git;
+using Snap.Nicole.Services.Settings;
 using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Navigation;
 using Snap.Nicole.UI.Xaml.Windows;
-using Snap.Nicole.Services.AI;
 using Snap.Nicole.ViewModels;
 using Snap.Nicole.ViewModels.NotifyIcon;
 using Snap.Nicole.ViewModels.Settings;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using WinRT;
-using CommunityToolkit.Mvvm.Messaging;
-using Snap.Nicole.Services.Git;
-using Microsoft.Extensions.ObjectPool;
-using System.Text;
 
 [assembly: DisableRuntimeMarshalling]
 

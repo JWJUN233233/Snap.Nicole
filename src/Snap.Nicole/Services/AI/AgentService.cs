@@ -52,10 +52,12 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                     continue;
                 }
 
-                responseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, options.ModelId);
-
                 await taskScheduler.Run(() =>
                 {
+                    // TODOO: this should be possible to lift out of the UI thread dispatch,
+                    // but currently if this is created on a background thread, the UI gets stuck and doesn't update at all.
+                    responseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, options.ModelId);
+
                     if (!responseAdded)
                     {
                         collection.Add(responseMessage);

@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
@@ -30,6 +31,7 @@ internal sealed partial class MarkdownTextBlock : UserControl
 
     private void RenderMarkdown(string? markdown)
     {
+        Debug.WriteLine($"RenderMarkdown: '{markdown}'");
         string nextMarkdown = markdown ?? string.Empty;
 
         if (!IsAppendUpdate(nextMarkdown))

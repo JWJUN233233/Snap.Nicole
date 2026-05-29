@@ -45,10 +45,9 @@ internal static partial class MarkdownHelper
         int codeFenceLength = 0;
         StringTokenizer tokenizer = new(markdown, GetLineSeparators(markdown));
         StringTokenizer.Enumerator enumerator = tokenizer.GetEnumerator();
-        bool hasPendingLine = false;
-        StringSegment pendingLine = default;
+        StringSegment? pendingLine = null;
 
-        while (TryReadLine(ref enumerator, ref hasPendingLine, ref pendingLine, out StringSegment line))
+        while (TryReadLine(ref enumerator, ref pendingLine, out StringSegment line))
         {
             StringSegment trimmedStart = line.TrimStart();
 
@@ -93,16 +92,15 @@ internal static partial class MarkdownHelper
             {
                 AddHorizontalRule(richText);
             }
-            else if (IsTableLine(line) && TryReadLine(ref enumerator, ref hasPendingLine, ref pendingLine, out StringSegment separatorLine))
+            else if (IsTableLine(line) && TryReadLine(ref enumerator, ref pendingLine, out StringSegment separatorLine))
             {
                 if (IsTableSeparator(separatorLine))
                 {
-                    AddTable(richText, line, separatorLine, ref enumerator, ref hasPendingLine, ref pendingLine);
+                    AddTable(richText, line, separatorLine, ref enumerator, ref pendingLine);
                 }
                 else
                 {
                     pendingLine = separatorLine;
-                    hasPendingLine = true;
                     AddParagraph(richText, line);
                 }
             }
@@ -148,14 +146,13 @@ internal static partial class MarkdownHelper
 
     private static bool TryReadLine(
         ref StringTokenizer.Enumerator enumerator,
-        ref bool hasPendingLine,
-        ref StringSegment pendingLine,
+        ref StringSegment? pendingLine,
         out StringSegment line)
     {
-        if (hasPendingLine)
+        if (pendingLine.HasValue)
         {
-            line = pendingLine;
-            hasPendingLine = false;
+            line = pendingLine.GetValueOrDefault();
+            pendingLine = null;
             return true;
         }
 
@@ -202,14 +199,10 @@ internal static partial class MarkdownHelper
     private static bool TryParseHeading(StringSegment line, out StringSegment text, out double fontSize)
     {
         StringSegment trimmed = line.TrimStart();
-        int level = 0;
+        ReadOnlySpan<char> span = trimmed.AsSpan();
+        int level = span.IndexOfAnyExcept('#');
 
-        while (level < trimmed.Length && trimmed[level] == '#')
-        {
-            level++;
-        }
-
-        if (level is < 1 or > 6 || level >= trimmed.Length || !char.IsWhiteSpace(trimmed[level]))
+        if (level is < 1 or > 6 || !char.IsWhiteSpace(span[level]))
         {
             text = default;
             fontSize = 0;
@@ -698,20 +691,18 @@ internal static partial class MarkdownHelper
         StringSegment headerLine,
         StringSegment separatorLine,
         ref StringTokenizer.Enumerator enumerator,
-        ref bool hasPendingLine,
-        ref StringSegment pendingLine)
+        ref StringSegment? pendingLine)
     {
         List<string> headerCells = ParseTableCells(headerLine);
         int columnCount = headerCells.Count;
         List<global::Microsoft.UI.Xaml.TextAlignment> columnAlignments = ParseTableColumnAlignments(separatorLine, columnCount);
         List<IReadOnlyList<string>> rows = [headerCells];
 
-        while (TryReadLine(ref enumerator, ref hasPendingLine, ref pendingLine, out StringSegment line))
+        while (TryReadLine(ref enumerator, ref pendingLine, out StringSegment line))
         {
             if (!IsTableLine(line))
             {
                 pendingLine = line;
-                hasPendingLine = true;
                 break;
             }
 

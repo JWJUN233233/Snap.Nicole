@@ -1,48 +1,47 @@
-using System;
-using System.Collections.Generic;
+using System.Buffers;
+using Snap.Nicole.Core;
 
 namespace Snap.Nicole.UI.Xaml.Controls.Markdown;
 
 internal static class MarkdownBlockPartitioner
 {
+    private static readonly SearchValues<char> LineEndings = SearchValues.Create("\r\f\u0085\u2028\u2029\n");
+
     public static int GetStablePrefixLength(string markdown)
     {
         return GetStablePrefixLength(markdown, 0);
     }
 
-    public static int GetStablePrefixLength(string markdown, int startIndex)
+    public static int GetStablePrefixLength(ReadOnlySpan<char> markdown, int startIndex)
     {
-        if (startIndex < 0 || startIndex > markdown.Length)
-        {
-            throw new ArgumentOutOfRangeException(nameof(startIndex));
-        }
+        ArgumentOutOfRangeException.ThrowIfNegative(startIndex);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(startIndex, markdown.Length);
 
-        if (markdown.Length == 0)
+        if (markdown.Length is 0)
         {
             return 0;
         }
 
-        List<MarkdownLine> lines = GetCompleteLines(markdown, startIndex);
         int stableEnd = startIndex;
         bool inCodeBlock = false;
         int codeFenceLength = 0;
+        int nextLineStart = startIndex;
+        MarkdownLine? pendingLine = null;
 
-        for (int i = 0; i < lines.Count; i++)
+        while (TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownLine line))
         {
-            MarkdownLine line = lines[i];
-
-            if (!inCodeBlock && TryGetCodeFenceLine(markdown, line, 3, out int openingFenceLength, out _))
+            if (!inCodeBlock && TryGetCodeFenceLine(markdown, line, /* At least ``` */ 3, out CodeFenceLine openingFenceLine))
             {
                 inCodeBlock = true;
-                codeFenceLength = openingFenceLength;
+                codeFenceLength = openingFenceLine.FenceLength;
 
                 continue;
             }
 
             if (inCodeBlock)
             {
-                if (TryGetCodeFenceLine(markdown, line, codeFenceLength, out _, out int closingFenceInfoStart)
-                    && !HasNonWhiteSpace(markdown, closingFenceInfoStart, line.ContentEnd))
+                if (TryGetCodeFenceLine(markdown, line, codeFenceLength, out CodeFenceLine closingFenceLine)
+                    && markdown[closingFenceLine.FenceInfoStart..line.ContentEnd].IsWhiteSpace())
                 {
                     inCodeBlock = false;
                     codeFenceLength = 0;
@@ -53,40 +52,42 @@ internal static class MarkdownBlockPartitioner
                 continue;
             }
 
-            if (IsHeadingLine(markdown, line)
-                && line.Start > startIndex
-                && HasNonWhiteSpace(markdown, startIndex, line.Start))
+            if (IsHeadingLine(markdown, line) && line.Start > startIndex && !markdown[startIndex..line.Start].IsWhiteSpace())
             {
                 return line.Start;
             }
 
             if (IsTableLine(markdown, line))
             {
-                if (i + 1 >= lines.Count)
+                if (!TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownLine nextLine))
                 {
                     break;
                 }
 
-                MarkdownLine nextLine = lines[i + 1];
                 if (IsTableSeparator(markdown, nextLine))
                 {
-                    int tableEndLineIndex = i + 1;
-                    int nextIndex = i + 2;
-                    while (nextIndex < lines.Count && IsTableLine(markdown, lines[nextIndex]))
+                    MarkdownLine tableEndLine = nextLine;
+                    while (TryReadCompleteLine(markdown, ref nextLineStart, ref pendingLine, out MarkdownLine tableLine))
                     {
-                        tableEndLineIndex = nextIndex;
-                        nextIndex++;
+                        if (!IsTableLine(markdown, tableLine))
+                        {
+                            pendingLine = tableLine;
+                            break;
+                        }
+
+                        tableEndLine = tableLine;
                     }
 
-                    if (nextIndex >= lines.Count)
+                    if (!pendingLine.HasValue)
                     {
                         break;
                     }
 
-                    stableEnd = lines[tableEndLineIndex].End;
-                    i = tableEndLineIndex;
+                    stableEnd = tableEndLine.End;
                     continue;
                 }
+
+                pendingLine = nextLine;
             }
 
             stableEnd = line.End;
@@ -95,45 +96,51 @@ internal static class MarkdownBlockPartitioner
         return stableEnd;
     }
 
-    private static List<MarkdownLine> GetCompleteLines(string markdown, int startIndex)
+    private static bool TryReadCompleteLine(ReadOnlySpan<char> markdown, ref int lineStart, ref MarkdownLine? pendingLine, out MarkdownLine line)
     {
-        List<MarkdownLine> lines = [];
-        int lineStart = startIndex;
-
-        for (int i = startIndex; i < markdown.Length; i++)
+        if (pendingLine.HasValue)
         {
-            char current = markdown[i];
-            if (current is not '\r' and not '\n')
-            {
-                continue;
-            }
-
-            int contentEnd = i;
-            int lineEnd = i + 1;
-            if (current == '\r' && lineEnd < markdown.Length && markdown[lineEnd] == '\n')
-            {
-                lineEnd++;
-            }
-
-            lines.Add(new MarkdownLine(lineStart, contentEnd, lineEnd));
-            lineStart = lineEnd;
-            i = lineEnd - 1;
+            line = pendingLine.GetValueOrDefault();
+            pendingLine = null;
+            return true;
         }
 
-        return lines;
+        return TryReadCompleteLine(markdown, ref lineStart, out line);
     }
 
-    public static bool StartsWithHeading(string markdown)
+    private static bool TryReadCompleteLine(ReadOnlySpan<char> markdown, ref int lineStart, out MarkdownLine line)
     {
-        if (markdown.Length == 0)
+        int offset = markdown[lineStart..].IndexOfAny(LineEndings);
+        if (offset < 0)
+        {
+            line = default;
+            return false;
+        }
+
+        int contentEnd = lineStart + offset;
+        int lineEnd = contentEnd + 1;
+
+        if (markdown[contentEnd] is '\r' && lineEnd < markdown.Length && markdown[lineEnd] is '\n')
+        {
+            lineEnd++;
+        }
+
+        line = new(lineStart, contentEnd, lineEnd);
+        lineStart = lineEnd;
+        return true;
+    }
+
+    public static bool StartsWithHeading(ReadOnlySpan<char> markdown)
+    {
+        if (markdown.Length is 0)
         {
             return false;
         }
 
-        List<MarkdownLine> lines = GetCompleteLines(markdown, 0);
-        foreach (MarkdownLine line in lines)
+        int nextLineStart = 0;
+        while (TryReadCompleteLine(markdown, ref nextLineStart, out MarkdownLine line))
         {
-            if (HasNonWhiteSpace(markdown, line.Start, line.ContentEnd))
+            if (!line.GetContent(markdown).IsWhiteSpace())
             {
                 return IsHeadingLine(markdown, line);
             }
@@ -142,75 +149,61 @@ internal static class MarkdownBlockPartitioner
         return false;
     }
 
-    private static bool TryGetCodeFenceLine(string markdown, MarkdownLine line, int minimumFenceLength, out int fenceLength, out int fenceInfoStart)
+    private static bool TryGetCodeFenceLine(ReadOnlySpan<char> markdown, MarkdownLine line, int minimumFenceLength, out CodeFenceLine codeFenceLine)
     {
-        int start = line.Start;
-        while (start < line.ContentEnd && char.IsWhiteSpace(markdown[start]))
-        {
-            start++;
-        }
+        int fenceLength = 0;
+        ReadOnlySpan<char> remaining = line.GetContent(markdown).TrimStart(out int start);
 
-        fenceLength = 0;
-        fenceInfoStart = start;
-        while (start + fenceLength < line.ContentEnd && markdown[start + fenceLength] == '`')
+        while (fenceLength < remaining.Length && remaining[fenceLength] is '`')
         {
             fenceLength++;
         }
 
         if (fenceLength < minimumFenceLength)
         {
+            codeFenceLine = default;
             return false;
         }
 
-        fenceInfoStart = start + fenceLength;
+        codeFenceLine = new(fenceLength, line.Start + start + fenceLength);
         return true;
     }
 
-    private static bool IsHeadingLine(string markdown, MarkdownLine line)
+    private static bool IsHeadingLine(ReadOnlySpan<char> markdown, MarkdownLine line)
     {
-        int start = line.Start;
-        while (start < line.ContentEnd && char.IsWhiteSpace(markdown[start]))
-        {
-            start++;
-        }
+        ReadOnlySpan<char> content = line.GetContent(markdown).TrimStart(out _);
+        int level = content.IndexOfAnyExcept('#');
 
-        int level = 0;
-        while (start + level < line.ContentEnd && markdown[start + level] == '#')
-        {
-            level++;
-        }
-
-        return level is >= 1 and <= 7
-            && start + level < line.ContentEnd
-            && char.IsWhiteSpace(markdown[start + level]);
+        return level is >= 1 and <= 6
+            && char.IsWhiteSpace(content[level]);
     }
 
-    private static bool IsTableLine(string markdown, MarkdownLine line)
+    private static bool IsTableLine(ReadOnlySpan<char> markdown, MarkdownLine line)
     {
-        if (!TryGetTrimmedBounds(markdown, line, out int start, out int end))
+        if (!TryGetTrimmedBounds(markdown, line, out TrimmedBounds bounds))
         {
             return false;
         }
 
-        return end - start > 2
-            && markdown[start] == '|'
-            && markdown[end - 1] == '|'
-            && !IsEscaped(markdown, end - 1);
+        return bounds.Length > 2
+            && markdown[bounds.Start] is '|'
+            && markdown[bounds.LastIndex] is '|'
+            && !IsEscaped(markdown, bounds.LastIndex);
     }
 
-    private static bool IsTableSeparator(string markdown, MarkdownLine line)
+    private static bool IsTableSeparator(ReadOnlySpan<char> markdown, MarkdownLine line)
     {
-        if (!TryGetTrimmedBounds(markdown, line, out int start, out int end)
-            || end - start <= 2
-            || markdown[start] != '|'
-            || markdown[end - 1] != '|')
+        if (!TryGetTrimmedBounds(markdown, line, out TrimmedBounds bounds)
+            || bounds.Length <= 2
+            || markdown[bounds.Start] is not '|'
+            || markdown[bounds.LastIndex] is not '|')
         {
             return false;
         }
 
-        for (int i = start + 1; i < end - 1; i++)
+        for (int i = bounds.Start + 1; i < bounds.LastIndex; i++)
         {
-            if (markdown[i] is not '|' and not '-' and not ':' && !char.IsWhiteSpace(markdown[i]))
+            if (markdown[i] is not ('|' or '-' or ':') && !char.IsWhiteSpace(markdown[i]))
             {
                 return false;
             }
@@ -219,61 +212,60 @@ internal static class MarkdownBlockPartitioner
         return true;
     }
 
-    private static bool HasNonWhiteSpace(string markdown, int start, int end)
+    private static bool TryGetTrimmedBounds(ReadOnlySpan<char> markdown, MarkdownLine line, out TrimmedBounds bounds)
     {
-        for (int i = start; i < end; i++)
+        ReadOnlySpan<char> content = line.GetContent(markdown);
+        content.TrimStart(out int startOffset);
+        content.TrimEnd(out int endOffset);
+
+        if (startOffset > endOffset)
         {
-            if (!char.IsWhiteSpace(markdown[i]))
-            {
-                return true;
-            }
+            bounds = default;
+            return false;
         }
 
-        return false;
+        int start = line.Start + startOffset;
+        int end = line.Start + endOffset + 1;
+        bounds = new(start, end);
+        return true;
     }
 
-    private static bool TryGetTrimmedBounds(string markdown, MarkdownLine line, out int start, out int end)
+    private static bool IsEscaped(ReadOnlySpan<char> markdown, int index)
     {
-        start = line.Start;
-        end = line.ContentEnd;
-
-        while (start < end && char.IsWhiteSpace(markdown[start]))
-        {
-            start++;
-        }
-
-        while (end > start && char.IsWhiteSpace(markdown[end - 1]))
-        {
-            end--;
-        }
-
-        return start < end;
-    }
-
-    private static bool IsEscaped(string markdown, int index)
-    {
-        int backslashCount = 0;
-        for (int i = index - 1; i >= 0 && markdown[i] == '\\'; i--)
-        {
-            backslashCount++;
-        }
-
+        int lastNonEscape = markdown[..index].LastIndexOfAnyExcept('\\');
+        int backslashCount = index - lastNonEscape - 1;
         return backslashCount % 2 != 0;
     }
 
-    private sealed class MarkdownLine
+    private readonly struct CodeFenceLine(int fenceLength, int fenceInfoStart)
     {
-        public MarkdownLine(int start, int contentEnd, int end)
+        public int FenceLength { get; } = fenceLength;
+
+        public int FenceInfoStart { get; } = fenceInfoStart;
+    }
+
+    private readonly struct TrimmedBounds(int start, int end)
+    {
+        public int Start { get; } = start;
+
+        public int End { get; } = end;
+
+        public int Length { get => End - Start; }
+
+        public int LastIndex { get => End - 1; }
+    }
+
+    private readonly struct MarkdownLine(int start, int contentEnd, int end)
+    {
+        public int Start { get; } = start;
+
+        public int ContentEnd { get; } = contentEnd;
+
+        public int End { get; } = end;
+
+        public ReadOnlySpan<char> GetContent(ReadOnlySpan<char> markdown)
         {
-            Start = start;
-            ContentEnd = contentEnd;
-            End = end;
+            return markdown[Start..ContentEnd];
         }
-
-        public int Start { get; }
-
-        public int ContentEnd { get; }
-
-        public int End { get; }
     }
 }
