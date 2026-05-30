@@ -12,10 +12,15 @@ namespace Snap.Nicole.UI.Xaml.Behaviors;
 [GeneratedDependencyProperty<object>("CommandParameter")]
 internal sealed partial class SubmitOnEnterTextBoxBehavior : BehaviorBase<TextBox>
 {
-    protected override void OnAttached()
+    protected override bool Initialize()
     {
-        base.OnAttached();
+        if (!base.Initialize())
+        {
+            return false;
+        }
+
         AssociatedObject.PreviewKeyDown += OnPreviewKeyDown;
+        return true;
     }
 
     protected override bool Uninitialize()

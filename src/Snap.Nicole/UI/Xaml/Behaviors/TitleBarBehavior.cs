@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.Messaging;
+using CommunityToolkit.Mvvm.Messaging;
 using CommunityToolkit.WinUI.Behaviors;
 using Microsoft.UI.Xaml.Controls;
 using Snap.Nicole.UI.Xaml.Navigation;
@@ -7,10 +7,16 @@ namespace Snap.Nicole.UI.Xaml.Behaviors;
 
 internal sealed partial class TitleBarBehavior : BehaviorBase<TitleBar>
 {
-    protected override void OnAssociatedObjectLoaded()
+    protected override bool Initialize()
     {
+        if (!base.Initialize())
+        {
+            return false;
+        }
+
         AssociatedObject.BackRequested += OnBackRequested;
         AssociatedObject.PaneToggleRequested += OnPaneToggleRequested;
+        return true;
     }
 
     protected override bool Uninitialize()

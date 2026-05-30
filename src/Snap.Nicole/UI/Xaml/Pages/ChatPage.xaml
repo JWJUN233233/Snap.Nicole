@@ -35,16 +35,20 @@
                         <ComboBox
                             Grid.Column="0"
                             MinWidth="240"
-                            DisplayMemberPath="Name"
-                            ItemsSource="{Binding Settings.ModelProviderProfiles}"
-                            SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                            DisplayMemberPath="Name">
+                            <mxi:Interaction.Behaviors>
+                                <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                            </mxi:Interaction.Behaviors>
+                        </ComboBox>
 
                         <ComboBox
                             Grid.Column="1"
                             MinWidth="240"
-                            DisplayMemberPath="DisplayName"
-                            ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
-                            SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                            DisplayMemberPath="DisplayName">
+                            <mxi:Interaction.Behaviors>
+                                <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                            </mxi:Interaction.Behaviors>
+                        </ComboBox>
                     </Grid>
                 </CommandBar.Content>
 

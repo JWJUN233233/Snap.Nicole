@@ -319,15 +319,17 @@
                                             <ComboBox
                                                 MinWidth="240"
                                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                DisplayMemberPath="DisplayName"
-                                                ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}"
-                                                SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                                DisplayMemberPath="DisplayName">
+                                                <mxi:Interaction.Behaviors>
+                                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles, Mode=OneWay}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                                </mxi:Interaction.Behaviors>
+                                            </ComboBox>
                                         </cwc:SettingsCard>
                                         <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}">
-                                            <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay}" />
                                         </cwc:SettingsCard>
                                         <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}">
-                                            <TextBox Grid.Column="1" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay}" />
                                         </cwc:SettingsCard>
                                     </StackPanel>
 

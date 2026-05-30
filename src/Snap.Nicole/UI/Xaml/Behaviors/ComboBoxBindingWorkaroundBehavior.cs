@@ -1,0 +1,110 @@
+using CommunityToolkit.WinUI.Behaviors;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Snap.Nicole.Core;
+
+namespace Snap.Nicole.UI.Xaml.Behaviors;
+
+[GeneratedDependencyProperty<object>("ItemsSource", PropertyChangedCallbackName = nameof(OnItemsSourceChanged))]
+[GeneratedDependencyProperty<object>("SelectedItem", PropertyChangedCallbackName = nameof(OnSelectedItemChanged))]
+internal sealed partial class ComboBoxBindingWorkaroundBehavior : BehaviorBase<ComboBox>
+{
+    // ItemsSource/SelectedItem changed, updating associated object
+    private bool isUpdatingAssociatedObject;
+
+    // Associated object selection changed, updating SelectedItem
+    private bool isUpdatingSelectedItem;
+
+    protected override bool Initialize()
+    {
+        if (!base.Initialize())
+        {
+            return false;
+        }
+
+        AssociatedObject.SelectionChanged += OnAssociatedObjectSelectionChanged;
+        UpdateAssociatedObject();
+        return true;
+    }
+
+    protected override void OnAssociatedObjectLoaded()
+    {
+        UpdateAssociatedObject();
+    }
+
+    protected override bool Uninitialize()
+    {
+        AssociatedObject.SelectionChanged -= OnAssociatedObjectSelectionChanged;
+        return base.Uninitialize();
+    }
+
+    private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not ComboBoxBindingWorkaroundBehavior behavior)
+        {
+            return;
+        }
+
+        behavior.UpdateAssociatedObject();
+    }
+
+    private static void OnSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is not ComboBoxBindingWorkaroundBehavior behavior)
+        {
+            return;
+        }
+
+        if (behavior.isUpdatingSelectedItem)
+        {
+            return;
+        }
+
+        behavior.UpdateAssociatedSelectedItem();
+    }
+
+    private void OnAssociatedObjectSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (isUpdatingAssociatedObject)
+        {
+            return;
+        }
+
+        using (BooleanTrueScope.Create(ref isUpdatingSelectedItem))
+        {
+            SelectedItem = AssociatedObject.SelectedItem;
+        }
+    }
+
+    private void UpdateAssociatedObject()
+    {
+        if (AssociatedObject is null)
+        {
+            return;
+        }
+
+        using (BooleanTrueScope.Create(ref isUpdatingAssociatedObject))
+        {
+            AssociatedObject.ItemsSource = ItemsSource;
+            AssociatedObject.SelectedItem = SelectedItem;
+        }
+    }
+
+    private void UpdateAssociatedSelectedItem()
+    {
+        if (AssociatedObject is null)
+        {
+            return;
+        }
+
+        if (ReferenceEquals(AssociatedObject.SelectedItem, SelectedItem))
+        {
+            return;
+        }
+
+        using (BooleanTrueScope.Create(ref isUpdatingAssociatedObject))
+        {
+            AssociatedObject.SelectedItem = SelectedItem;
+        }
+    }
+}
