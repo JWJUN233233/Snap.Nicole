@@ -2,10 +2,12 @@ global using Microsoft.Extensions.DependencyInjection;
 global using System;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.Git;
@@ -33,7 +35,14 @@ internal static class Program
 
         AppContext.SetSwitch("System.Net.Http.EnableActivityPropagation", true);
 
+        using IDisposable sentry = SentryDiagnostics.Initialize();
+
         IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
+        hostBuilder.ConfigureLogging(static logging =>
+        {
+            logging.AddSentry(SentryDiagnostics.ConfigureLogging);
+        });
+
         hostBuilder.ConfigureServices(static (context, services) =>
         {
             services

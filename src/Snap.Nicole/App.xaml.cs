@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.Hosting;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Native;
@@ -18,6 +19,7 @@ public partial class App : Application
     public App()
     {
         Threading = new ApplicationThreading();
+        UnhandledException += OnUnhandledException;
 
         XamlUtilities.PatchFontAndScriptServicesGetDefaultFontNameString("ms-appx:///Assets/MiSans-Regular.ttf#MiSans");
 
@@ -42,6 +44,11 @@ public partial class App : Application
     }
 
     internal IApplicationThreading Threading { get; }
+
+    private static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+    {
+        SentryDiagnostics.CaptureUnhandledException(e.Exception, !e.Handled);
+    }
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <wil/resource.h>
 #include <Windows.h>
 #include <wrl/implements.h>
@@ -10,6 +12,7 @@ namespace Snap::Nicole::Native
     struct INicoleNative;
     struct INicoleNativeNotifyIcon;
     struct INicoleNativeWindowSubclass;
+    struct INicoleNativeFirmwareUuidReader;
 
     class NicoleNativeNotifyIcon;
 
@@ -19,16 +22,18 @@ namespace Snap::Nicole::Native
     using NicoleNativeWindowSubclassCallback = BOOL(*)(HWND hWnd, UINT32 uMsg, WPARAM wParam, LPARAM lParam, LPCVOID userData, LRESULT* pResult);
 
 #pragma region INicoleNative
-    MIDL_INTERFACE("E5EEEB3A-C782-4C90-8F93-91830D7F1F58") INicoleNative : public IUnknown
+    MIDL_INTERFACE("10E6C85E-438D-4871-B1E3-2527BF5DC936") INicoleNative : public IUnknown
     {
         virtual HRESULT APIENTRY MakeNotifyIcon(LPCWSTR iconPath, LPCGUID pId, INicoleNativeNotifyIcon * *ppv) = 0;
         virtual HRESULT APIENTRY MakeWindowSubclass(HWND hWnd, NicoleNativeWindowSubclassCallback callback, LPVOID userData, INicoleNativeWindowSubclass** ppv) = 0;
+        virtual HRESULT APIENTRY MakeFirmwareUuidReader(INicoleNativeFirmwareUuidReader** ppv) = 0;
     };
 
     class NicoleNative : public RuntimeClass<RuntimeClassFlags<ClassicCom>, IAgileObject, INicoleNative>
     {
         HRESULT APIENTRY MakeNotifyIcon(LPCWSTR iconPath, LPCGUID pId, INicoleNativeNotifyIcon** ppv) override;
         HRESULT APIENTRY MakeWindowSubclass(HWND hWnd, NicoleNativeWindowSubclassCallback callback, LPVOID userData, INicoleNativeWindowSubclass** ppv) override;
+        HRESULT APIENTRY MakeFirmwareUuidReader(INicoleNativeFirmwareUuidReader** ppv) override;
     };
 #pragma endregion
 
@@ -82,6 +87,18 @@ namespace Snap::Nicole::Native
         BOOL IsDesktopCompositionEnabled() const;
         HRESULT APIENTRY Attach() override;
         HRESULT APIENTRY Detach() override;
+    };
+#pragma endregion
+
+#pragma region INicoleNativeFirmwareUuidReader
+    MIDL_INTERFACE("84C232A9-E16B-4C70-BFE0-D1CA056E4FAE") INicoleNativeFirmwareUuidReader : public IUnknown
+    {
+        virtual HRESULT APIENTRY GetFirmwareUuid(GUID * pUuid) = 0;
+    };
+
+    class NicoleNativeFirmwareUuidReader : public RuntimeClass<RuntimeClassFlags<ClassicCom>, IAgileObject, INicoleNativeFirmwareUuidReader>
+    {
+        HRESULT APIENTRY GetFirmwareUuid(GUID* pUuid) override;
     };
 #pragma endregion
 }

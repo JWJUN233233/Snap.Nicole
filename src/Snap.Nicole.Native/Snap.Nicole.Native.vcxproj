@@ -168,6 +168,7 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="NicoleNative.cpp" />
+    <ClCompile Include="NicoleNativeFirmwareUuidReader.cpp" />
     <ClCompile Include="NicoleNativeNotifyIcon.cpp" />
     <ClCompile Include="NicoleNativeWindowSubclass.cpp" />
     <ClCompile Include="WindowUtilities.cpp" />

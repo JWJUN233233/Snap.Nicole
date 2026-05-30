@@ -25,14 +25,33 @@ src
 
 ## Snap.Nicole
 
+### Architecture and patterns
+
 - Extensively adopt Microsoft.Extensions.Hosting and Microsoft.Extensions.DependencyInjection to manage the lifetime of applications, services, and objects.
 - Extensively adopt the Model-View-ViewModel (MVVM) pattern to handle data presentation and user interactions.
+
+### Type and file organization
+
 - All top-level members like class/struct should be `internal` or `private`, unless XAML requires them to be `public` (for example, attached DependencyProperties and the `Application` class).
 - Prefer one top-level type per file for models, result records, and enums. Avoid broad aggregate files such as `*Models.cs`; split related types into files named after each type.
 - For all `record` types, do not use positional record declarations or positional construction patterns. Prefer explicit properties and object initializers so members remain self-describing.
+
+### Syntax and style
+
 - Do not use expression-bodied syntax for methods, constructors, operators, or conversions. Lambdas or expressions inside method/property bodies are unaffected.
 - For read-only properties, do not use direct expression-bodied declarations like `Property => value;`; use an accessor body instead, for example `Property { get => value; }`.
 - For non-constant `string` or `string?` values that need an empty string, use `string.Empty` instead of `""`. Empty string literals are allowed only for constants or the `is pattern`.
+
+### Cryptography
+
+- Perfer uisng `System.Security.Cryptography.CryptographicOperations` for general oneshot usage over certain types like `SHA256`,`MD5`
+
+### String comparision
+
+- Always normalize strings to uppercase before comparison when case-insensitive matching is required and `StringComparison.OrdinalIgnoreCase` is unavailable.
+
+### Resources and reuse
+
 - In `.resx` resources, single-line user-visible text should not end with a sentence-ending period. Preserve meaningful punctuation such as ellipses, URLs, file extensions, or multi-line prose.
 - Do not reinvent the wheel when runtime libraries already provide equivalent functionality; use the `ilspycmd` command-line tool extensively to verify existing implementations before adding new code.
 
@@ -48,7 +67,14 @@ If CMD is not available and PowerShell is, the script above may be converted to 
 
 ## Snap.Nicole.Native
 
-No information provided yet.
+- COM ABI
+	- The project exposes a hand-written Classic COM ABI consumed by `src/Snap.Nicole/Native/*`, not generated WinRT metadata.
+- Project file maintenance
+	- The native `.vcxproj` is not SDK-style globbing.
+	- New `.cpp` files must be added to `src/Snap.Nicole.Native/Snap.Nicole.Native.vcxproj` as `ClCompile`.
+	- Also update `Snap.Nicole.Native.vcxproj.filters` so Visual Studio shows the file in the expected filter.
+- Native coding conventions
+	- Extensively uses Windows Implementation Library (Wil) helpers macros/methods/classes to keep the control flow straight and the code clean.
 
 ## Snap.Nicole.SourceGeneration
 
