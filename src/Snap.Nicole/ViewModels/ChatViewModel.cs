@@ -2,6 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Sentry;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
@@ -103,6 +105,10 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
             AuthorName = "You",
         };
 
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.send", "Send chat message");
+        span.SetTag("ai.provider", requestOptions.ProviderType.ToString());
+        span.SetTag("ai.model", requestOptions.ModelId);
+
         InputText = string.Empty;
         IsBusy = true;
         CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -110,10 +116,17 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 
         try
         {
-            await chatService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
+            SpanStatus result = await chatService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
+            span.Finish(result);
         }
         catch (OperationCanceledException)
         {
+            span.Finish(SpanStatus.Cancelled);
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "ai.chat.send");
+            throw;
         }
         finally
         {
@@ -135,6 +148,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
             return;
         }
 
+        SentryDiagnostics.AddBreadcrumb("Stop chat generation", "ai.chat", "ui");
         generationCts?.Cancel();
     }
 
@@ -146,6 +160,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
             return;
         }
 
+        SentryDiagnostics.AddBreadcrumb("Clear chat", "ai.chat", "ui");
         Messages.Clear();
         session = null;
     }

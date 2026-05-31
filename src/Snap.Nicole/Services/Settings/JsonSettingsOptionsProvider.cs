@@ -1,5 +1,7 @@
 using Microsoft.Extensions.FileProviders;
+using Sentry;
 using Snap.Nicole.Core;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -89,8 +91,12 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
             return;
         }
 
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.json.file_changed", $"Reload {self.fileName}");
+        span.SetTag("settings.options", typeof(TOptions).Name);
+
         if (self.disposed)
         {
+            span.Finish(SpanStatus.Cancelled);
             return;
         }
 
@@ -108,6 +114,15 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
             {
                 self.BeginApplyExternalChangeOnMainThread(newValue!);
             }
+            else
+            {
+                span.Finish(SpanStatus.FailedPrecondition);
+            }
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.json.file_changed");
+            throw;
         }
         finally
         {
@@ -156,8 +171,12 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
 
     private void ApplyExternalChange(TOptions value)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.json.apply_external_change", $"Apply {fileName}");
+        span.SetTag("settings.options", typeof(TOptions).Name);
+
         if (disposed)
         {
+            span.Finish(SpanStatus.Cancelled);
             return;
         }
 
@@ -166,6 +185,11 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
         {
             cachedValue.CopyFrom(value);
             UpdateObservableChildren();
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.json.apply_external_change");
+            throw;
         }
         finally
         {
@@ -241,11 +265,17 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
 
     private bool TryLoadCore([NotNullWhen(true)] out TOptions? value)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.json.load", $"Load {fileName}");
+        span.SetTag("settings.options", typeof(TOptions).Name);
+
         if (!File.Exists(filePath))
         {
             value = new TOptions();
+            span.SetTag("settings.file.exists", false);
             return true;
         }
+
+        span.SetTag("settings.file.exists", true);
 
         for (int retry = 0; retry < 3; retry++)
         {
@@ -254,32 +284,53 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
                 using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
                     value = JsonSerializer.Deserialize<TOptions>(stream, JsonOptions) ?? new TOptions();
+                    span.SetData("settings.load.retry", retry);
                     return true;
                 }
             }
-            catch (IOException)
+            catch (IOException ex)
             {
+                span.SetData("settings.load.retry", retry + 1);
+                SentryDiagnostics.AddBreadcrumb("Retry settings load", "settings.json", "default");
+                if (retry == 2)
+                {
+                    SentryDiagnostics.CaptureException(ex, span, "settings.json.load");
+                }
+
                 Thread.Sleep(50);
             }
-            catch (JsonException)
+            catch (JsonException ex)
             {
+                SentryDiagnostics.CaptureException(ex, span, "settings.json.load");
                 break;
             }
         }
 
         value = null;
+        span.Finish(SpanStatus.FailedPrecondition);
         return false;
     }
 
     private void SaveCore(TOptions value)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.json.save", $"Save {fileName}");
+        span.SetTag("settings.options", typeof(TOptions).Name);
+
         string tempFile = $"{filePath}.tmp";
 
-        using (FileStream stream = File.Open(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
+        try
         {
-            JsonSerializer.Serialize(stream, value, JsonOptions);
-        }
+            using (FileStream stream = File.Open(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                JsonSerializer.Serialize(stream, value, JsonOptions);
+            }
 
-        File.Move(tempFile, filePath, true);
+            File.Move(tempFile, filePath, true);
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.json.save");
+            throw;
+        }
     }
 }

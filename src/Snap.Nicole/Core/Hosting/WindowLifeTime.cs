@@ -1,6 +1,8 @@
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Sentry;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.IO;
 using Snap.Nicole.UI;
 using Snap.Nicole.UI.Xaml;
@@ -20,45 +22,73 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
 
     public void Show()
     {
-        if (Window == null)
+        string windowTypeFullName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow));
+        string windowTypeName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false);
+
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.window.show", windowTypeFullName);
+        span.SetTag("ui.window", windowTypeName);
+
+        try
         {
-            TWindow window = serviceProvider.GetRequiredService<TWindow>();
-            window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(TypeNameHelper.GetTypeDisplayName(window)))));
-            Window = window;
-
-            subclass = new(window);
-
-            AppWindow appWindow = window.AppWindow;
-
-            appWindow.Title = window.Title;
-            appWindow.SetIcon(WellKnownLocations.AppIcon);
-
-            if (window is IXamlWindowExtendsContentIntoTitleBar xamlWindow)
+            if (Window == null)
             {
-                window.ExtendsContentIntoTitleBar = true;
-                window.SetTitleBar(xamlWindow.TitleBar);
+                TWindow window = serviceProvider.GetRequiredService<TWindow>();
+                window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(windowTypeFullName))));
+                Window = window;
 
-                AppWindowTitleBar appWindowTitleBar = appWindow.TitleBar;
-                appWindowTitleBar.IconShowOptions = IconShowOptions.HideIconAndSystemMenu;
-                appWindowTitleBar.ExtendsContentIntoTitleBar = true;
+                subclass = new(window);
 
-                UpdateTitleButtonColor(default!, default!);
-                xamlWindow.TitleBar.ActualThemeChanged += UpdateTitleButtonColor;
+                AppWindow appWindow = window.AppWindow;
+
+                appWindow.Title = window.Title;
+                appWindow.SetIcon(WellKnownLocations.AppIcon);
+
+                if (window is IXamlWindowExtendsContentIntoTitleBar xamlWindow)
+                {
+                    window.ExtendsContentIntoTitleBar = true;
+                    window.SetTitleBar(xamlWindow.TitleBar);
+
+                    AppWindowTitleBar appWindowTitleBar = appWindow.TitleBar;
+                    appWindowTitleBar.IconShowOptions = IconShowOptions.HideIconAndSystemMenu;
+                    appWindowTitleBar.ExtendsContentIntoTitleBar = true;
+
+                    UpdateTitleButtonColor(default!, default!);
+                    xamlWindow.TitleBar.ActualThemeChanged += UpdateTitleButtonColor;
+                }
+
+                window.Closed += OnWindowClose;
             }
 
-            window.Closed += OnWindowClose;
+            Window.Activate();
         }
-
-        Window.Activate();
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "ui.window.show");
+            throw;
+        }
     }
 
     public void Close()
     {
-        Window?.Close();
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.window.close", TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
+        span.SetTag("ui.window", TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
+
+        try
+        {
+            Window?.Close();
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "ui.window.close");
+            throw;
+        }
     }
 
     private void OnWindowClose(object ignore, WindowEventArgs args)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.window.closed", TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
+        span.SetTag("ui.window", TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
+
         if (Window is not { } window)
         {
             return;
@@ -71,6 +101,8 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
             if (cancel)
             {
                 args.Handled = true;
+                span.SetTag("ui.window.close_cancelled", true);
+                span.Finish(SpanStatus.Cancelled);
                 return;
             }
         }

@@ -11,6 +11,7 @@ using Snap.Nicole.UI.Xaml.Windows;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace Snap.Nicole;
 
@@ -57,14 +58,27 @@ public partial class App : Application
             return;
         }
 
-        _ = Host.StartAsync().ContinueWith(static task =>
+        _ = LaunchAsync();
+    }
+
+    private static async Task LaunchAsync()
+    {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("app.launch", "Launch application shell");
+
+        try
         {
+            await Host.StartAsync();
+
             IServiceProvider serviceProvider = Host.Services;
 
             // AppSettings must be initialized on the UI thread
             StringResourceProxy.Default.CurrentCulture = CultureInfo.GetCultureInfo(serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue.Language);
             serviceProvider.GetRequiredService<INotifyIcon>().Create();
             serviceProvider.GetRequiredService<IWindowLifeTime<MainWindow>>().Show();
-        }, Threading.TaskScheduler);
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "app.launch");
+        }
     }
 }

@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Markup;
+using Sentry;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.Git;
 using System.ComponentModel;
@@ -98,6 +100,8 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     [RelayCommand]
     private void OpenSettingsFolder()
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.folder.open", "Open settings folder");
+
         try
         {
             Directory.CreateDirectory(gitSyncService.RepositoryPath);
@@ -109,6 +113,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
         {
+            SentryDiagnostics.CaptureException(ex, span, "settings.folder.open");
             Debug.WriteLine(ex);
         }
     }
@@ -116,12 +121,24 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     [RelayCommand(CanExecute = nameof(CanRefreshRepositoryState))]
     private async Task RefreshRepositoryStateAsync(CancellationToken cancellationToken)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.refresh", "Refresh settings Git repository state");
+
         IsBusy = true;
         SetStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageGitStatusCheckingTitle, SR.UIXamlPagesSettingsPageGitStatusCheckingMessage);
 
         try
         {
             await RefreshRepositoryStateCoreAsync(true, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.git.refresh");
+            throw;
         }
         finally
         {
@@ -133,6 +150,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     private async Task InitializeRepositoryAsync(CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
+            "settings.git.initialize",
             SR.UIXamlPagesSettingsPageGitStatusInitializeMessage,
             gitSyncService.InitializeRepositoryAsync,
             SR.UIXamlPagesSettingsPageGitStatusInitializeSuccessTitle,
@@ -144,6 +162,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     private async Task PullRepositoryAsync(CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
+            "settings.git.pull",
             SR.UIXamlPagesSettingsPageGitStatusPullMessage,
             gitSyncService.PullAsync,
             SR.UIXamlPagesSettingsPageGitStatusPullSuccessTitle,
@@ -155,6 +174,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     private async Task PushRepositoryAsync(CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
+            "settings.git.push",
             SR.UIXamlPagesSettingsPageGitStatusPushMessage,
             gitSyncService.PushAsync,
             SR.UIXamlPagesSettingsPageGitStatusPushSuccessTitle,
@@ -183,12 +203,15 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     }
 
     private async Task ExecuteOperationAsync(
+        string operationName,
         string currentOperationText,
         Func<string, CancellationToken, Task<SettingsGitOperationResult>> operation,
         string successTitle,
         Func<SettingsGitOperationResult, string> successMessageFactory,
         CancellationToken cancellationToken)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(operationName, currentOperationText);
+
         IsBusy = true;
         CurrentOperationText = currentOperationText;
         SetStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageGitStatusOperationTitle, currentOperationText);
@@ -201,8 +224,14 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         }
         catch (OperationCanceledException)
         {
+            span.Finish(SpanStatus.Cancelled);
             SetStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, SR.UIXamlPagesSettingsPageGitErrorCanceled);
             return;
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, operationName);
+            throw;
         }
         finally
         {
@@ -212,14 +241,20 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
 
         if (result.Succeeded)
         {
+            span.SetTag("settings.git.succeeded", true);
+            span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
             SetStatus(InfoBarSeverity.Success, successTitle, successMessageFactory(result));
             return;
         }
 
+        span.SetTag("settings.git.succeeded", false);
+        span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+        span.Finish(SpanStatus.FailedPrecondition);
         SetStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, BuildFailureMessage(result));
     }
 
     private async Task ExecuteOperationAsync(
+        string operationName,
         string currentOperationText,
         Func<CancellationToken, Task<SettingsGitOperationResult>> operation,
         string successTitle,
@@ -227,6 +262,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
+            operationName,
             currentOperationText,
             (_, token) => operation(token),
             successTitle,

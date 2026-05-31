@@ -1,7 +1,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml.Controls;
+using Sentry;
 using Snap.Nicole.Core;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
@@ -58,6 +60,8 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
     [RelayCommand]
     private void AddProfile()
     {
+        SentryDiagnostics.AddBreadcrumb("Add provider profile", "settings.model_profiles", "ui");
+
         ModelProviderProfile providerProfile = new();
         ModelProfile modelProfile = new();
 
@@ -75,6 +79,7 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
             return;
         }
 
+        SentryDiagnostics.AddBreadcrumb("Delete provider profile", "settings.model_profiles", "ui");
         Settings.ModelProviderProfiles.Remove(selected);
     }
 
@@ -86,6 +91,7 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
             return;
         }
 
+        SentryDiagnostics.AddBreadcrumb("Add model profile", "settings.model_profiles", "ui");
         ModelProfile modelProfile = new();
 
         providerProfile.ModelProfiles.Add(modelProfile);
@@ -105,23 +111,30 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
             return;
         }
 
+        SentryDiagnostics.AddBreadcrumb("Delete model profile", "settings.model_profiles", "ui");
         modelProfiles.Remove(selected);
     }
 
     [RelayCommand]
     private void ClearModels()
     {
+        SentryDiagnostics.AddBreadcrumb("Clear model profiles", "settings.model_profiles", "ui");
         Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles?.Clear();
     }
 
     [RelayCommand(CanExecute = nameof(CanRefreshModels))]
     private async Task RefreshModelsAsync(CancellationToken cancellationToken)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.model_profiles.refresh", "Refresh model list");
+
         if (Settings.ModelProviderProfiles.CurrentItem is not { } providerProfile)
         {
             SetModelListStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusNoProviderMessage);
+            span.Finish(SpanStatus.FailedPrecondition);
             return;
         }
+
+        span.SetTag("ai.provider", providerProfile.ProviderType.Value.ToString());
 
         if (!string.IsNullOrWhiteSpace(providerProfile.ModelListDocumentationLink))
         {
@@ -132,6 +145,7 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
         if (string.IsNullOrWhiteSpace(providerProfile.ApiKey))
         {
             SetModelListStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusApiKeyMissingMessage);
+            span.Finish(SpanStatus.FailedPrecondition);
             return;
         }
 
@@ -143,13 +157,16 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
             IReadOnlyList<ModelProfile> modelProfiles = await modelProfileService.GetModelsAsync(providerProfile, cancellationToken);
             MergeModelProfiles(providerProfile, modelProfiles);
             SetModelListStatus(InfoBarSeverity.Success, SR.UIXamlPagesSettingsPageModelListStatusSuccessTitle, string.Format(CultureInfo.CurrentCulture, SR.UIXamlPagesSettingsPageModelListStatusSuccessMessage, modelProfiles.Count));
+            span.SetData("ai.model_count", modelProfiles.Count);
         }
         catch (OperationCanceledException)
         {
             SetModelListStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusCanceledMessage);
+            span.Finish(SpanStatus.Cancelled);
         }
         catch (Exception ex)
         {
+            SentryDiagnostics.CaptureException(ex, span, "settings.model_profiles.refresh");
             SetModelListStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, ex.Message);
         }
         finally
@@ -160,15 +177,19 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
 
     private void OpenModelListDocumentationLink(string link)
     {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.model_profiles.open_docs", "Open model list documentation");
+
         string trimmedLink = link.Trim();
         if (!Uri.TryCreate(trimmedLink, UriKind.Absolute, out Uri? uri) || uri.Scheme is not "http" and not "https")
         {
             SetModelListStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusInvalidDocumentationLinkMessage);
+            span.Finish(SpanStatus.InvalidArgument);
             return;
         }
 
         try
         {
+            span.SetTag("url.scheme", uri.Scheme);
             _ = Process.Start(new ProcessStartInfo
             {
                 FileName = uri.AbsoluteUri,
@@ -179,6 +200,7 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {
+            SentryDiagnostics.CaptureException(ex, span, "settings.model_profiles.open_docs");
             SetModelListStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, ex.Message);
         }
     }

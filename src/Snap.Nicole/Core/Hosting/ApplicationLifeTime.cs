@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Xaml;
+using Snap.Nicole.Core.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Snap.Nicole.Core.Hosting;
@@ -10,12 +11,22 @@ internal sealed class ApplicationLifeTime(IHost host) : IApplicationLifeTime
 
     public async Task ShutdownAsync()
     {
-        IsExiting = true;
-        Application.Current.Exit();
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("app.shutdown", "Shutdown application");
 
-        using (host)
+        try
         {
-            await host.StopAsync();
+            IsExiting = true;
+            Application.Current.Exit();
+
+            using (host)
+            {
+                await host.StopAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "app.shutdown");
+            throw;
         }
     }
 }

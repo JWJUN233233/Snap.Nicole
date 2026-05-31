@@ -1,173 +1,64 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Sentry;
-using Sentry.Extensions.Logging;
-using Snap.Nicole.Core.IO;
-using Snap.Nicole.Native;
-using System.IO;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
+using System.Collections.Generic;
 
 namespace Snap.Nicole.Core.Diagnostics;
 
 internal static class SentryDiagnostics
 {
-    private const string ApplicationName = "Snap.Nicole";
-    private const string DefaultDsn = "https://46fe08b9947aee4a457bc20fe15fdb6a@sentry.gentle.house/14";
-    private const string DsnEnvironmentVariable = "SENTRY_DSN";
-    private const string EnvironmentEnvironmentVariable = "SENTRY_ENVIRONMENT";
-    private const string ReleaseEnvironmentVariable = "SENTRY_RELEASE";
-    private const int FlushTimeoutSeconds = 2;
-
-    public static IDisposable Initialize()
-    {
-        IDisposable sentry = SentrySdk.Init(ConfigureOptions);
-
-        if (SentrySdk.IsEnabled)
-        {
-            ConfigureUser();
-        }
-
-        return sentry;
-    }
-
-    public static void ConfigureLogging(SentryLoggingOptions options)
-    {
-        ConfigureOptions(options);
-        options.InitializeSdk = false;
-        options.MinimumBreadcrumbLevel = LogLevel.Information;
-        options.MinimumEventLevel = LogLevel.Error;
-    }
-
     public static void CaptureUnhandledException(Exception exception, bool isTerminating)
     {
-        SentrySdk.CaptureException(exception);
+        CaptureException(exception, "app.unhandled_exception", scope =>
+        {
+            scope.SetTag("exception.is_terminating", isTerminating ? "true" : "false");
+        });
 
         if (isTerminating)
         {
-            SentrySdk.Flush(TimeSpan.FromSeconds(FlushTimeoutSeconds));
+            SentrySdk.Flush(SentrySdkInitializationSupport.FlushTimeout);
         }
     }
 
-    private static void ConfigureOptions(SentryOptions options)
+    public static SentryDiagnosticSpan StartSpan(string operation, string description)
     {
-        options.Dsn = GetDsn();
-        options.Environment = GetEnvironmentName();
-        options.Release = GetReleaseName();
-        options.CacheDirectoryPath = GetCacheDirectory();
-        options.IsGlobalModeEnabled = true;
-        options.AutoSessionTracking = true;
-        options.SendDefaultPii = false;
-        options.AttachStacktrace = true;
-        options.EnableLogs = true;
-        options.ShutdownTimeout = TimeSpan.FromSeconds(FlushTimeoutSeconds);
-        options.FlushTimeout = TimeSpan.FromSeconds(FlushTimeoutSeconds);
-
-        options.AddInAppInclude(ApplicationName);
-        options.AddExceptionFilterForType<OperationCanceledException>();
-        options.SetBeforeSend(static @event =>
-        {
-            @event.ServerName = null;
-            return @event;
-        });
-        options.SetBeforeSendLog(static log =>
-        {
-            return log.Level < SentryLogLevel.Warning ? null : log;
-        });
-        options.DisableWinUiUnhandledExceptionIntegration();
+        return new(SentrySdk.StartSpan(operation, description));
     }
 
-    private static string GetDsn()
+    public static void AddBreadcrumb(string message, string category, string type, IDictionary<string, string>? data = null, BreadcrumbLevel level = BreadcrumbLevel.Info)
     {
-        string? dsn = Environment.GetEnvironmentVariable(DsnEnvironmentVariable);
-        if (dsn is null)
-        {
-            return DefaultDsn;
-        }
-
-        return dsn.Trim();
+        SentrySdk.AddBreadcrumb(message, category, type, data, level);
     }
 
-    private static string GetEnvironmentName()
+    public static void CaptureException(Exception exception, string operation)
     {
-        if (GetEnvironmentValue(EnvironmentEnvironmentVariable) is { } environment)
-        {
-            return environment;
-        }
-
-#if DEBUG
-        return Environments.Development;
-#else
-        return Environments.Production;
-#endif
+        CaptureException(exception, operation, null);
     }
 
-    private static string? GetEnvironmentValue(string name)
+    public static void CaptureException(Exception exception, SentryDiagnosticSpan span, string operation)
     {
-        string? value = Environment.GetEnvironmentVariable(name);
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        return value.Trim();
+        CaptureException(exception, span, operation, null);
     }
 
-    private static void ConfigureUser()
+    public static void CaptureException(Exception exception, SentryDiagnosticSpan span, string operation, Action<Scope>? configureScope)
     {
-        try
+        Dictionary<string, string> tags = new(span.Tags);
+        span.Finish(exception);
+        CaptureException(exception, operation, scope =>
         {
-            NicoleNativeFirmwareUuidReader firmwareUuidReader = NicoleNative.Default.MakeFirmwareUuidReader();
-            if (!firmwareUuidReader.TryGetFirmwareUuid(out Guid firmwareUuid))
+            foreach (KeyValuePair<string, string> tag in tags)
             {
-                return;
+                scope.SetTag(tag.Key, tag.Value);
             }
 
-            string userId = Convert.ToHexString(CryptographicOperations.HashData(HashAlgorithmName.SHA256, MemoryMarshal.AsBytes(new ReadOnlySpan<Guid>(ref firmwareUuid)))).ToUpperInvariant();
-
-            SentrySdk.ConfigureScope(static (scope, userId) =>
-            {
-                scope.User.Id = userId;
-            }, userId);
-        }
-        catch (Exception ex)
-        {
-            SentrySdk.CaptureException(ex, static scope =>
-            {
-                scope.SetTag("diagnostics.operation", "sentry.configure_user");
-            });
-        }
+            configureScope?.Invoke(scope);
+        });
     }
 
-    private static string GetReleaseName()
+    public static void CaptureException(Exception exception, string operation, Action<Scope>? configureScope)
     {
-        if (GetEnvironmentValue(ReleaseEnvironmentVariable) is { } release)
+        SentrySdk.CaptureException(exception, scope =>
         {
-            return release;
-        }
-
-        Assembly thisAssembly = typeof(SentryDiagnostics).Assembly;
-        string? informationalVersion = thisAssembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
-
-        if (!string.IsNullOrWhiteSpace(informationalVersion))
-        {
-            return $"{ApplicationName}@{informationalVersion}";
-        }
-
-        if (thisAssembly.GetName().Version is { } version)
-        {
-            return $"{ApplicationName}@{version}";
-        }
-
-        return ApplicationName;
-    }
-
-    private static string GetCacheDirectory()
-    {
-        string cacheDirectory = Path.Combine(WellKnownLocations.Cache, "Sentry");
-        Directory.CreateDirectory(cacheDirectory);
-        return cacheDirectory;
+            scope.SetTag("diagnostics.operation", operation);
+            configureScope?.Invoke(scope);
+        });
     }
 }

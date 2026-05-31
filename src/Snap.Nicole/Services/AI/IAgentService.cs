@@ -3,13 +3,14 @@ using Snap.Nicole.Services.AI.Observables;
 using System.Threading;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Sentry;
 using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.AI;
 
 internal interface IAgentService
 {
-    ValueTask RunStreamingAsync(
+    ValueTask<SpanStatus> RunStreamingAsync(
         ChatMessage message,
         ObservableChatMessageCollection collection,
         ExtendedAgentOptions options,

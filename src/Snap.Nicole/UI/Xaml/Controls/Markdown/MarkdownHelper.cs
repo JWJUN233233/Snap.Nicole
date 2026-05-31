@@ -145,13 +145,7 @@ internal static partial class MarkdownHelper
         return richText;
     }
 
-    private static bool TryReadLine(
-        string markdown,
-        ref SpanLineEnumerator enumerator,
-        ref int lineStart,
-        ref MarkdownLine? pendingLine,
-        out ReadOnlySpan<char> line,
-        out MarkdownLine markdownLine)
+    private static bool TryReadLine(string markdown, ref SpanLineEnumerator enumerator, ref int lineStart, ref MarkdownLine? pendingLine, out ReadOnlySpan<char> line, out MarkdownLine markdownLine)
     {
         if (pendingLine.HasValue)
         {
@@ -413,7 +407,7 @@ internal static partial class MarkdownHelper
         ReadOnlySpan<char> markdownSpan = markdown.AsSpan();
         List<string> headerCells = ParseTableCells(headerLine.GetContent(markdownSpan));
         int columnCount = headerCells.Count;
-        List<global::Microsoft.UI.Xaml.TextAlignment> columnAlignments = ParseTableColumnAlignments(separatorLine.GetContent(markdownSpan), columnCount);
+        List<TextAlignment> columnAlignments = ParseTableColumnAlignments(separatorLine.GetContent(markdownSpan), columnCount);
         List<IReadOnlyList<string>> rows = [headerCells];
 
         while (TryReadLine(markdown, ref enumerator, ref lineStart, ref pendingLine, out ReadOnlySpan<char> line, out MarkdownLine markdownLine))

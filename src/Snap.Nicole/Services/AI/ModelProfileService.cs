@@ -3,7 +3,9 @@ using Anthropic.Core;
 using Anthropic.Models.Models;
 using OpenAI;
 using OpenAI.Models;
+using Sentry;
 using Snap.Nicole.Core;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Services.AI.Models;
 using System.ClientModel;
 using System.Collections.Generic;
@@ -20,12 +22,36 @@ internal sealed class ModelProfileService : IModelProfileService
     {
         ArgumentNullException.ThrowIfNull(providerProfile);
 
-        return providerProfile.ProviderType.Value switch
+        return GetModelsCoreAsync(providerProfile, cancellationToken);
+    }
+
+    private static async Task<IReadOnlyList<ModelProfile>> GetModelsCoreAsync(ModelProviderProfile providerProfile, CancellationToken cancellationToken)
+    {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.model_profiles.fetch", "Fetch model list");
+        span.SetTag("ai.provider", providerProfile.ProviderType.Value.ToString());
+
+        try
         {
-            ModelProviderType.OpenAIChatCompletion or ModelProviderType.OpenAIResponses => GetOpenAIModelsAsync(providerProfile, cancellationToken),
-            ModelProviderType.Anthropic => GetAnthropicModelsAsync(providerProfile, cancellationToken),
-            _ => throw new NotSupportedException($"Unsupported model provider type: {providerProfile.ProviderType.Value}"),
-        };
+            IReadOnlyList<ModelProfile> result = providerProfile.ProviderType.Value switch
+            {
+                ModelProviderType.OpenAIChatCompletion or ModelProviderType.OpenAIResponses => await GetOpenAIModelsAsync(providerProfile, cancellationToken),
+                ModelProviderType.Anthropic => await GetAnthropicModelsAsync(providerProfile, cancellationToken),
+                _ => throw new NotSupportedException($"Unsupported model provider type: {providerProfile.ProviderType.Value}"),
+            };
+
+            span.SetData("ai.model_count", result.Count);
+            return result;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            span.Finish(ex);
+            throw;
+        }
     }
 
     private static async Task<IReadOnlyList<ModelProfile>> GetOpenAIModelsAsync(ModelProviderProfile providerProfile, CancellationToken cancellationToken)

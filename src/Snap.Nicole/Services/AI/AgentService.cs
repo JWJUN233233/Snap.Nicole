@@ -1,5 +1,7 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using Sentry;
+using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
@@ -15,26 +17,33 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
     private readonly IServiceProvider serviceProvider = serviceProvider;
 
     // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
-    public async ValueTask RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
+    public async ValueTask<SpanStatus> RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
-        ObservableChatMessage inputMessage = ObservableChatMessage.Create(message);
-        await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
-
-        if (string.IsNullOrWhiteSpace(options.ApiKey))
-        {
-            // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
-            ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
-            await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
-            return;
-        }
-
-        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
-
-        ObservableChatMessage? responseMessage = null;
-        bool responseAdded = false;
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.stream", "Run streaming chat completion");
+        span.SetTag("ai.provider", options.ProviderType.ToString());
+        span.SetTag("ai.model", options.ModelId);
 
         try
         {
+            ObservableChatMessage inputMessage = ObservableChatMessage.Create(message);
+            await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
+
+            if (string.IsNullOrWhiteSpace(options.ApiKey))
+            {
+                SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "default");
+
+                // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
+                ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
+                await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
+                span.Finish(SpanStatus.FailedPrecondition);
+                return SpanStatus.FailedPrecondition;
+            }
+
+            ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
+
+            ObservableChatMessage? responseMessage = null;
+            bool responseAdded = false;
+
             await foreach (AgentResponseUpdate update in agent.RunStreamingAsync([message], session, options.AsAgentRunOptions(), cancellationToken))
             {
                 List<ObservableAIContent> observableContents = [];
@@ -70,14 +79,22 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                     }
                 }, cancellationToken);
             }
+
+            span.SetData("ai.response_added", responseAdded);
+            return SpanStatus.Ok;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
         }
         catch (Exception ex)
         {
+            SentryDiagnostics.CaptureException(ex, span, "ai.chat.stream");
+
             ObservableChatMessage errorMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create($"Error: {ex.Message}"));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);
+            return SpanStatus.InternalError;
         }
     }
 }

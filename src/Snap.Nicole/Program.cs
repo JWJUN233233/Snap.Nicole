@@ -35,57 +35,76 @@ internal static class Program
 
         AppContext.SetSwitch("System.Net.Http.EnableActivityPropagation", true);
 
-        using IDisposable sentry = SentryDiagnostics.Initialize();
+        using IDisposable sentry = SentrySdkInitializationSupport.Initialize();
+        using SentryDiagnosticSpan startupSpan = SentryDiagnostics.StartSpan("app.startup", "Initialize Snap.Nicole host");
 
-        IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
-        hostBuilder.ConfigureLogging(static logging =>
+        try
         {
-            logging.AddSentry(SentryDiagnostics.ConfigureLogging);
-        });
+            IHostBuilder hostBuilder = Host.CreateDefaultBuilder(args);
+            hostBuilder.ConfigureLogging(static logging =>
+            {
+                logging.AddSentry(SentrySdkInitializationSupport.ConfigureLogging);
+            });
 
-        hostBuilder.ConfigureServices(static (context, services) =>
+            hostBuilder.ConfigureServices(static (context, services) =>
+            {
+                services
+                    .AddJsonSettings<AppSettings>("AppSettings")
+                    .AddXamlApplication<App>()
+                    .AddXamlWindows(static builder =>
+                    {
+                        builder
+                            .AddXamlWindow<MainWindow>()
+                            .AddXamlWindow<NotifyIconXamlHostWindow>();
+                    })
+                    .AddSingleton<IMessenger, WeakReferenceMessenger>()
+                    .AddSingleton<INavigationService, NavigationService>()
+                    .AddSingleton<INotifyIcon, NotifyIcon>()
+                    .AddSingleton<IAgentService, AgentService>()
+                    .AddSingleton<IModelProfileService, ModelProfileService>()
+                    .AddSingleton<ISettingsGitSyncService, SettingsGitSyncService>()
+                    .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
+                    .AddTransient<MainViewModel>()
+                    .AddTransient<HomeViewModel>()
+                    .AddTransient<SettingsGitSyncViewModel>()
+                    .AddTransient<SettingsViewModel>()
+                    .AddTransient<ChatViewModel>();
+
+                services
+                    .AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>()
+                    .AddSingleton(serviceProvider =>
+                    {
+                        ObjectPoolProvider poolProvider = serviceProvider.GetRequiredService<ObjectPoolProvider>();
+                        return poolProvider.CreateStringBuilderPool(initialCapacity: 256, maximumRetainedCapacity: 4096);
+                    });
+
+            });
+
+            App.Host = hostBuilder.Build();
+            App.IsHostInitialized = true;
+        }
+        catch (Exception ex)
         {
-            services
-                .AddJsonSettings<AppSettings>("AppSettings")
-                .AddXamlApplication<App>()
-                .AddXamlWindows(static builder =>
-                {
-                    builder
-                        .AddXamlWindow<MainWindow>()
-                        .AddXamlWindow<NotifyIconXamlHostWindow>();
-                })
-                .AddSingleton<IMessenger, WeakReferenceMessenger>()
-                .AddSingleton<INavigationService, NavigationService>()
-                .AddSingleton<INotifyIcon, NotifyIcon>()
-                .AddSingleton<IAgentService, AgentService>()
-                .AddSingleton<IModelProfileService, ModelProfileService>()
-                .AddSingleton<ISettingsGitSyncService, SettingsGitSyncService>()
-                .AddTransient<NotifyIconContextMenuFlyoutViewModel>()
-                .AddTransient<MainViewModel>()
-                .AddTransient<HomeViewModel>()
-                .AddTransient<SettingsGitSyncViewModel>()
-                .AddTransient<SettingsViewModel>()
-                .AddTransient<ChatViewModel>();
-
-            services
-                .AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>()
-                .AddSingleton(serviceProvider =>
-                {
-                    ObjectPoolProvider poolProvider = serviceProvider.GetRequiredService<ObjectPoolProvider>();
-                    return poolProvider.CreateStringBuilderPool(initialCapacity: 256, maximumRetainedCapacity: 4096);
-                });
-
-        });
-
-        App.Host = hostBuilder.Build();
-        App.IsHostInitialized = true;
+            SentryDiagnostics.CaptureException(ex, startupSpan, "app.startup");
+            throw;
+        }
 
         Application.Start(static ignored =>
         {
+            using SentryDiagnosticSpan xamlSpan = SentryDiagnostics.StartSpan("app.xaml.start", "Start XAML application");
+
             SynchronizationContextPolyfill context = new(DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
 
-            App app = App.Host.Services.GetRequiredService<App>();
+            try
+            {
+                App app = App.Host.Services.GetRequiredService<App>();
+            }
+            catch (Exception ex)
+            {
+                SentryDiagnostics.CaptureException(ex, xamlSpan, "app.xaml.start");
+                throw;
+            }
         });
     }
 }

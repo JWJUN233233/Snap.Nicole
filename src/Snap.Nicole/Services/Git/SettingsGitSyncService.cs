@@ -1,4 +1,6 @@
 using Snap.Nicole.Core.IO;
+using Sentry;
+using Snap.Nicole.Core.Diagnostics;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -22,6 +24,199 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
     public string RepositoryPath { get => WellKnownLocations.Settings; }
 
     public async Task<SettingsGitRepositoryState> GetRepositoryStateAsync(CancellationToken cancellationToken = default)
+    {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.state", "Get settings Git repository state");
+
+        try
+        {
+            SettingsGitRepositoryState result = await GetRepositoryStateCoreAsync(cancellationToken);
+            CompleteRepositoryStateSpan(span, result);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.git.state");
+            throw;
+        }
+    }
+
+    public async Task<SettingsGitOperationResult> InitializeRepositoryAsync(string remoteUrl, CancellationToken cancellationToken = default)
+    {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.initialize", "Initialize settings Git repository");
+
+        try
+        {
+            SettingsGitOperationResult result = await InitializeRepositoryCoreAsync(remoteUrl, cancellationToken);
+            CompleteOperationSpan(span, result);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.git.initialize");
+            throw;
+        }
+    }
+
+    public async Task<SettingsGitOperationResult> PullAsync(CancellationToken cancellationToken = default)
+    {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.pull", "Pull settings Git repository");
+
+        try
+        {
+            SettingsGitOperationResult result = await PullCoreAsync(cancellationToken);
+            CompleteOperationSpan(span, result);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.git.pull");
+            throw;
+        }
+    }
+
+    private async Task<SettingsGitOperationResult> PullCoreAsync(CancellationToken cancellationToken)
+    {
+        if (await EnsureRepositoryReadyAsync(cancellationToken) is { Succeeded: false } ready)
+        {
+            return ready;
+        }
+
+        if (EnsureNoRepositoryOperationInProgress() is { Succeeded: false } repositoryOperation)
+        {
+            return repositoryOperation;
+        }
+
+        if (await CommitSettingsChangesAsync("Save settings before pull", cancellationToken) is { Succeeded: false } commit)
+        {
+            return commit;
+        }
+
+        SettingsGitCommandResult remoteHeads = await RunGitAsync(["ls-remote", "--heads", RemoteName], RepositoryPath, cancellationToken);
+        if (!remoteHeads.Succeeded)
+        {
+            return SettingsGitOperationResult.CommandFailure(remoteHeads);
+        }
+
+        if (string.IsNullOrWhiteSpace(remoteHeads.Output))
+        {
+            return SettingsGitOperationResult.Success("RemoteEmpty");
+        }
+
+        if (await PullWithMergeAsync(cancellationToken) is { Succeeded: true } pull)
+        {
+            return SettingsGitOperationResult.Command(pull);
+        }
+
+        return await ForcePullAsync(cancellationToken);
+    }
+
+    public async Task<SettingsGitOperationResult> PushAsync(CancellationToken cancellationToken = default)
+    {
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.push", "Push settings Git repository");
+
+        try
+        {
+            SettingsGitOperationResult result = await PushCoreAsync(cancellationToken);
+            CompleteOperationSpan(span, result);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            SentryDiagnostics.CaptureException(ex, span, "settings.git.push");
+            throw;
+        }
+    }
+
+    private static void CompleteRepositoryStateSpan(SentryDiagnosticSpan span, SettingsGitRepositoryState result)
+    {
+        span.SetTag("settings.git.available", result.IsGitAvailable);
+        span.SetTag("settings.git.repository", result.IsRepository);
+        span.SetTag("settings.git.has_remote", !string.IsNullOrWhiteSpace(result.RemoteUrl));
+        span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+        span.Finish(result.FailureKind is SettingsGitFailureKind.None ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
+    }
+
+    private static void CompleteOperationSpan(SentryDiagnosticSpan span, SettingsGitOperationResult result)
+    {
+        span.SetTag("settings.git.succeeded", result.Succeeded);
+        span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+        span.Finish(result.Succeeded ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
+    }
+
+    private static void CompleteCommandSpan(SentryDiagnosticSpan span, SettingsGitCommandResult result)
+    {
+        span.SetTag("settings.git.command_succeeded", result.Succeeded);
+        span.SetTag("settings.git.failure_kind", result.Succeeded ? SettingsGitFailureKind.None.ToString() : result.FailureKind.ToString());
+        span.SetData("settings.git.exit_code", result.ExitCode);
+        span.Finish(result.Succeeded ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
+    }
+
+    private static SpanStatus GetFailureSpanStatus(SettingsGitFailureKind failureKind)
+    {
+        return failureKind switch
+        {
+            SettingsGitFailureKind.GitUnavailable => SpanStatus.NotFound,
+            SettingsGitFailureKind.Network => SpanStatus.Unavailable,
+            SettingsGitFailureKind.Permission => SpanStatus.PermissionDenied,
+            SettingsGitFailureKind.Remote => SpanStatus.FailedPrecondition,
+            SettingsGitFailureKind.Repository => SpanStatus.FailedPrecondition,
+            SettingsGitFailureKind.Conflict => SpanStatus.Aborted,
+            SettingsGitFailureKind.CommandFailed => SpanStatus.InternalError,
+            _ => SpanStatus.FailedPrecondition,
+        };
+    }
+
+    private static string GetBranchNameFromRemoteReference(string remoteReference)
+    {
+        int separatorIndex = remoteReference.IndexOf('/');
+        return separatorIndex >= 0
+            ? remoteReference[(separatorIndex + 1)..]
+            : remoteReference;
+    }
+
+    private static string GetGitCommandName(string[] arguments)
+    {
+        for (int i = 0; i < arguments.Length; i++)
+        {
+            string argument = arguments[i];
+            if (argument is "-c")
+            {
+                i++;
+                continue;
+            }
+
+            if (argument.StartsWith("-", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            return argument;
+        }
+
+        return arguments.Length is 0 ? string.Empty : arguments[0];
+    }
+
+    private async Task<SettingsGitRepositoryState> GetRepositoryStateCoreAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -98,7 +293,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
     }
 
-    public async Task<SettingsGitOperationResult> InitializeRepositoryAsync(string remoteUrl, CancellationToken cancellationToken = default)
+    private async Task<SettingsGitOperationResult> InitializeRepositoryCoreAsync(string remoteUrl, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(remoteUrl))
         {
@@ -122,7 +317,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
                     return SettingsGitOperationResult.CommandFailure(init);
                 }
 
-                if (await RunGitAsync(["symbolic-ref", "HEAD", $"refs/heads/{DefaultBranchName}"], RepositoryPath, cancellationToken) is { Succeeded: false} setDefaultBranch)
+                if (await RunGitAsync(["symbolic-ref", "HEAD", $"refs/heads/{DefaultBranchName}"], RepositoryPath, cancellationToken) is { Succeeded: false } setDefaultBranch)
                 {
                     return SettingsGitOperationResult.CommandFailure(setDefaultBranch);
                 }
@@ -145,43 +340,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
     }
 
-    public async Task<SettingsGitOperationResult> PullAsync(CancellationToken cancellationToken = default)
-    {
-        if (await EnsureRepositoryReadyAsync(cancellationToken) is { Succeeded: false } ready)
-        {
-            return ready;
-        }
-
-        if (EnsureNoRepositoryOperationInProgress() is { Succeeded: false } repositoryOperation)
-        {
-            return repositoryOperation;
-        }
-
-        if (await CommitSettingsChangesAsync("Save settings before pull", cancellationToken) is { Succeeded: false } commit)
-        {
-            return commit;
-        }
-
-        SettingsGitCommandResult remoteHeads = await RunGitAsync(["ls-remote", "--heads", RemoteName], RepositoryPath, cancellationToken);
-        if (!remoteHeads.Succeeded)
-        {
-            return SettingsGitOperationResult.CommandFailure(remoteHeads);
-        }
-
-        if (string.IsNullOrWhiteSpace(remoteHeads.Output))
-        {
-            return SettingsGitOperationResult.Success("RemoteEmpty");
-        }
-
-        if (await PullWithMergeAsync(cancellationToken) is { Succeeded: true } pull)
-        {
-            return SettingsGitOperationResult.Command(pull);
-        }
-
-        return await ForcePullAsync(cancellationToken);
-    }
-
-    public async Task<SettingsGitOperationResult> PushAsync(CancellationToken cancellationToken = default)
+    private async Task<SettingsGitOperationResult> PushCoreAsync(CancellationToken cancellationToken)
     {
         if (await EnsureRepositoryReadyAsync(cancellationToken) is { Succeeded: false } ready)
         {
@@ -231,14 +390,6 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
 
         return SettingsGitOperationResult.Success();
-    }
-
-    private static string GetBranchNameFromRemoteReference(string remoteReference)
-    {
-        int separatorIndex = remoteReference.IndexOf('/');
-        return separatorIndex >= 0
-            ? remoteReference[(separatorIndex + 1)..]
-            : remoteReference;
     }
 
     private SettingsGitOperationResult EnsureNoRepositoryOperationInProgress()
@@ -389,6 +540,10 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
     private async Task<SettingsGitCommandResult> RunGitAsync(string[] arguments, string? workingDirectory, CancellationToken cancellationToken)
     {
+        string commandName = GetGitCommandName(arguments);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.command", $"git {commandName}");
+        span.SetTag("settings.git.command", commandName);
+
         ProcessStartInfo startInfo = new()
         {
             FileName = GitFileName,
@@ -432,32 +587,43 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
                     throw;
                 }
 
-                return new()
+                SettingsGitCommandResult result = new()
                 {
                     ExitCode = process.ExitCode,
                     Output = await process.StandardOutput.ReadToEndAsync(cancellationToken),
                     Error = await process.StandardError.ReadToEndAsync(cancellationToken),
                 };
+                CompleteCommandSpan(span, result);
+                return result;
             }
+        }
+        catch (OperationCanceledException)
+        {
+            span.Finish(SpanStatus.Cancelled);
+            throw;
         }
         catch (Win32Exception ex)
         {
-            return new()
+            SettingsGitCommandResult result = new()
             {
                 ExitCode = -1,
                 Output = string.Empty,
                 Error = ex.Message,
                 GitUnavailable = true,
             };
+            CompleteCommandSpan(span, result);
+            return result;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
-            return new()
+            SettingsGitCommandResult result = new()
             {
                 ExitCode = -1,
                 Output = string.Empty,
                 Error = ex.Message,
             };
+            CompleteCommandSpan(span, result);
+            return result;
         }
     }
 
