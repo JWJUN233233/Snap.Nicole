@@ -4,9 +4,11 @@ using Sentry;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Resources;
+using Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,7 +18,35 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 {
     private readonly IServiceProvider serviceProvider = serviceProvider;
 
-    // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
+    public async ValueTask<AgentSession> CreateSessionAsync(ExtendedAgentOptions options, CancellationToken cancellationToken = default)
+    {
+        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
+        return await agent.CreateSessionAsync(cancellationToken);
+    }
+
+    public async ValueTask<AgentSession> DeserializeSessionAsync(ExtendedAgentOptions options, JsonElement serializedState, CancellationToken cancellationToken = default)
+    {
+        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
+        return await agent.DeserializeSessionAsync(serializedState, cancellationToken: cancellationToken);
+    }
+
+    public async ValueTask<JsonElement> SerializeSessionAsync(ExtendedAgentOptions options, AgentSession session, CancellationToken cancellationToken = default)
+    {
+        ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
+        return await agent.SerializeSessionAsync(session, cancellationToken: cancellationToken);
+    }
+
+    public IReadOnlyList<ChatMessage> GetChatHistory(ExtendedAgentOptions options, AgentSession? session)
+    {
+        ChatHistoryProvider provider = options.CreateChatHistoryProvider(serviceProvider);
+        return provider switch
+        {
+            RoundTripInMemoryChatHistoryProvider roundTripProvider => [.. roundTripProvider.GetMessages(session)],
+            InMemoryChatHistoryProvider inMemoryProvider => [.. inMemoryProvider.GetMessages(session)],
+            _ => [],
+        };
+    }
+
     public async ValueTask<SpanStatus> RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
         using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.stream", "Run streaming chat completion");

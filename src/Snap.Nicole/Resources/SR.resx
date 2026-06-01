@@ -302,6 +302,69 @@
   <data name="UIXamlPagesAgentPageLabelModelProfile" xml:space="preserve">
     <value>模型</value>
   </data>
+  <data name="UIXamlPagesAgentPageLabelConversations" xml:space="preserve">
+    <value>会话</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelNewConversation" xml:space="preserve">
+    <value>新会话</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelDeleteConversation" xml:space="preserve">
+    <value>删除会话</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelHistory" xml:space="preserve">
+    <value>历史</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelContext" xml:space="preserve">
+    <value>上下文</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelMessages" xml:space="preserve">
+    <value>消息</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelContents" xml:space="preserve">
+    <value>内容</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelCreatedAt" xml:space="preserve">
+    <value>创建时间</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelUpdatedAt" xml:space="preserve">
+    <value>更新时间</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelRole" xml:space="preserve">
+    <value>角色</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelAuthor" xml:space="preserve">
+    <value>作者</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelMessageId" xml:space="preserve">
+    <value>消息 ID</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelTotalTokens" xml:space="preserve">
+    <value>总 Token</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelInputTokens" xml:space="preserve">
+    <value>输入 Token</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelOutputTokens" xml:space="preserve">
+    <value>输出 Token</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelReasoningTokens" xml:space="preserve">
+    <value>推理 Token</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelCachedInputTokens" xml:space="preserve">
+    <value>缓存输入 Token</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelTextContents" xml:space="preserve">
+    <value>文本内容</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelReasoningContents" xml:space="preserve">
+    <value>推理内容</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelToolCalls" xml:space="preserve">
+    <value>工具调用</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelToolResults" xml:space="preserve">
+    <value>工具结果</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
     <value>模型配置</value>
   </data>

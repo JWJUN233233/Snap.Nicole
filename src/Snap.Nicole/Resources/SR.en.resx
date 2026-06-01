@@ -241,6 +241,69 @@
   <data name="UIXamlPagesAgentPageLabelModelProfile" xml:space="preserve">
     <value>Model</value>
   </data>
+  <data name="UIXamlPagesAgentPageLabelConversations" xml:space="preserve">
+    <value>Conversations</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelNewConversation" xml:space="preserve">
+    <value>New conversation</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelDeleteConversation" xml:space="preserve">
+    <value>Delete conversation</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelHistory" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelContext" xml:space="preserve">
+    <value>Context</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelMessages" xml:space="preserve">
+    <value>Messages</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelContents" xml:space="preserve">
+    <value>Contents</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelCreatedAt" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelUpdatedAt" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelRole" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelAuthor" xml:space="preserve">
+    <value>Author</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelMessageId" xml:space="preserve">
+    <value>Message ID</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelTotalTokens" xml:space="preserve">
+    <value>Total tokens</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelInputTokens" xml:space="preserve">
+    <value>Input tokens</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelOutputTokens" xml:space="preserve">
+    <value>Output tokens</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelReasoningTokens" xml:space="preserve">
+    <value>Reasoning tokens</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelCachedInputTokens" xml:space="preserve">
+    <value>Cached input tokens</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelTextContents" xml:space="preserve">
+    <value>Text contents</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelReasoningContents" xml:space="preserve">
+    <value>Reasoning contents</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelToolCalls" xml:space="preserve">
+    <value>Tool calls</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelToolResults" xml:space="preserve">
+    <value>Tool results</value>
+  </data>
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
     <value>Model Provider Profiles</value>
   </data>
