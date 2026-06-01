@@ -284,22 +284,22 @@
   <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
     <value>检测到未完成的合并、变基或锁文件，请先完成或清理该 Git 操作</value>
   </data>
-  <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
-    <value>AI 对话</value>
+  <data name="UIXamlWindowsMainWindowNavigationViewItemAgentPageContent" xml:space="preserve">
+    <value>智能体</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelSend" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelSend" xml:space="preserve">
     <value>发送</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelPlaceholder" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelPlaceholder" xml:space="preserve">
     <value>输入消息...</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelClear" xml:space="preserve">
     <value>清空</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelModelProviderProfile" xml:space="preserve">
     <value>模型提供商配置</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelModelProfile" xml:space="preserve">
     <value>模型</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
@@ -398,7 +398,7 @@
   <data name="UIXamlPagesSettingsPageLabelDeleteProfile" xml:space="preserve">
     <value>删除</value>
   </data>
-  <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageMessageConfigureApiKey" xml:space="preserve">
     <value>请先在设置中配置模型供应商</value>
   </data>
   <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">

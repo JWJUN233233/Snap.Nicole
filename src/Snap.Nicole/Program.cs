@@ -68,7 +68,7 @@ internal static class Program
                     .AddTransient<HomeViewModel>()
                     .AddTransient<SettingsGitSyncViewModel>()
                     .AddTransient<SettingsViewModel>()
-                    .AddTransient<ChatViewModel>();
+                    .AddTransient<AgentViewModel>();
 
                 services
                     .AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>()

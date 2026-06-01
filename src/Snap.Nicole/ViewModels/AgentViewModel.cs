@@ -15,9 +15,9 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels;
 
-internal sealed partial class ChatViewModel : ObservableObject, IDisposable
+internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 {
-    private readonly IAgentService chatService;
+    private readonly IAgentService agentService;
     private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
     private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
 
@@ -25,9 +25,9 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
     private AgentSession? session;
     private bool disposed;
 
-    public ChatViewModel(IServiceProvider serviceProvider)
+    public AgentViewModel(IServiceProvider serviceProvider)
     {
-        chatService = serviceProvider.GetRequiredService<IAgentService>();
+        agentService = serviceProvider.GetRequiredService<IAgentService>();
         Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
         Settings.PropertyChanged += OnSettingsPropertyChanged;
@@ -116,7 +116,7 @@ internal sealed partial class ChatViewModel : ObservableObject, IDisposable
 
         try
         {
-            SpanStatus result = await chatService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
+            SpanStatus result = await agentService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
             span.Finish(result);
         }
         catch (OperationCanceledException)

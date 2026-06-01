@@ -33,7 +33,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "default");
 
                 // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
-                ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesChatPageMessageConfigureApiKey));
+                ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesAgentPageMessageConfigureApiKey));
                 await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
                 span.Finish(SpanStatus.FailedPrecondition);
                 return SpanStatus.FailedPrecondition;

@@ -59,8 +59,8 @@
                     Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemHomePageContent}"
                     Icon="{snuxm:FontIcon Glyph=&#xE80F;}" />
                 <NavigationViewItem
-                    snuxc:NavigationExtensions.NavigateTo="snuxp:ChatPage"
-                    Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemChatPageContent}"
+                    snuxc:NavigationExtensions.NavigateTo="snuxp:AgentPage"
+                    Content="{snuxm:StringResource Name=UIXamlWindowsMainWindowNavigationViewItemAgentPageContent}"
                     Icon="{snuxm:FontIcon Glyph=&#xE76E;}" />
             </NavigationView.MenuItems>
             <Frame x:Name="ContentFrame" Transitions="{ThemeResource NavigationThemeTransitions}" />

@@ -5,20 +5,20 @@ using Snap.Nicole.ViewModels;
 
 namespace Snap.Nicole.UI.Xaml.Pages;
 
-internal sealed partial class ChatPage : Page
+internal sealed partial class AgentPage : Page
 {
     private bool disposed;
 
-    public ChatPage()
+    public AgentPage()
     {
         InitializeComponent();
-        ViewModel = App.Host.Services.GetRequiredService<ChatViewModel>();
+        ViewModel = App.Host.Services.GetRequiredService<AgentViewModel>();
         DataContext = ViewModel;
 
         Unloaded += OnUnloaded;
     }
 
-    internal ChatViewModel ViewModel { get; }
+    internal AgentViewModel ViewModel { get; }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {

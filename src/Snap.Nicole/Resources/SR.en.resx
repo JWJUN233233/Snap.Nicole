@@ -223,22 +223,22 @@
   <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
     <value>An unfinished merge, rebase, or lock file was detected. Complete or clean up that Git operation first</value>
   </data>
-  <data name="UIXamlWindowsMainWindowNavigationViewItemChatPageContent" xml:space="preserve">
-    <value>Chat</value>
+  <data name="UIXamlWindowsMainWindowNavigationViewItemAgentPageContent" xml:space="preserve">
+    <value>Agent</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelSend" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelSend" xml:space="preserve">
     <value>Send</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelPlaceholder" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelPlaceholder" xml:space="preserve">
     <value>Type a message...</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelClear" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelClear" xml:space="preserve">
     <value>Clear</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelModelProviderProfile" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelModelProviderProfile" xml:space="preserve">
     <value>Model Provider Profile</value>
   </data>
-  <data name="UIXamlPagesChatPageLabelModelProfile" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageLabelModelProfile" xml:space="preserve">
     <value>Model</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelModelProviderProfiles" xml:space="preserve">
@@ -337,7 +337,7 @@
   <data name="UIXamlPagesSettingsPageLabelDeleteProfile" xml:space="preserve">
     <value>Delete</value>
   </data>
-  <data name="UIXamlPagesChatPageMessageConfigureApiKey" xml:space="preserve">
+  <data name="UIXamlPagesAgentPageMessageConfigureApiKey" xml:space="preserve">
     <value>Please configure your API key in Settings</value>
   </data>
   <data name="UIXamlControlsChatMessageViewLabelReasoningCompleted" xml:space="preserve">
