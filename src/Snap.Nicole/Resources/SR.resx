@@ -293,9 +293,6 @@
   <data name="UIXamlPagesAgentPageLabelPlaceholder" xml:space="preserve">
     <value>输入消息...</value>
   </data>
-  <data name="UIXamlPagesAgentPageLabelClear" xml:space="preserve">
-    <value>清空</value>
-  </data>
   <data name="UIXamlPagesAgentPageLabelModelProviderProfile" xml:space="preserve">
     <value>模型提供商配置</value>
   </data>

@@ -253,23 +253,6 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         generationCts?.Cancel();
     }
 
-    [RelayCommand]
-    private void ClearChat()
-    {
-        if (disposed || SelectedConversation is not AgentConversationViewModel conversation)
-        {
-            return;
-        }
-
-        SentryDiagnostics.AddBreadcrumb("Clear chat", "ai.chat", "ui");
-        ResetConversationRuntime(conversation);
-        conversation.SerializedSessionState = null;
-        conversation.UpdatedAt = DateTimeOffset.Now;
-        Messages.Clear();
-        RebuildHistorySummary(Messages);
-        SaveConversation(conversation);
-    }
-
     public void Dispose()
     {
         if (disposed)

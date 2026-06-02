@@ -289,7 +289,6 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <TextBox
@@ -309,12 +308,6 @@
                     VerticalAlignment="Bottom"
                     Command="{x:Bind ViewModel.SendMessageCommand}"
                     Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSend}" />
-
-                <Button
-                    Grid.Column="2"
-                    VerticalAlignment="Bottom"
-                    Command="{x:Bind ViewModel.ClearChatCommand}"
-                    Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelClear}" />
             </Grid>
         </Grid>
     </Grid>

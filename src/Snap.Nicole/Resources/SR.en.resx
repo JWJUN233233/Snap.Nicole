@@ -232,9 +232,6 @@
   <data name="UIXamlPagesAgentPageLabelPlaceholder" xml:space="preserve">
     <value>Type a message...</value>
   </data>
-  <data name="UIXamlPagesAgentPageLabelClear" xml:space="preserve">
-    <value>Clear</value>
-  </data>
   <data name="UIXamlPagesAgentPageLabelModelProviderProfile" xml:space="preserve">
     <value>Model Provider Profile</value>
   </data>
