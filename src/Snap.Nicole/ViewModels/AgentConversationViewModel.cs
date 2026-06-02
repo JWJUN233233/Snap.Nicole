@@ -43,6 +43,13 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
     [ObservableProperty]
     public partial string ModelId { get; set; } = string.Empty;
 
+    [JsonIgnore]
+    public ChatClientAgent? Agent { get; set; }
+
+    [JsonIgnore]
+    public ExtendedAgentOptions? AgentOptions { get; set; }
+
+    [JsonIgnore]
     public AgentSession? Session { get; set; }
 
     [JsonIgnore]

@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -152,7 +151,17 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         }
 
         UpdateConversationProfile(conversation, requestOptions);
-        AgentSession session = await EnsureConversationSessionAsync(conversation, requestOptions, cancellationToken);
+        ChatClientAgent? agent = null;
+        AgentSession? session = null;
+        if (!string.IsNullOrWhiteSpace(requestOptions.ApiKey))
+        {
+            agent = await EnsureConversationAgentAsync(conversation, requestOptions, cancellationToken);
+            session = await EnsureConversationSessionAsync(conversation, agent, cancellationToken);
+        }
+        else
+        {
+            ResetConversationRuntime(conversation);
+        }
 
         ChatMessage userMessage = new(ChatRole.User, input)
         {
@@ -171,7 +180,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         try
         {
-            SpanStatus result = await agentService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
+            SpanStatus result = await agentService.RunStreamingAsync(agent, userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
             span.Finish(result);
 
             conversation.UpdatedAt = DateTimeOffset.Now;
@@ -180,9 +189,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
                 conversation.Title = CreateTitle(input);
             }
 
-            if (!string.IsNullOrWhiteSpace(requestOptions.ApiKey))
+            if (agent is not null && session is not null)
             {
-                await PersistConversationSessionAsync(conversation, requestOptions, session, linkedCts.Token);
+                await PersistConversationSessionAsync(conversation, agent, session, linkedCts.Token);
             }
             else
             {
@@ -236,7 +245,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         }
 
         SentryDiagnostics.AddBreadcrumb("Clear chat", "ai.chat", "ui");
-        conversation.Session = null;
+        ResetConversationRuntime(conversation);
         conversation.SerializedSessionState = null;
         conversation.UpdatedAt = DateTimeOffset.Now;
         Messages.Clear();
@@ -342,34 +351,41 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         };
     }
 
-    private async ValueTask<AgentSession> EnsureConversationSessionAsync(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions, CancellationToken cancellationToken)
+    private async ValueTask<ChatClientAgent> EnsureConversationAgentAsync(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions, CancellationToken cancellationToken)
+    {
+        if (conversation.Agent is not null && IsConversationAgentCurrent(conversation, requestOptions))
+        {
+            return conversation.Agent;
+        }
+
+        ResetConversationRuntime(conversation);
+        conversation.Agent = await agentService.CreateAgentAsync(requestOptions, cancellationToken);
+        conversation.AgentOptions = requestOptions;
+        return conversation.Agent;
+    }
+
+    private async ValueTask<AgentSession> EnsureConversationSessionAsync(AgentConversationViewModel conversation, ChatClientAgent agent, CancellationToken cancellationToken)
     {
         if (conversation.Session is not null)
         {
             return conversation.Session;
         }
 
-        if (string.IsNullOrWhiteSpace(requestOptions.ApiKey))
-        {
-            conversation.Session = ChatClientAgentSessionCreate();
-            return conversation.Session;
-        }
-
         if (conversation.SerializedSessionState is JsonElement serializedState)
         {
-            conversation.Session = await agentService.DeserializeSessionAsync(requestOptions, serializedState, cancellationToken);
+            conversation.Session = await agentService.DeserializeSessionAsync(agent, serializedState, cancellationToken);
         }
         else
         {
-            conversation.Session = await agentService.CreateSessionAsync(requestOptions, cancellationToken);
+            conversation.Session = await agentService.CreateSessionAsync(agent, cancellationToken);
         }
 
         return conversation.Session;
     }
 
-    private async ValueTask PersistConversationSessionAsync(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions, AgentSession session, CancellationToken cancellationToken)
+    private async ValueTask PersistConversationSessionAsync(AgentConversationViewModel conversation, ChatClientAgent agent, AgentSession session, CancellationToken cancellationToken)
     {
-        JsonElement serializedState = await agentService.SerializeSessionAsync(requestOptions, session, cancellationToken);
+        JsonElement serializedState = await agentService.SerializeSessionAsync(agent, session, cancellationToken);
         conversation.SerializedSessionState = serializedState.Clone();
 
         if (ReferenceEquals(SelectedConversation, conversation))
@@ -378,6 +394,21 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         }
 
         SaveConversation(conversation);
+    }
+
+    private static bool IsConversationAgentCurrent(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions)
+    {
+        if (conversation.AgentOptions is not { } agentOptions)
+        {
+            return false;
+        }
+
+        return agentOptions.ProviderType == requestOptions.ProviderType
+            && string.Equals(agentOptions.Endpoint, requestOptions.Endpoint, StringComparison.Ordinal)
+            && string.Equals(agentOptions.ApiKey, requestOptions.ApiKey, StringComparison.Ordinal)
+            && string.Equals(agentOptions.ModelId, requestOptions.ModelId, StringComparison.Ordinal)
+            && agentOptions.ThinkingEnabled == requestOptions.ThinkingEnabled
+            && string.Equals(agentOptions.SystemPrompt, requestOptions.SystemPrompt, StringComparison.Ordinal);
     }
 
     private void SaveConversation(AgentConversationViewModel conversation)
@@ -479,7 +510,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
             SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
-            ResetSelectedRuntimeSession();
+            ResetSelectedRuntime();
         }
     }
 
@@ -492,7 +523,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
-            ResetSelectedRuntimeSession();
+            ResetSelectedRuntime();
         }
     }
 
@@ -540,7 +571,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         modelProfiles = null;
     }
 
-    private void ResetSelectedRuntimeSession()
+    private void ResetSelectedRuntime()
     {
         if (isApplyingConversationSelection)
         {
@@ -549,10 +580,17 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         if (SelectedConversation is not null)
         {
-            SelectedConversation.Session = null;
+            ResetConversationRuntime(SelectedConversation);
         }
 
         SendMessageCommand.NotifyCanExecuteChanged();
+    }
+
+    private static void ResetConversationRuntime(AgentConversationViewModel conversation)
+    {
+        conversation.Agent = null;
+        conversation.AgentOptions = null;
+        conversation.Session = null;
     }
 
     private static string CreateTitle(string input)
@@ -566,7 +604,4 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         return title[..maxLength] + "...";
     }
-
-    [UnsafeAccessor(UnsafeAccessorKind.Constructor)]
-    private static extern ChatClientAgentSession ChatClientAgentSessionCreate();
 }
