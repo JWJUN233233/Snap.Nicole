@@ -41,9 +41,6 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
     public partial ModelProviderType ProviderType { get; set; }
 
     [ObservableProperty]
-    public partial string Endpoint { get; set; } = string.Empty;
-
-    [ObservableProperty]
     public partial string ModelId { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -91,7 +88,7 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
         MessageCount = Messages.Count;
     }
 
-    public AgentConversationData ToData()
+    public AgentConversation ToData()
     {
         return new()
         {
@@ -102,15 +99,13 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelProviderProfileId = ModelProviderProfileId,
             ModelProfileId = ModelProfileId,
             ProviderType = ProviderType,
-            Endpoint = Endpoint,
-            ModelId = ModelId,
             MessageCount = MessageCount,
             SerializedSessionState = SerializedSessionState?.Clone(),
             Messages = [.. Messages],
         };
     }
 
-    public static AgentConversationViewModel Create(AgentConversationData data)
+    public static AgentConversationViewModel Create(AgentConversation data)
     {
         AgentConversationViewModel viewModel = new()
         {
@@ -121,8 +116,6 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelProviderProfileId = data.ModelProviderProfileId,
             ModelProfileId = data.ModelProfileId,
             ProviderType = data.ProviderType,
-            Endpoint = data.Endpoint,
-            ModelId = data.ModelId,
             MessageCount = data.MessageCount,
             SerializedSessionState = data.SerializedSessionState?.Clone(),
         };

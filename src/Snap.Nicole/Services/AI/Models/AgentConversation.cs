@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Snap.Nicole.Services.AI.Models;
 
-internal sealed class AgentConversationData
+internal sealed class AgentConversation
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -18,10 +18,6 @@ internal sealed class AgentConversationData
     public Guid? ModelProfileId { get; set; }
 
     public ModelProviderType ProviderType { get; set; }
-
-    public string Endpoint { get; set; } = string.Empty;
-
-    public string ModelId { get; set; } = string.Empty;
 
     public int MessageCount { get; set; }
 

@@ -31,11 +31,6 @@ internal sealed class RoundTripInMemoryChatHistoryProvider : ChatHistoryProvider
 
     public override IReadOnlyList<string> StateKeys { get => stateKeys ??= [sessionState.StateKey]; }
 
-    public List<ChatMessage> GetMessages(AgentSession? session)
-    {
-        return sessionState.GetOrInitializeState(session).Messages;
-    }
-
     protected override async ValueTask<IEnumerable<ChatMessage>> ProvideChatHistoryAsync(InvokingContext context, CancellationToken cancellationToken = default)
     {
         State state = sessionState.GetOrInitializeState(context.Session);

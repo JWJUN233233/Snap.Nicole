@@ -20,20 +20,20 @@ internal sealed class AgentConversationFileStore : IAgentConversationStore
         directoryPath = Path.Combine(WellKnownLocations.Settings, "AgentConversations");
     }
 
-    public IReadOnlyList<AgentConversationData> LoadConversations()
+    public IReadOnlyList<AgentConversation> LoadConversations()
     {
         if (!Directory.Exists(directoryPath))
         {
             return [];
         }
 
-        List<AgentConversationData> conversations = [];
+        List<AgentConversation> conversations = [];
         foreach (string filePath in Directory.EnumerateFiles(directoryPath, "*.json"))
         {
             try
             {
                 using FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                if (JsonSerializer.Deserialize<AgentConversationData>(stream, jsonOptions) is { } conversation)
+                if (JsonSerializer.Deserialize<AgentConversation>(stream, jsonOptions) is { } conversation)
                 {
                     conversations.Add(conversation);
                 }
@@ -49,7 +49,7 @@ internal sealed class AgentConversationFileStore : IAgentConversationStore
         return conversations;
     }
 
-    public void SaveConversation(AgentConversationData conversation)
+    public void SaveConversation(AgentConversation conversation)
     {
         Directory.CreateDirectory(directoryPath);
 

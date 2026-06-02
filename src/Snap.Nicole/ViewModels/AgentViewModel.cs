@@ -275,9 +275,11 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
     private void LoadConversations()
     {
-        foreach (AgentConversationData conversation in conversationStore.LoadConversations().OrderByDescending(static item => item.UpdatedAt))
+        foreach (AgentConversation conversation in conversationStore.LoadConversations().OrderByDescending(static item => item.UpdatedAt))
         {
-            Conversations.Add(AgentConversationViewModel.Create(conversation));
+            AgentConversationViewModel viewModel = AgentConversationViewModel.Create(conversation);
+            RefreshConversationModelId(viewModel);
+            Conversations.Add(viewModel);
         }
 
         if (Conversations.Count is 0)
@@ -302,7 +304,6 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         {
             conversation.ModelProviderProfileId = providerProfile.Id;
             conversation.ProviderType = providerProfile.ProviderType.Value;
-            conversation.Endpoint = providerProfile.Endpoint;
         }
 
         if (modelProfile is not null)
@@ -392,8 +393,22 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         conversation.ModelProviderProfileId = providerProfile?.Id;
         conversation.ModelProfileId = modelProfile?.Id;
         conversation.ProviderType = requestOptions.ProviderType;
-        conversation.Endpoint = requestOptions.Endpoint ?? string.Empty;
         conversation.ModelId = requestOptions.ModelId;
+    }
+
+    private void RefreshConversationModelId(AgentConversationViewModel conversation)
+    {
+        if (!conversation.ModelProviderProfileId.HasValue || !conversation.ModelProfileId.HasValue)
+        {
+            conversation.ModelId = string.Empty;
+            return;
+        }
+
+        Guid providerProfileId = conversation.ModelProviderProfileId.Value;
+        Guid modelProfileId = conversation.ModelProfileId.Value;
+        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.FirstOrDefault(item => item.Id == providerProfileId);
+        ModelProfile? modelProfile = providerProfile?.ModelProfiles.FirstOrDefault(item => item.Id == modelProfileId);
+        conversation.ModelId = modelProfile?.ModelId ?? string.Empty;
     }
 
     private void ApplyConversationProfile(AgentConversationViewModel? conversation)

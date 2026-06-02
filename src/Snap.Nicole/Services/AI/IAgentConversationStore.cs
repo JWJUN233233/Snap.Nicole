@@ -5,9 +5,9 @@ namespace Snap.Nicole.Services.AI;
 
 internal interface IAgentConversationStore
 {
-    IReadOnlyList<AgentConversationData> LoadConversations();
+    IReadOnlyList<AgentConversation> LoadConversations();
 
-    void SaveConversation(AgentConversationData conversation);
+    void SaveConversation(AgentConversation conversation);
 
     void DeleteConversation(Guid id);
 }
