@@ -26,6 +26,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
     private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
     private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
 
+    private ObservableChatMessageCollection messages = [];
     private CancellationTokenSource? generationCts;
     private bool disposed;
     private bool isApplyingConversationSelection;
@@ -47,9 +48,11 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
     public ObservableCollection<AgentConversationViewModel> Conversations { get; } = [];
 
-    public ObservableChatMessageCollection Messages { get; } = [];
-
-    public ObservableCollection<AgentHistoryMessageViewModel> HistoryMessages { get; } = [];
+    public ObservableChatMessageCollection Messages
+    {
+        get => messages;
+        private set => SetProperty(ref messages, value);
+    }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -58,9 +61,6 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     public partial AgentHistorySummaryViewModel HistorySummary { get; set; } = new();
-
-    [ObservableProperty]
-    public partial bool IsHistoryPaneOpen { get; set; }
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -186,6 +186,11 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             }
             else
             {
+                if (ReferenceEquals(SelectedConversation, conversation))
+                {
+                    RebuildHistorySummary(Messages);
+                }
+
                 SaveConversation(conversation);
             }
         }
@@ -233,10 +238,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         SentryDiagnostics.AddBreadcrumb("Clear chat", "ai.chat", "ui");
         conversation.Session = null;
         conversation.SerializedSessionState = null;
-        conversation.SetHistoryMessages([]);
         conversation.UpdatedAt = DateTimeOffset.Now;
         Messages.Clear();
-        RebuildHistoryPanel(conversation.HistoryMessages);
+        RebuildHistorySummary(Messages);
         SaveConversation(conversation);
     }
 
@@ -367,12 +371,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         JsonElement serializedState = await agentService.SerializeSessionAsync(requestOptions, session, cancellationToken);
         conversation.SerializedSessionState = serializedState.Clone();
 
-        IReadOnlyList<ChatMessage> historyMessages = agentService.GetChatHistory(requestOptions, session);
-        conversation.SetHistoryMessages(historyMessages);
-
         if (ReferenceEquals(SelectedConversation, conversation))
         {
-            RebuildHistoryPanel(conversation.HistoryMessages);
+            RebuildHistorySummary(Messages);
         }
 
         SaveConversation(conversation);
@@ -423,30 +424,19 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
     private void RebuildActiveConversation(AgentConversationViewModel? conversation)
     {
-        Messages.Clear();
-
         if (conversation is null)
         {
-            RebuildHistoryPanel([]);
+            Messages = [];
+            RebuildHistorySummary([]);
             return;
         }
 
-        foreach (ChatMessage message in conversation.HistoryMessages)
-        {
-            Messages.Add(ObservableChatMessage.Create(message));
-        }
-
-        RebuildHistoryPanel(conversation.HistoryMessages);
+        Messages = conversation.Messages;
+        RebuildHistorySummary(Messages);
     }
 
-    private void RebuildHistoryPanel(IReadOnlyList<ChatMessage> messages)
+    private void RebuildHistorySummary(IEnumerable<ObservableChatMessage> messages)
     {
-        HistoryMessages.Clear();
-        for (int i = 0; i < messages.Count; i++)
-        {
-            HistoryMessages.Add(AgentHistoryMessageViewModel.Create(i + 1, messages[i]));
-        }
-
         HistorySummary = AgentHistorySummaryViewModel.Create(messages);
     }
 

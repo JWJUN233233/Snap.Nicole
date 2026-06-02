@@ -1,9 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Agents.AI;
-using Microsoft.Extensions.AI;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
+using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,9 +12,12 @@ namespace Snap.Nicole.ViewModels;
 
 internal sealed partial class AgentConversationViewModel : ObservableObject
 {
-    private readonly List<ChatMessage> historyMessages = [];
-
     public Guid Id { get; set; } = Guid.NewGuid();
+
+    public AgentConversationViewModel()
+    {
+        Messages.CollectionChanged += OnMessagesCollectionChanged;
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(TitleDisplay))]
@@ -50,10 +54,7 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
     [JsonIgnore]
     public JsonElement? SerializedSessionState { get; set; }
 
-    public IReadOnlyList<ChatMessage> HistoryMessages
-    {
-        get => historyMessages;
-    }
+    public ObservableChatMessageCollection Messages { get; } = [];
 
     public string TitleDisplay
     {
@@ -79,11 +80,15 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
         }
     }
 
-    public void SetHistoryMessages(IEnumerable<ChatMessage> messages)
+    public void SetMessages(IEnumerable<ObservableChatMessage> messages)
     {
-        historyMessages.Clear();
-        historyMessages.AddRange(messages);
-        MessageCount = historyMessages.Count;
+        Messages.Clear();
+        foreach (ObservableChatMessage message in messages)
+        {
+            Messages.Add(message);
+        }
+
+        MessageCount = Messages.Count;
     }
 
     public AgentConversationData ToData()
@@ -101,7 +106,7 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelId = ModelId,
             MessageCount = MessageCount,
             SerializedSessionState = SerializedSessionState?.Clone(),
-            HistoryMessages = [.. historyMessages],
+            Messages = [.. Messages],
         };
     }
 
@@ -122,7 +127,17 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             SerializedSessionState = data.SerializedSessionState?.Clone(),
         };
 
-        viewModel.SetHistoryMessages(data.HistoryMessages);
+        if (data.Messages is { Count: > 0 } messages)
+        {
+            viewModel.SetMessages(messages);
+        }
+
+        viewModel.MessageCount = viewModel.Messages.Count;
         return viewModel;
+    }
+
+    private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        MessageCount = Messages.Count;
     }
 }

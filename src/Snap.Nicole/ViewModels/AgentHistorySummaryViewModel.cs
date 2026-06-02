@@ -1,6 +1,5 @@
-using Microsoft.Extensions.AI;
+using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Snap.Nicole.ViewModels;
 
@@ -28,34 +27,32 @@ internal sealed class AgentHistorySummaryViewModel
 
     public long? CachedInputTokenCount { get; set; }
 
-    public static AgentHistorySummaryViewModel Create(IEnumerable<ChatMessage> messages)
+    public static AgentHistorySummaryViewModel Create(IEnumerable<ObservableChatMessage> messages)
     {
-        AgentHistorySummaryViewModel summary = new()
-        {
-            MessageCount = messages.Count(),
-        };
+        AgentHistorySummaryViewModel summary = new();
 
-        foreach (ChatMessage message in messages)
+        foreach (ObservableChatMessage message in messages)
         {
-            foreach (AIContent content in message.Contents)
+            summary.MessageCount++;
+            foreach (ObservableAIContent content in message.Contents)
             {
                 summary.ContentCount++;
                 switch (content)
                 {
-                    case TextContent:
+                    case ObservableTextContent:
                         summary.TextContentCount++;
                         break;
-                    case TextReasoningContent:
+                    case ObservableTextReasoningContent:
                         summary.ReasoningContentCount++;
                         break;
-                    case ToolCallContent:
+                    case ObservableToolCallContent:
                         summary.ToolCallCount++;
                         break;
-                    case ToolResultContent:
+                    case ObservableToolResultContent:
                         summary.ToolResultCount++;
                         break;
-                    case UsageContent usageContent:
-                        summary.AddUsage(usageContent.Details);
+                    case ObservableUsageContent usageContent:
+                        summary.AddUsage(usageContent);
                         break;
                 }
             }
@@ -64,18 +61,13 @@ internal sealed class AgentHistorySummaryViewModel
         return summary;
     }
 
-    private void AddUsage(UsageDetails? details)
+    private void AddUsage(ObservableUsageContent usageContent)
     {
-        if (details is null)
-        {
-            return;
-        }
-
-        TotalTokenCount = AddCounts(TotalTokenCount, details.TotalTokenCount);
-        InputTokenCount = AddCounts(InputTokenCount, details.InputTokenCount);
-        OutputTokenCount = AddCounts(OutputTokenCount, details.OutputTokenCount);
-        ReasoningTokenCount = AddCounts(ReasoningTokenCount, details.ReasoningTokenCount);
-        CachedInputTokenCount = AddCounts(CachedInputTokenCount, details.CachedInputTokenCount);
+        TotalTokenCount = AddCounts(TotalTokenCount, usageContent.TotalTokenCount);
+        InputTokenCount = AddCounts(InputTokenCount, usageContent.InputTokenCount);
+        OutputTokenCount = AddCounts(OutputTokenCount, usageContent.OutputTokenCount);
+        ReasoningTokenCount = AddCounts(ReasoningTokenCount, usageContent.ReasoningTokenCount);
+        CachedInputTokenCount = AddCounts(CachedInputTokenCount, usageContent.CachedInputTokenCount);
     }
 
     private static long? AddCounts(long? current, long? value)

@@ -112,388 +112,210 @@
             </Grid>
         </Border>
 
-        <SplitView
-            Grid.Column="1"
-            DisplayMode="Inline"
-            IsPaneOpen="{x:Bind ViewModel.IsHistoryPaneOpen, Mode=TwoWay}"
-            OpenPaneLength="420"
-            PanePlacement="Right">
-            <SplitView.Pane>
-                <Border
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="1,0,0,0">
-                    <Grid Padding="16" RowSpacing="16">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-                        <TextBlock
-                            Grid.Row="0"
-                            Style="{ThemeResource SubtitleTextBlockStyle}"
-                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelHistory}" />
+            <Border
+                Grid.Row="0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1">
+                <CommandBar DefaultLabelPosition="Right">
+                    <CommandBar.Content>
+                        <Grid Margin="13,8,0,0" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                        <StackPanel Grid.Row="1" Spacing="8">
-                            <TextBlock FontWeight="SemiBold" Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContext}" />
-                            <Grid ColumnSpacing="12" RowSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
+                            <ComboBox
+                                Grid.Column="0"
+                                MinWidth="240"
+                                DisplayMemberPath="Name">
+                                <mxi:Interaction.Behaviors>
+                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                                </mxi:Interaction.Behaviors>
+                            </ComboBox>
 
-                                <StackPanel Grid.Row="0" Grid.Column="0">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelMessages}" />
-                                    <TextBlock Text="{Binding HistorySummary.MessageCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="0" Grid.Column="1">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContents}" />
-                                    <TextBlock Text="{Binding HistorySummary.ContentCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="0">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTextContents}" />
-                                    <TextBlock Text="{Binding HistorySummary.TextContentCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="1" Grid.Column="1">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningContents}" />
-                                    <TextBlock Text="{Binding HistorySummary.ReasoningContentCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="2" Grid.Column="0">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolCalls}" />
-                                    <TextBlock Text="{Binding HistorySummary.ToolCallCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="2" Grid.Column="1">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolResults}" />
-                                    <TextBlock Text="{Binding HistorySummary.ToolResultCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="3" Grid.Column="0">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTotalTokens}" />
-                                    <TextBlock Text="{Binding HistorySummary.TotalTokenCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="3" Grid.Column="1">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelInputTokens}" />
-                                    <TextBlock Text="{Binding HistorySummary.InputTokenCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="4" Grid.Column="0">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelOutputTokens}" />
-                                    <TextBlock Text="{Binding HistorySummary.OutputTokenCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="4" Grid.Column="1">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningTokens}" />
-                                    <TextBlock Text="{Binding HistorySummary.ReasoningTokenCount}" />
-                                </StackPanel>
-                                <StackPanel Grid.Row="5" Grid.Column="0">
-                                    <TextBlock
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelCachedInputTokens}" />
-                                    <TextBlock Text="{Binding HistorySummary.CachedInputTokenCount}" />
-                                </StackPanel>
-                            </Grid>
-                        </StackPanel>
+                            <ComboBox
+                                Grid.Column="1"
+                                MinWidth="240"
+                                DisplayMemberPath="DisplayName">
+                                <mxi:Interaction.Behaviors>
+                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                </mxi:Interaction.Behaviors>
+                            </ComboBox>
+                        </Grid>
+                    </CommandBar.Content>
 
-                        <ScrollViewer Grid.Row="2">
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.HistoryMessages, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="snv:AgentHistoryMessageViewModel">
-                                        <Expander Margin="0,0,0,8">
-                                            <Expander.Header>
-                                                <Grid ColumnSpacing="8">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock
-                                                        Grid.Column="0"
-                                                        FontWeight="SemiBold"
-                                                        Text="{Binding Index}" />
-                                                    <TextBlock
-                                                        Grid.Column="1"
-                                                        Opacity="0.7"
-                                                        Text="{Binding Role}" />
-                                                    <TextBlock
-                                                        Grid.Column="2"
-                                                        Text="{Binding Preview}"
-                                                        TextTrimming="CharacterEllipsis" />
-                                                </Grid>
-                                            </Expander.Header>
+                    <AppBarButton Label="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContext}" ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContext}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8A5;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <Flyout>
+                                <Flyout.FlyoutPresenterStyle>
+                                    <Style BasedOn="{StaticResource DefaultFlyoutPresenterStyle}" TargetType="FlyoutPresenter">
+                                        <Setter Property="MinWidth" Value="360" />
+                                    </Style>
+                                </Flyout.FlyoutPresenterStyle>
+                                <Grid ColumnSpacing="12" RowSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-                                            <StackPanel Spacing="8">
-                                                <Grid ColumnSpacing="12" RowSpacing="4">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <Grid.RowDefinitions>
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                        <RowDefinition Height="Auto" />
-                                                    </Grid.RowDefinitions>
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelMessages}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.MessageCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContents}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ContentCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTextContents}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.TextContentCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningContents}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ReasoningContentCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolCalls}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ToolCallCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolResults}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ToolResultCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTotalTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.TotalTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelInputTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.InputTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelOutputTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.OutputTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ReasoningTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="5" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelCachedInputTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.CachedInputTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Flyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                </CommandBar>
+            </Border>
 
-                                                    <TextBlock
-                                                        Grid.Row="0"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelRole}" />
-                                                    <TextBlock
-                                                        Grid.Row="0"
-                                                        Grid.Column="1"
-                                                        Text="{Binding Role}" />
-                                                    <TextBlock
-                                                        Grid.Row="1"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelAuthor}" />
-                                                    <TextBlock
-                                                        Grid.Row="1"
-                                                        Grid.Column="1"
-                                                        Text="{Binding AuthorName}" />
-                                                    <TextBlock
-                                                        Grid.Row="2"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelCreatedAt}" />
-                                                    <TextBlock
-                                                        Grid.Row="2"
-                                                        Grid.Column="1"
-                                                        Text="{Binding CreatedAt}" />
-                                                    <TextBlock
-                                                        Grid.Row="3"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelMessageId}" />
-                                                    <TextBlock
-                                                        Grid.Row="3"
-                                                        Grid.Column="1"
-                                                        Text="{Binding MessageId}"
-                                                        TextWrapping="WrapWholeWords" />
-                                                    <TextBlock
-                                                        Grid.Row="4"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContents}" />
-                                                    <TextBlock
-                                                        Grid.Row="4"
-                                                        Grid.Column="1"
-                                                        Text="{Binding ContentCount}" />
-                                                    <TextBlock
-                                                        Grid.Row="5"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTotalTokens}" />
-                                                    <TextBlock
-                                                        Grid.Row="5"
-                                                        Grid.Column="1"
-                                                        Text="{Binding TotalTokenCount}" />
-                                                    <TextBlock
-                                                        Grid.Row="6"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelInputTokens}" />
-                                                    <TextBlock
-                                                        Grid.Row="6"
-                                                        Grid.Column="1"
-                                                        Text="{Binding InputTokenCount}" />
-                                                    <TextBlock
-                                                        Grid.Row="7"
-                                                        Grid.Column="0"
-                                                        Opacity="0.7"
-                                                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelOutputTokens}" />
-                                                    <TextBlock
-                                                        Grid.Row="7"
-                                                        Grid.Column="1"
-                                                        Text="{Binding OutputTokenCount}" />
-                                                </Grid>
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl
+                    Margin="16,16,16,8"
+                    ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
+                    ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsStackPanel ItemsUpdatingScrollMode="KeepLastItemInView" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
 
-                                                <ItemsControl ItemsSource="{Binding Contents}">
-                                                    <ItemsControl.ItemTemplate>
-                                                        <DataTemplate x:DataType="snv:AgentHistoryContentViewModel">
-                                                            <Border
-                                                                Margin="0,0,0,6"
-                                                                Padding="8"
-                                                                Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
-                                                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                                BorderThickness="1"
-                                                                CornerRadius="{ThemeResource ControlCornerRadius}">
-                                                                <StackPanel Spacing="4">
-                                                                    <TextBlock FontWeight="SemiBold" Text="{Binding Kind}" />
-                                                                    <TextBlock
-                                                                        Opacity="0.8"
-                                                                        Text="{Binding Summary}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                    <TextBlock
-                                                                        FontFamily="Consolas"
-                                                                        FontSize="12"
-                                                                        Opacity="0.75"
-                                                                        Text="{Binding Detail}"
-                                                                        TextWrapping="WrapWholeWords" />
-                                                                </StackPanel>
-                                                            </Border>
-                                                        </DataTemplate>
-                                                    </ItemsControl.ItemTemplate>
-                                                </ItemsControl>
-                                            </StackPanel>
-                                        </Expander>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
-                    </Grid>
-                </Border>
-            </SplitView.Pane>
+            <Grid
+                Grid.Row="2"
+                Padding="16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
 
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
+                <TextBox
+                    Grid.Column="0"
+                    MaxHeight="120"
+                    AcceptsReturn="True"
+                    IsSpellCheckEnabled="False"
+                    PlaceholderText="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelPlaceholder}"
+                    Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <mxi:Interaction.Behaviors>
+                        <snuxb:SubmitOnEnterTextBoxBehavior Command="{x:Bind ViewModel.SendMessageCommand}" />
+                    </mxi:Interaction.Behaviors>
+                </TextBox>
 
-                <Border
-                    Grid.Row="0"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="0,0,0,1">
-                    <CommandBar DefaultLabelPosition="Right">
-                        <CommandBar.Content>
-                            <Grid Margin="13,8,0,0" ColumnSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+                <Button
+                    Grid.Column="1"
+                    VerticalAlignment="Bottom"
+                    Command="{x:Bind ViewModel.SendMessageCommand}"
+                    Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSend}" />
 
-                                <ComboBox
-                                    Grid.Column="0"
-                                    MinWidth="240"
-                                    DisplayMemberPath="Name">
-                                    <mxi:Interaction.Behaviors>
-                                        <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
-                                    </mxi:Interaction.Behaviors>
-                                </ComboBox>
-
-                                <ComboBox
-                                    Grid.Column="1"
-                                    MinWidth="240"
-                                    DisplayMemberPath="DisplayName">
-                                    <mxi:Interaction.Behaviors>
-                                        <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
-                                    </mxi:Interaction.Behaviors>
-                                </ComboBox>
-                            </Grid>
-                        </CommandBar.Content>
-
-                        <AppBarToggleButton
-                            IsChecked="{x:Bind ViewModel.IsHistoryPaneOpen, Mode=TwoWay}"
-                            Label="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelHistory}"
-                            ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelHistory}">
-                            <AppBarToggleButton.Icon>
-                                <FontIcon Glyph="&#xE8A5;" />
-                            </AppBarToggleButton.Icon>
-                        </AppBarToggleButton>
-                    </CommandBar>
-                </Border>
-
-                <ScrollViewer Grid.Row="1">
-                    <ItemsControl
-                        Margin="16,16,16,8"
-                        ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
-                        ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <ItemsStackPanel ItemsUpdatingScrollMode="KeepLastItemInView" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                    </ItemsControl>
-                </ScrollViewer>
-
-                <Grid
-                    Grid.Row="2"
-                    Padding="16"
-                    Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="0,1,0,0"
-                    ColumnSpacing="8">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-
-                    <TextBox
-                        Grid.Column="0"
-                        MaxHeight="120"
-                        AcceptsReturn="True"
-                        IsSpellCheckEnabled="False"
-                        PlaceholderText="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelPlaceholder}"
-                        Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                        <mxi:Interaction.Behaviors>
-                            <snuxb:SubmitOnEnterTextBoxBehavior Command="{x:Bind ViewModel.SendMessageCommand}" />
-                        </mxi:Interaction.Behaviors>
-                    </TextBox>
-
-                    <Button
-                        Grid.Column="1"
-                        VerticalAlignment="Bottom"
-                        Command="{x:Bind ViewModel.SendMessageCommand}"
-                        Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSend}" />
-
-                    <Button
-                        Grid.Column="2"
-                        VerticalAlignment="Bottom"
-                        Command="{x:Bind ViewModel.ClearChatCommand}"
-                        Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelClear}" />
-                </Grid>
+                <Button
+                    Grid.Column="2"
+                    VerticalAlignment="Bottom"
+                    Command="{x:Bind ViewModel.ClearChatCommand}"
+                    Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelClear}" />
             </Grid>
-        </SplitView>
+        </Grid>
     </Grid>
 </Page>

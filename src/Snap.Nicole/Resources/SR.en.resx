@@ -250,9 +250,6 @@
   <data name="UIXamlPagesAgentPageLabelDeleteConversation" xml:space="preserve">
     <value>Delete conversation</value>
   </data>
-  <data name="UIXamlPagesAgentPageLabelHistory" xml:space="preserve">
-    <value>History</value>
-  </data>
   <data name="UIXamlPagesAgentPageLabelContext" xml:space="preserve">
     <value>Context</value>
   </data>

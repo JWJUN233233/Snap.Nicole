@@ -1,29 +1,22 @@
-using Microsoft.Extensions.AI;
 using Sentry;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.IO;
+using Snap.Nicole.Core.Text.Json;
 using Snap.Nicole.Services.AI.Models;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI;
 
 internal sealed class AgentConversationFileStore : IAgentConversationStore
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(AIJsonUtilities.DefaultOptions)
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        WriteIndented = true,
-    };
-
     private readonly string directoryPath;
+    private readonly JsonSerializerOptions jsonOptions;
 
-    public AgentConversationFileStore()
+    public AgentConversationFileStore([FromKeyedServices(JsonSerializerOptionsKey.AgentConversation)] JsonSerializerOptions jsonOptions)
     {
+        this.jsonOptions = jsonOptions;
         directoryPath = Path.Combine(WellKnownLocations.Settings, "AgentConversations");
     }
 
@@ -40,7 +33,7 @@ internal sealed class AgentConversationFileStore : IAgentConversationStore
             try
             {
                 using FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                if (JsonSerializer.Deserialize<AgentConversationData>(stream, JsonOptions) is { } conversation)
+                if (JsonSerializer.Deserialize<AgentConversationData>(stream, jsonOptions) is { } conversation)
                 {
                     conversations.Add(conversation);
                 }
@@ -65,7 +58,7 @@ internal sealed class AgentConversationFileStore : IAgentConversationStore
 
         using (FileStream stream = File.Open(tempFilePath, FileMode.Create, FileAccess.Write, FileShare.None))
         {
-            JsonSerializer.Serialize(stream, conversation, JsonOptions);
+            JsonSerializer.Serialize(stream, conversation, jsonOptions);
         }
 
         File.Move(tempFilePath, filePath, true);

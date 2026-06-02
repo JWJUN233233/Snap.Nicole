@@ -4,7 +4,6 @@ using System.Threading;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Sentry;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -17,8 +16,6 @@ internal interface IAgentService
     ValueTask<AgentSession> DeserializeSessionAsync(ExtendedAgentOptions options, JsonElement serializedState, CancellationToken cancellationToken = default);
 
     ValueTask<JsonElement> SerializeSessionAsync(ExtendedAgentOptions options, AgentSession session, CancellationToken cancellationToken = default);
-
-    IReadOnlyList<ChatMessage> GetChatHistory(ExtendedAgentOptions options, AgentSession? session);
 
     ValueTask<SpanStatus> RunStreamingAsync(
         ChatMessage message,

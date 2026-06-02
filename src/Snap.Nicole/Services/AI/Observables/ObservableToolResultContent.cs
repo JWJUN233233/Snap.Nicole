@@ -1,7 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonDerivedType(typeof(ObservableCodeInterpreterToolResultContent), "code_interpreter_tool_result")]
+[JsonDerivedType(typeof(ObservableFunctionResultContent), "function_result")]
+[JsonDerivedType(typeof(ObservableImageGenerationToolResultContent), "image_generation_tool_result")]
+[JsonDerivedType(typeof(ObservableMcpServerToolResultContent), "mcp_server_tool_result")]
+[JsonDerivedType(typeof(ObservableWebSearchToolResultContent), "web_search_tool_result")]
 internal partial class ObservableToolResultContent : ObservableAIContent
 {
     [ObservableProperty]

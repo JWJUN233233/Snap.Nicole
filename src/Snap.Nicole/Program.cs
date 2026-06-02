@@ -8,6 +8,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Snap.Nicole.Core.DependencyInjection;
 using Snap.Nicole.Core.Diagnostics;
+using Snap.Nicole.Core.Text.Json;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.Git;
@@ -49,6 +50,7 @@ internal static class Program
             hostBuilder.ConfigureServices(static (context, services) =>
             {
                 services
+                    .AddJsonSerializerOptions()
                     .AddJsonSettings<AppSettings>("AppSettings")
                     .AddXamlApplication<App>()
                     .AddXamlWindows(static builder =>

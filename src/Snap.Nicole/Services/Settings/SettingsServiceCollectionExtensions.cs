@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Snap.Nicole.Core;
+using Snap.Nicole.Core.Text.Json;
 using System.ComponentModel;
+using System.Text.Json;
 
 namespace Snap.Nicole.Services.Settings;
 
@@ -11,7 +13,7 @@ internal static class SettingsServiceCollectionExtensions
         public IServiceCollection AddJsonSettings<T>(string fileNameWithoutExtension)
             where T : class, INotifyPropertyChanged, ICopyFrom<T>, new()
         {
-            services.TryAddSingleton<IOptionsProvider<T>>(sp => new JsonSettingsOptionsProvider<T>(fileNameWithoutExtension));
+            services.TryAddSingleton<IOptionsProvider<T>>(sp => new JsonSettingsOptionsProvider<T>(fileNameWithoutExtension, sp.GetRequiredKeyedService<JsonSerializerOptions>(JsonSerializerOptionsKey.Settings)));
 
             return services;
         }

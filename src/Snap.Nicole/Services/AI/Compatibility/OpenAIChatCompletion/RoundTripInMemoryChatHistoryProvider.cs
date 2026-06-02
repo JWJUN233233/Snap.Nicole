@@ -16,13 +16,14 @@ namespace Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 // 2. 'content' can be round-tripped correctly in the chat history
 internal sealed class RoundTripInMemoryChatHistoryProvider : ChatHistoryProvider
 {
+    private const string StateName = "round_trip_chat_history";
     private readonly ObjectPool<StringBuilder> stringBuilderPool;
 
     public RoundTripInMemoryChatHistoryProvider(ObjectPool<StringBuilder> stringBuilderPool)
         : base(null, null, StoreInputResponseMessageFilter)
     {
         this.stringBuilderPool = stringBuilderPool;
-        sessionState = new ProviderSessionState<State>((_ => new()), GetType().Name, null);
+        sessionState = new ProviderSessionState<State>((_ => new()), StateName, null);
     }
 
     private readonly ProviderSessionState<State> sessionState;

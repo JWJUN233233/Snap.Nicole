@@ -1,5 +1,4 @@
-using Microsoft.Extensions.AI;
-using System.Collections.Generic;
+using Snap.Nicole.Services.AI.Observables;
 using System.Text.Json;
 
 namespace Snap.Nicole.Services.AI.Models;
@@ -28,5 +27,5 @@ internal sealed class AgentConversationData
 
     public JsonElement? SerializedSessionState { get; set; }
 
-    public List<ChatMessage> HistoryMessages { get; set; } = [];
+    public ObservableChatMessageCollection Messages { get; set; } = [];
 }

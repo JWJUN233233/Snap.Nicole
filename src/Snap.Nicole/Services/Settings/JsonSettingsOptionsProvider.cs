@@ -17,15 +17,11 @@ namespace Snap.Nicole.Services.Settings;
 internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<TOptions>, IDisposable
     where TOptions : class, INotifyPropertyChanged, ICopyFrom<TOptions>, new()
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = true,
-    };
-
     private readonly Lock syncRoot = new();
 
     private readonly string filePath;
     private readonly string fileName;
+    private readonly JsonSerializerOptions jsonOptions;
 
     private readonly PhysicalFileProvider fileProvider;
     private readonly List<INotifyPropertyChanged> observableChildren = [];
@@ -35,8 +31,12 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
     private bool isExternalChange;
     private volatile bool disposed;
 
-    public JsonSettingsOptionsProvider(string fileNameWithoutExtension)
+    public JsonSettingsOptionsProvider(string fileNameWithoutExtension, JsonSerializerOptions jsonOptions)
     {
+        ArgumentNullException.ThrowIfNull(jsonOptions);
+
+        this.jsonOptions = jsonOptions;
+
         string directory = WellKnownLocations.Settings;
         Directory.CreateDirectory(directory);
 
@@ -283,7 +283,7 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
             {
                 using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
                 {
-                    value = JsonSerializer.Deserialize<TOptions>(stream, JsonOptions) ?? new TOptions();
+                    value = JsonSerializer.Deserialize<TOptions>(stream, jsonOptions) ?? new TOptions();
                     span.SetData("settings.load.retry", retry);
                     return true;
                 }
@@ -322,7 +322,7 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
         {
             using (FileStream stream = File.Open(tempFile, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                JsonSerializer.Serialize(stream, value, JsonOptions);
+                JsonSerializer.Serialize(stream, value, jsonOptions);
             }
 
             File.Move(tempFile, filePath, true);

@@ -311,9 +311,6 @@
   <data name="UIXamlPagesAgentPageLabelDeleteConversation" xml:space="preserve">
     <value>删除会话</value>
   </data>
-  <data name="UIXamlPagesAgentPageLabelHistory" xml:space="preserve">
-    <value>历史</value>
-  </data>
   <data name="UIXamlPagesAgentPageLabelContext" xml:space="preserve">
     <value>上下文</value>
   </data>

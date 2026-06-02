@@ -2,9 +2,9 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Sentry;
 using Snap.Nicole.Core.Diagnostics;
+using Snap.Nicole.Core.Text.Json;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Resources;
-using Snap.Nicole.Services.AI.Compatibility.OpenAIChatCompletion;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
@@ -14,9 +14,10 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.Services.AI;
 
-internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentService
+internal sealed class AgentService(IServiceProvider serviceProvider, [FromKeyedServices(JsonSerializerOptionsKey.AIFunctionContent)] JsonSerializerOptions functionContentJsonOptions) : IAgentService
 {
     private readonly IServiceProvider serviceProvider = serviceProvider;
+    private readonly JsonSerializerOptions functionContentJsonOptions = functionContentJsonOptions;
 
     public async ValueTask<AgentSession> CreateSessionAsync(ExtendedAgentOptions options, CancellationToken cancellationToken = default)
     {
@@ -36,17 +37,6 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         return await agent.SerializeSessionAsync(session, cancellationToken: cancellationToken);
     }
 
-    public IReadOnlyList<ChatMessage> GetChatHistory(ExtendedAgentOptions options, AgentSession? session)
-    {
-        ChatHistoryProvider provider = options.CreateChatHistoryProvider(serviceProvider);
-        return provider switch
-        {
-            RoundTripInMemoryChatHistoryProvider roundTripProvider => [.. roundTripProvider.GetMessages(session)],
-            InMemoryChatHistoryProvider inMemoryProvider => [.. inMemoryProvider.GetMessages(session)],
-            _ => [],
-        };
-    }
-
     public async ValueTask<SpanStatus> RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
         using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.stream", "Run streaming chat completion");
@@ -55,7 +45,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
         try
         {
-            ObservableChatMessage inputMessage = ObservableChatMessage.Create(message);
+            ObservableChatMessage inputMessage = ObservableChatMessage.Create(message, functionContentJsonOptions);
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
 
             if (string.IsNullOrWhiteSpace(options.ApiKey))
@@ -79,7 +69,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 List<ObservableAIContent> observableContents = [];
                 foreach (AIContent content in update.Contents)
                 {
-                    if (ObservableAIContent.Create(content) is { } observableContent)
+                    if (ObservableAIContent.Create(content, functionContentJsonOptions) is { } observableContent)
                     {
                         observableContents.Add(observableContent);
                     }
