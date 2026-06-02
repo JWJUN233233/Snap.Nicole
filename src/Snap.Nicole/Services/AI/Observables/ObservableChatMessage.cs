@@ -33,7 +33,7 @@ internal sealed partial class ObservableChatMessage : ObservableObject
 
         foreach (AIContent content in chatMessage.Contents)
         {
-            observableChatMessage.Contents.Append(ObservableAIContent.Create(content, jsonOptions));
+            observableChatMessage.Contents.AddOrUpdate(ObservableAIContent.Create(content, jsonOptions));
         }
 
         return observableChatMessage;

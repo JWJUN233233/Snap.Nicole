@@ -66,7 +66,7 @@ internal sealed class ModelProfileService : IModelProfileService
         ClientResult<OpenAIModelCollection> result = await client.GetModelsAsync(cancellationToken);
 
         IEnumerable<ModelProfile> models = result.Value
-            .Where(static model => string.IsNotNullOrWhiteSpace(model.Id))
+            .Where(static model => !string.IsNullOrWhiteSpace(model.Id))
             .Where(static model =>
             {
                 IDictionary<string, BinaryData> additionalRawData = GetSerializedAdditionalRawData(model);

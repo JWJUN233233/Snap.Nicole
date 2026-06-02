@@ -20,7 +20,7 @@ internal sealed class ObservableAIContentCollection : ObservableCollection<Obser
     {
     }
 
-    public void Append(ObservableAIContent? newContent)
+    public void AddOrUpdate(ObservableAIContent? newContent)
     {
         if (newContent is null)
         {

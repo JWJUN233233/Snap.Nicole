@@ -41,6 +41,7 @@ src
 
 - Always organize method arguments in single line, no matter how long they are. Wrap related arguments into context class/struct/record if necessary.
 - Do not use expression-bodied syntax for methods, constructors, operators, or conversions. Lambdas or expressions inside method/property bodies are unaffected.
+- When comparing an object with `null`, use `==` `!=` for WinRT Projection objects and the `is` `is not` pattern for all other types.
 - For read-only properties, do not use direct expression-bodied declarations like `Property => value;`; use an accessor body instead, for example `Property { get => value; }`.
 - For non-constant `string` or `string?` values that need an empty string, use `string.Empty` instead of `""`. Empty string literals are allowed only for constants or the `is pattern`.
 - Use `Interlocked.Exchange` for atomic read-modify-write operations:

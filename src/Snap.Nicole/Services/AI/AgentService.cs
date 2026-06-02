@@ -83,7 +83,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
                     foreach (ObservableAIContent observableContent in observableContents)
                     {
-                        responseMessage.Contents.Append(observableContent);
+                        responseMessage.Contents.AddOrUpdate(observableContent);
                     }
                 }, cancellationToken);
             }

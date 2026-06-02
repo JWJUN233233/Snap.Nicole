@@ -26,11 +26,6 @@ internal sealed partial class ObservableFunctionResultContent : ObservableToolRe
 
     private static string? SerializeResult(object? value, JsonSerializerOptions jsonOptions)
     {
-        if (value is string stringValue)
-        {
-            return stringValue;
-        }
-
         if (value is JsonElement { ValueKind: JsonValueKind.String } stringElement)
         {
             return stringElement.GetString();

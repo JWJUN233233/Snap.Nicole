@@ -16,16 +16,17 @@ namespace Snap.Nicole.Core.Hosting;
 internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) : IWindowLifeTime<TWindow>
     where TWindow : Window
 {
+    private static readonly string WindowTypeFullName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow));
+
     private WindowSubclassLifeTime? subclass;
 
     public TWindow? Window { get; private set; }
 
     public void Show()
     {
-        string windowTypeFullName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow));
         string windowTypeName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false);
 
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowShow, windowTypeFullName);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowShow, WindowTypeFullName);
         span.SetTag(SentryTags.UIWindow, windowTypeName);
 
         try
@@ -33,7 +34,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
             if (Window == null)
             {
                 TWindow window = serviceProvider.GetRequiredService<TWindow>();
-                window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(windowTypeFullName))));
+                window.EnablePlacementRestoration(MemoryMarshal.AsRef<Guid>(CryptographicOperations.HashData(HashAlgorithmName.MD5, Encoding.UTF8.GetBytes(WindowTypeFullName))));
                 Window = window;
 
                 subclass = new(window);
@@ -70,7 +71,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
 
     public void Close()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowClose, TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowClose, WindowTypeFullName);
         span.SetTag(SentryTags.UIWindow, TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
 
         try
@@ -86,7 +87,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
 
     private void OnWindowClose(object ignore, WindowEventArgs args)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowClosed, TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowClosed, WindowTypeFullName);
         span.SetTag(SentryTags.UIWindow, TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
 
         if (Window is not { } window)

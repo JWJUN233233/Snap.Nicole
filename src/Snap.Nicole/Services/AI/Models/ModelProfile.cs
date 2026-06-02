@@ -34,7 +34,7 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
 
     public static ModelProfile Create(OpenAI.Models.OpenAIModel model)
     {
-        return new ModelProfile
+        return new()
         {
             Name = string.IsNullOrEmpty(model.OwnedBy) ? model.Id : $"{model.OwnedBy}/{model.Id}",
             ModelId = model.Id,
@@ -43,7 +43,7 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
 
     public static ModelProfile Create(Anthropic.Models.Models.ModelInfo model)
     {
-        return new ModelProfile
+        return new()
         {
             Name = string.IsNullOrWhiteSpace(model.DisplayName) ? model.ID : model.DisplayName,
             ModelId = model.ID,

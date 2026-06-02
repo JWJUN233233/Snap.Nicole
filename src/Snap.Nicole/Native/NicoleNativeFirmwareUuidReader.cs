@@ -7,21 +7,14 @@ namespace Snap.Nicole.Native;
 
 internal sealed unsafe class NicoleNativeFirmwareUuidReader(ObjectReference<NicoleNativeFirmwareUuidReader.Vftbl> objRef)
 {
-    public bool TryGetFirmwareUuid(out Guid firmwareUuid)
+    public Guid FirmwareUuid
     {
-        firmwareUuid = default;
-
-        fixed (Guid* pFirmwareUuid = &firmwareUuid)
+        get
         {
-            HRESULT result = objRef.Vftbl.GetFirmwareUuid(objRef.ThisPtr, pFirmwareUuid);
-            if (result < 0)
-            {
-                firmwareUuid = default;
-                return false;
-            }
+            Guid firmwareUuid = default;
+            Marshal.ThrowExceptionForHR(objRef.Vftbl.GetFirmwareUuid(objRef.ThisPtr, &firmwareUuid));
+            return firmwareUuid;
         }
-
-        return firmwareUuid != Guid.Empty;
     }
 
     [Guid(NicoleNative.IID_INicoleNativeFirmwareUuidReader)]

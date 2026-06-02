@@ -12,7 +12,7 @@ internal sealed class StringResourceConverter : IValueConverter
 
         return name switch
         {
-            SRName resourceName => StringResourceProxy.Default[$"{resourceName}"],
+            SRName resourceName => StringResourceProxy.Default[string.Intern($"{resourceName}")],
             string resourceName => StringResourceProxy.Default[resourceName],
             _ => string.Empty,
         };

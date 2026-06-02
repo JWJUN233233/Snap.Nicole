@@ -24,7 +24,7 @@ internal sealed record SettingsGitCommandResult
 
     public bool Succeeded { get => !GitUnavailable && ExitCode == 0; }
 
-    public string CombinedOutput { get => string.Join('\n', Core.Enumerable.Enumerate(Output, Error).Where(string.IsNotNullOrWhiteSpace)); }
+    public string CombinedOutput { get => string.Join('\n', Core.Enumerable.Enumerate(Output, Error).Where(static output => !string.IsNullOrWhiteSpace(output))); }
 
     public string NormalizedCombinedOutput { get => Normalize(CombinedOutput); }
 

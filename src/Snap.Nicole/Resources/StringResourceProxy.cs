@@ -18,19 +18,21 @@ internal sealed class StringResourceProxy : ObservableObject
         get;
         set
         {
-            if (field != value)
+            if (field == value)
             {
-                field = value;
-
-                CultureInfo.DefaultThreadCurrentCulture = value;
-                CultureInfo.DefaultThreadCurrentUICulture = value;
-
-                CultureInfo.CurrentCulture = value;
-                CultureInfo.CurrentUICulture = value;
-
-                ApplicationLanguages.PrimaryLanguageOverride = value.Name;
-                OnPropertyChanged("Item[]");
+                return;
             }
+
+            field = value;
+
+            CultureInfo.DefaultThreadCurrentCulture = value;
+            CultureInfo.DefaultThreadCurrentUICulture = value;
+
+            CultureInfo.CurrentCulture = value;
+            CultureInfo.CurrentUICulture = value;
+
+            ApplicationLanguages.PrimaryLanguageOverride = value.Name;
+            OnPropertyChanged("Item[]");
         }
     } = CultureInfo.CurrentCulture;
 

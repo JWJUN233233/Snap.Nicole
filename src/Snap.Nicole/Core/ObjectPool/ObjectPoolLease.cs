@@ -8,7 +8,7 @@ public ref struct ObjectPoolLease<T>(ObjectPool<T> objectPool) : IDisposable
     private readonly ObjectPool<T> objectPool = objectPool;
     private T value = objectPool.Get();
 
-    public T Value { get => value ?? throw new ObjectDisposedException(nameof(ObjectPoolLease<>)); }
+    public readonly T Value { get => value ?? throw new ObjectDisposedException(nameof(ObjectPoolLease<>)); }
 
     public void Dispose()
     {

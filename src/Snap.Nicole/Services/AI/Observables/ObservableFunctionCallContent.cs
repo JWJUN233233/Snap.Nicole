@@ -18,9 +18,6 @@ internal sealed partial class ObservableFunctionCallContent : ObservableToolCall
     [JsonIgnore]
     public partial Exception? Exception { get; set; }
 
-    [ObservableProperty]
-    public partial bool InformationalOnly { get; set; }
-
     public static ObservableFunctionCallContent Create(FunctionCallContent functionCallContent, JsonSerializerOptions jsonOptions)
     {
         return new()

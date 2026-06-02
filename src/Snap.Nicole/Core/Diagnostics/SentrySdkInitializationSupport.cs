@@ -68,12 +68,7 @@ internal static class SentrySdkInitializationSupport
     {
         try
         {
-            NicoleNativeFirmwareUuidReader firmwareUuidReader = NicoleNative.Default.MakeFirmwareUuidReader();
-            if (!firmwareUuidReader.TryGetFirmwareUuid(out Guid firmwareUuid))
-            {
-                return;
-            }
-
+            Guid firmwareUuid = NicoleNative.Default.MakeFirmwareUuidReader().FirmwareUuid;
             string userId = Convert.ToHexString(CryptographicOperations.HashData(HashAlgorithmName.SHA256, MemoryMarshal.AsBytes(new ReadOnlySpan<Guid>(ref firmwareUuid)))).ToUpperInvariant();
 
             SentrySdk.ConfigureScope(static (scope, userId) =>

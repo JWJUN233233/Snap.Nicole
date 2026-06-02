@@ -44,6 +44,7 @@ internal sealed class ExtendedAgentOptions
 
     public ChatClientAgentRunOptions AsAgentRunOptions()
     {
+        // Most models will ignore temperature and top_p when reasoning is enabled, but we set them here anyway.
         ChatOptions chatOptions = new()
         {
             ModelId = ModelId,
@@ -79,7 +80,7 @@ internal sealed class ExtendedAgentOptions
         return ProviderType switch
         {
             ModelProviderType.OpenAIChatCompletion => new RoundTripInMemoryChatHistoryProvider(serviceProvider.GetRequiredService<ObjectPool<StringBuilder>>()),
-            ModelProviderType.OpenAIResponses or ModelProviderType.Anthropic => new InMemoryChatHistoryProvider(null),
+            ModelProviderType.OpenAIResponses or ModelProviderType.Anthropic => new InMemoryChatHistoryProvider(),
             _ => throw new NotSupportedException($"Unsupported model provider type: {ProviderType}"),
         };
     }
