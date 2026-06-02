@@ -12,104 +12,303 @@
     d:DataContext="{d:DesignInstance snv:AgentViewModel}"
     mc:Ignorable="d">
 
-    <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-        </Grid.RowDefinitions>
+    <Grid ColumnSpacing="0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
         <Border
-            Grid.Row="0"
+            Grid.Column="0"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,0,0,1">
-            <CommandBar>
-                <CommandBar.Content>
-                    <Grid Margin="13,8,0,0" ColumnSpacing="8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+            BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                        <ComboBox
-                            Grid.Column="0"
-                            MinWidth="240"
-                            DisplayMemberPath="Name">
-                            <mxi:Interaction.Behaviors>
-                                <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
-                            </mxi:Interaction.Behaviors>
-                        </ComboBox>
+                <Grid
+                    Grid.Row="0"
+                    Padding="16,12"
+                    ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                        <ComboBox
-                            Grid.Column="1"
-                            MinWidth="240"
-                            DisplayMemberPath="DisplayName">
-                            <mxi:Interaction.Behaviors>
-                                <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
-                            </mxi:Interaction.Behaviors>
-                        </ComboBox>
-                    </Grid>
-                </CommandBar.Content>
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        Style="{ThemeResource SubtitleTextBlockStyle}"
+                        Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelConversations}" />
 
-            </CommandBar>
+                    <Button
+                        Grid.Column="1"
+                        Command="{x:Bind ViewModel.CreateConversationCommand}"
+                        ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelNewConversation}">
+                        <FontIcon FontSize="16" Glyph="&#xE710;" />
+                    </Button>
+
+                    <Button
+                        Grid.Column="2"
+                        Command="{x:Bind ViewModel.DeleteConversationCommand}"
+                        ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelDeleteConversation}">
+                        <FontIcon FontSize="16" Glyph="&#xE74D;" />
+                    </Button>
+                </Grid>
+
+                <ListView
+                    Grid.Row="1"
+                    ItemContainerTransitions="{ThemeResource ListViewLikeThemeTransitions}"
+                    ItemsSource="{x:Bind ViewModel.Conversations, Mode=OneWay}"
+                    SelectedItem="{x:Bind ViewModel.SelectedConversation, Mode=TwoWay}"
+                    SelectionMode="Single">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid
+                                MinHeight="68"
+                                Padding="12,8"
+                                RowSpacing="4">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock
+                                    Grid.Row="0"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding TitleDisplay}"
+                                    TextTrimming="CharacterEllipsis" />
+
+                                <StackPanel
+                                    Grid.Row="1"
+                                    Orientation="Horizontal"
+                                    Spacing="8">
+                                    <TextBlock
+                                        Opacity="0.7"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="{Binding MessageCount}" />
+                                    <TextBlock
+                                        MaxWidth="160"
+                                        Opacity="0.7"
+                                        Style="{ThemeResource CaptionTextBlockStyle}"
+                                        Text="{Binding ModelId}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Grid.Row="2"
+                                    Opacity="0.7"
+                                    Style="{ThemeResource CaptionTextBlockStyle}"
+                                    Text="{Binding UpdatedAtDisplay}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
         </Border>
 
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
 
-        <ScrollViewer Grid.Row="1">
-            <ItemsControl
-                Margin="16,16,16,8"
-                ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
-                ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <ItemsStackPanel ItemsUpdatingScrollMode="KeepLastItemInView" />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-            </ItemsControl>
-        </ScrollViewer>
+            <Border
+                Grid.Row="0"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,0,0,1">
+                <CommandBar DefaultLabelPosition="Right">
+                    <CommandBar.Content>
+                        <Grid Margin="13,8,0,0" ColumnSpacing="8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-        <Grid
-            Grid.Row="2"
-            Padding="16"
-            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,1,0,0"
-            ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                            <ComboBox
+                                Grid.Column="0"
+                                MinWidth="240"
+                                DisplayMemberPath="Name">
+                                <mxi:Interaction.Behaviors>
+                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                                </mxi:Interaction.Behaviors>
+                            </ComboBox>
 
-            <TextBox
-                Grid.Column="0"
-                MaxHeight="120"
-                AcceptsReturn="True"
-                IsSpellCheckEnabled="False"
-                PlaceholderText="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelPlaceholder}"
-                Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                <mxi:Interaction.Behaviors>
-                    <snuxb:SubmitOnEnterTextBoxBehavior Command="{x:Bind ViewModel.SendMessageCommand}" />
-                </mxi:Interaction.Behaviors>
-            </TextBox>
+                            <ComboBox
+                                Grid.Column="1"
+                                MinWidth="240"
+                                DisplayMemberPath="DisplayName">
+                                <mxi:Interaction.Behaviors>
+                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                </mxi:Interaction.Behaviors>
+                            </ComboBox>
+                        </Grid>
+                    </CommandBar.Content>
 
-            <Button
-                Grid.Column="1"
-                VerticalAlignment="Bottom"
-                Command="{x:Bind ViewModel.SendMessageCommand}"
-                Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSend}" />
+                    <AppBarButton Label="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContext}" ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContext}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8A5;" />
+                        </AppBarButton.Icon>
+                        <AppBarButton.Flyout>
+                            <Flyout>
+                                <Flyout.FlyoutPresenterStyle>
+                                    <Style BasedOn="{StaticResource DefaultFlyoutPresenterStyle}" TargetType="FlyoutPresenter">
+                                        <Setter Property="MinWidth" Value="360" />
+                                    </Style>
+                                </Flyout.FlyoutPresenterStyle>
+                                <Grid ColumnSpacing="12" RowSpacing="8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
 
-            <Button
-                Grid.Column="2"
-                VerticalAlignment="Bottom"
-                Command="{x:Bind ViewModel.ClearChatCommand}"
-                Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelClear}" />
+                                    <StackPanel Grid.Row="0" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelMessages}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.MessageCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="0" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContents}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ContentCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTextContents}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.TextContentCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="1" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningContents}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ReasoningContentCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolCalls}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ToolCallCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="2" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolResults}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ToolResultCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTotalTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.TotalTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="3" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelInputTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.InputTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelOutputTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.OutputTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="4" Grid.Column="1">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.ReasoningTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Row="5" Grid.Column="0">
+                                        <TextBlock
+                                            Opacity="0.7"
+                                            Style="{ThemeResource CaptionTextBlockStyle}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelCachedInputTokens}" />
+                                        <TextBlock Text="{x:Bind ViewModel.HistorySummary.CachedInputTokenCount, Mode=OneWay}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Flyout>
+                        </AppBarButton.Flyout>
+                    </AppBarButton>
+                </CommandBar>
+            </Border>
+
+            <ScrollViewer Grid.Row="1">
+                <ItemsControl
+                    Margin="16,16,16,8"
+                    ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
+                    ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <ItemsStackPanel ItemsUpdatingScrollMode="KeepLastItemInView" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <Grid
+                Grid.Row="2"
+                Padding="16"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="0,1,0,0"
+                ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox
+                    Grid.Column="0"
+                    MaxHeight="120"
+                    AcceptsReturn="True"
+                    IsSpellCheckEnabled="False"
+                    PlaceholderText="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelPlaceholder}"
+                    Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <mxi:Interaction.Behaviors>
+                        <snuxb:SubmitOnEnterTextBoxBehavior Command="{x:Bind ViewModel.SendMessageCommand}" />
+                    </mxi:Interaction.Behaviors>
+                </TextBox>
+
+                <Button
+                    Grid.Column="1"
+                    VerticalAlignment="Bottom"
+                    Command="{x:Bind ViewModel.SendMessageCommand}"
+                    Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSend}" />
+            </Grid>
         </Grid>
     </Grid>
 </Page>

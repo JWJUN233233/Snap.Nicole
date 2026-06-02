@@ -2,11 +2,12 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Sentry;
 using Snap.Nicole.Core.Diagnostics;
+using Snap.Nicole.Core.Text.Json;
 using Snap.Nicole.Core.Threading;
-using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,9 +16,29 @@ namespace Snap.Nicole.Services.AI;
 internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentService
 {
     private readonly IServiceProvider serviceProvider = serviceProvider;
+    private readonly JsonSerializerOptions functionContentJsonOptions = serviceProvider.GetRequiredKeyedService<JsonSerializerOptions>(JsonSerializerOptionsKey.AIFunctionContent);
 
-    // TODO: preserve ChatHistory across multiple calls to RunStreamingAsync for the same conversation
-    public async ValueTask<SpanStatus> RunStreamingAsync(ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
+    public ValueTask<ChatClientAgent> CreateAgentAsync(ExtendedAgentOptions options, CancellationToken cancellationToken = default)
+    {
+        return ValueTask.FromResult(options.CreateAIAgent(CreateBuiltInTools(), serviceProvider));
+    }
+
+    public ValueTask<AgentSession> CreateSessionAsync(ChatClientAgent agent, CancellationToken cancellationToken = default)
+    {
+        return agent.CreateSessionAsync(cancellationToken);
+    }
+
+    public ValueTask<AgentSession> DeserializeSessionAsync(ChatClientAgent agent, JsonElement serializedState, CancellationToken cancellationToken = default)
+    {
+        return agent.DeserializeSessionAsync(serializedState, cancellationToken: cancellationToken);
+    }
+
+    public ValueTask<JsonElement> SerializeSessionAsync(ChatClientAgent agent, AgentSession session, CancellationToken cancellationToken = default)
+    {
+        return agent.SerializeSessionAsync(session, cancellationToken: cancellationToken);
+    }
+
+    public async ValueTask<SpanStatus> RunStreamingAsync(ChatClientAgent agent, ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
         using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.stream", "Run streaming chat completion");
         span.SetTag("ai.provider", options.ProviderType.ToString());
@@ -25,21 +46,8 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
         try
         {
-            ObservableChatMessage inputMessage = ObservableChatMessage.Create(message);
+            ObservableChatMessage inputMessage = ObservableChatMessage.Create(message, functionContentJsonOptions);
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
-
-            if (string.IsNullOrWhiteSpace(options.ApiKey))
-            {
-                SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "default");
-
-                // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
-                ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesAgentPageMessageConfigureApiKey));
-                await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
-                span.Finish(SpanStatus.FailedPrecondition);
-                return SpanStatus.FailedPrecondition;
-            }
-
-            ChatClientAgent agent = options.CreateAIAgent([AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)], serviceProvider);
 
             ObservableChatMessage? responseMessage = null;
             bool responseAdded = false;
@@ -49,7 +57,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 List<ObservableAIContent> observableContents = [];
                 foreach (AIContent content in update.Contents)
                 {
-                    if (ObservableAIContent.Create(content) is { } observableContent)
+                    if (ObservableAIContent.Create(content, functionContentJsonOptions) is { } observableContent)
                     {
                         observableContents.Add(observableContent);
                     }
@@ -96,5 +104,10 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);
             return SpanStatus.InternalError;
         }
+    }
+
+    private static IList<AITool> CreateBuiltInTools()
+    {
+        return [AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)];
     }
 }

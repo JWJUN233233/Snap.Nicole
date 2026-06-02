@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.AI;
 using System.Runtime.CompilerServices;
+using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
@@ -44,6 +45,7 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
     [NotifyPropertyChangedFor(nameof(CacheHitRate))]
     public partial long? CachedInputTokenCount { get; set; }
 
+    [JsonIgnore]
     public double? CacheHitRate
     {
         get
@@ -58,6 +60,7 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
         }
     }
 
+    [JsonIgnore]
     public bool HasCounts
     {
         get =>

@@ -74,6 +74,16 @@ internal sealed class ExtendedAgentOptions
         };
     }
 
+    public ChatHistoryProvider CreateChatHistoryProvider(IServiceProvider serviceProvider)
+    {
+        return ProviderType switch
+        {
+            ModelProviderType.OpenAIChatCompletion => new RoundTripInMemoryChatHistoryProvider(serviceProvider.GetRequiredService<ObjectPool<StringBuilder>>()),
+            ModelProviderType.OpenAIResponses or ModelProviderType.Anthropic => new InMemoryChatHistoryProvider(null),
+            _ => throw new NotSupportedException($"Unsupported model provider type: {ProviderType}"),
+        };
+    }
+
     private ChatClientAgent CreateOpenAIChatCompletionAgent(IList<AITool>? tools, IServiceProvider serviceProvider)
     {
         string? thinkingEnabled = ThinkingEnabled.HasValue
@@ -114,7 +124,7 @@ internal sealed class ExtendedAgentOptions
                     Instructions = SystemPrompt,
                     Tools = tools,
                 },
-                ChatHistoryProvider = new RoundTripInMemoryChatHistoryProvider(serviceProvider.GetRequiredService<ObjectPool<StringBuilder>>()),
+                ChatHistoryProvider = CreateChatHistoryProvider(serviceProvider),
                 RequirePerServiceCallChatHistoryPersistence = true,
             }, loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
     }
@@ -125,7 +135,7 @@ internal sealed class ExtendedAgentOptions
         {
             Endpoint = Endpoint.ToUri(),
         }).GetResponsesClient();
-        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), model: ModelId, loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
+        return client.AsAIAgent(CreateAgentOptions(tools, CreateChatHistoryProvider(serviceProvider)), model: ModelId, loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
     }
 
     private ChatClientAgent CreateAnthropicAgent(IList<AITool>? tools, IServiceProvider serviceProvider)
@@ -136,7 +146,7 @@ internal sealed class ExtendedAgentOptions
             BaseUrl = string.IsNullOrWhiteSpace(Endpoint) ? EnvironmentUrl.Production : Endpoint,
         });
 
-        return client.AsAIAgent(CreateAgentOptions(tools, new InMemoryChatHistoryProvider(null)), loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
+        return client.AsAIAgent(CreateAgentOptions(tools, CreateChatHistoryProvider(serviceProvider)), loggerFactory: serviceProvider.GetRequiredService<ILoggerFactory>());
     }
 
     private ChatClientAgentOptions CreateAgentOptions(IList<AITool>? tools, ChatHistoryProvider chatHistoryProvider)

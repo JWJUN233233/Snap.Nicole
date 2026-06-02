@@ -4,12 +4,17 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Sentry;
 using Snap.Nicole.Core.Diagnostics;
+using Snap.Nicole.Core.Threading;
+using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using Snap.Nicole.Services.Settings;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,26 +23,45 @@ namespace Snap.Nicole.ViewModels;
 internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 {
     private readonly IAgentService agentService;
+    private readonly IAgentConversationProvider conversationStore;
     private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
     private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
 
+    private ObservableChatMessageCollection messages = [];
     private CancellationTokenSource? generationCts;
-    private AgentSession? session;
     private bool disposed;
+    private bool isApplyingConversationSelection;
 
     public AgentViewModel(IServiceProvider serviceProvider)
     {
         agentService = serviceProvider.GetRequiredService<IAgentService>();
+        conversationStore = serviceProvider.GetRequiredService<IAgentConversationProvider>();
         Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
         Settings.PropertyChanged += OnSettingsPropertyChanged;
         SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
         SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
+
+        LoadConversations();
     }
 
     public AppSettings Settings { get; }
 
-    public ObservableChatMessageCollection Messages { get; } = [];
+    public ObservableCollection<AgentConversationViewModel> Conversations { get; } = [];
+
+    public ObservableChatMessageCollection Messages
+    {
+        get => messages;
+        private set => SetProperty(ref messages, value);
+    }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteConversationCommand))]
+    public partial AgentConversationViewModel? SelectedConversation { get; set; }
+
+    [ObservableProperty]
+    public partial AgentHistorySummaryViewModel HistorySummary { get; set; } = new();
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -45,6 +69,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
+    [NotifyCanExecuteChangedFor(nameof(DeleteConversationCommand))]
     public partial bool IsBusy { get; set; }
 
     private bool CanSendMessage
@@ -54,15 +79,63 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             ModelProfile? modelProfile = Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.CurrentItem;
             return !disposed
                 && !IsBusy
+                && SelectedConversation is not null
                 && !string.IsNullOrWhiteSpace(InputText)
                 && !string.IsNullOrWhiteSpace(modelProfile?.ModelId);
         }
     }
 
+    private bool CanDeleteConversation
+    {
+        get
+        {
+            return !disposed
+                && !IsBusy
+                && SelectedConversation is not null;
+        }
+    }
+
+    [RelayCommand]
+    private void CreateConversation()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        AgentConversationViewModel conversation = CreateConversationCore();
+        Conversations.Insert(0, conversation);
+        SelectedConversation = conversation;
+        SaveConversation(conversation);
+    }
+
+    [RelayCommand(CanExecute = nameof(CanDeleteConversation))]
+    private void DeleteConversation()
+    {
+        if (!CanDeleteConversation || SelectedConversation is not AgentConversationViewModel conversation)
+        {
+            return;
+        }
+
+        SentryDiagnostics.AddBreadcrumb("Delete chat conversation", "ai.chat", "ui");
+
+        int oldIndex = Conversations.IndexOf(conversation);
+        conversationStore.DeleteConversation(conversation.Id);
+        Conversations.Remove(conversation);
+
+        if (Conversations.Count is 0)
+        {
+            Conversations.Add(CreateConversationCore());
+        }
+
+        int newIndex = Math.Clamp(oldIndex, 0, Conversations.Count - 1);
+        SelectedConversation = Conversations[newIndex];
+    }
+
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
     {
-        if (disposed)
+        if (disposed || SelectedConversation is not AgentConversationViewModel conversation)
         {
             return;
         }
@@ -73,31 +146,24 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             return;
         }
 
-        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.CurrentItem;
-        if (providerProfile is null)
+        ExtendedAgentOptions? requestOptions = CreateRequestOptions();
+        if (requestOptions is null)
         {
             return;
         }
 
-        ModelProfile? modelProfile = providerProfile.ModelProfiles.CurrentItem;
-        if (modelProfile is null || string.IsNullOrWhiteSpace(modelProfile.ModelId))
+        UpdateConversationProfile(conversation, requestOptions);
+        ChatClientAgent? agent = null;
+        AgentSession? session = null;
+        if (!string.IsNullOrWhiteSpace(requestOptions.ApiKey))
         {
-            return;
+            agent = await EnsureConversationAgentAsync(conversation, requestOptions, cancellationToken);
+            session = await EnsureConversationSessionAsync(conversation, agent, cancellationToken);
         }
-
-        ExtendedAgentOptions requestOptions = new()
+        else
         {
-            ProviderType = providerProfile.ProviderType.Value,
-            ModelId = modelProfile.ModelId.Trim(),
-            Endpoint = providerProfile.Endpoint,
-            ApiKey = providerProfile.ApiKey,
-            Temperature = 0.3f,
-            TopP = 0.95f,
-            ThinkingEnabled = true,
-            OmitReasoningEffortWhenThinkingDisabled = true,
-        };
-
-        session ??= ChatClientAgentSessionCreate();
+            ResetConversationRuntime(conversation);
+        }
 
         ChatMessage userMessage = new(ChatRole.User, input)
         {
@@ -116,8 +182,43 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         try
         {
-            SpanStatus result = await agentService.RunStreamingAsync(userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
+            TaskScheduler taskScheduler = App.Current.Threading.TaskScheduler;
+            SpanStatus result;
+            if (string.IsNullOrWhiteSpace(requestOptions.ApiKey))
+            {
+                result = await AddMissingApiKeyMessagesAsync(input, userMessage.CreatedAt, userMessage.AuthorName, Messages, taskScheduler, linkedCts.Token);
+            }
+            else
+            {
+                if (agent is null || session is null)
+                {
+                    throw new InvalidOperationException("Agent runtime must be initialized before streaming chat.");
+                }
+
+                result = await agentService.RunStreamingAsync(agent, userMessage, Messages, requestOptions, session, taskScheduler, linkedCts.Token);
+            }
+
             span.Finish(result);
+
+            conversation.UpdatedAt = DateTimeOffset.Now;
+            if (string.IsNullOrWhiteSpace(conversation.Title))
+            {
+                conversation.Title = CreateTitle(input);
+            }
+
+            if (agent is not null && session is not null)
+            {
+                await PersistConversationSessionAsync(conversation, agent, session, linkedCts.Token);
+            }
+            else
+            {
+                if (ReferenceEquals(SelectedConversation, conversation))
+                {
+                    RebuildHistorySummary(Messages);
+                }
+
+                SaveConversation(conversation);
+            }
         }
         catch (OperationCanceledException)
         {
@@ -152,19 +253,6 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         generationCts?.Cancel();
     }
 
-    [RelayCommand]
-    private void ClearChat()
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        SentryDiagnostics.AddBreadcrumb("Clear chat", "ai.chat", "ui");
-        Messages.Clear();
-        session = null;
-    }
-
     public void Dispose()
     {
         if (disposed)
@@ -180,6 +268,235 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         generationCts?.Cancel();
         SendMessageCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnSelectedConversationChanged(AgentConversationViewModel? value)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        ApplyConversationProfile(value);
+        RebuildActiveConversation(value);
+        SendMessageCommand.NotifyCanExecuteChanged();
+    }
+
+    private void LoadConversations()
+    {
+        foreach (AgentConversation conversation in conversationStore.LoadConversations().OrderByDescending(static item => item.UpdatedAt))
+        {
+            AgentConversationViewModel viewModel = AgentConversationViewModel.Create(conversation);
+            RefreshConversationModelId(viewModel);
+            Conversations.Add(viewModel);
+        }
+
+        if (Conversations.Count is 0)
+        {
+            Conversations.Add(CreateConversationCore());
+        }
+
+        SelectedConversation = Conversations[0];
+    }
+
+    private AgentConversationViewModel CreateConversationCore()
+    {
+        AgentConversationViewModel conversation = new()
+        {
+            CreatedAt = DateTimeOffset.Now,
+            UpdatedAt = DateTimeOffset.Now,
+        };
+
+        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.CurrentItem;
+        ModelProfile? modelProfile = providerProfile?.ModelProfiles.CurrentItem;
+        if (providerProfile is not null)
+        {
+            conversation.ModelProviderProfileId = providerProfile.Id;
+            conversation.ProviderType = providerProfile.ProviderType.Value;
+        }
+
+        if (modelProfile is not null)
+        {
+            conversation.ModelProfileId = modelProfile.Id;
+            conversation.ModelId = modelProfile.ModelId;
+        }
+
+        return conversation;
+    }
+
+    private ExtendedAgentOptions? CreateRequestOptions()
+    {
+        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.CurrentItem;
+        if (providerProfile is null)
+        {
+            return null;
+        }
+
+        ModelProfile? modelProfile = providerProfile.ModelProfiles.CurrentItem;
+        if (modelProfile is null || string.IsNullOrWhiteSpace(modelProfile.ModelId))
+        {
+            return null;
+        }
+
+        return new()
+        {
+            ProviderType = providerProfile.ProviderType.Value,
+            ModelId = modelProfile.ModelId.Trim(),
+            Endpoint = providerProfile.Endpoint,
+            ApiKey = providerProfile.ApiKey,
+            Temperature = 0.3f,
+            TopP = 0.95f,
+            ThinkingEnabled = true,
+            OmitReasoningEffortWhenThinkingDisabled = true,
+        };
+    }
+
+    private async ValueTask<ChatClientAgent> EnsureConversationAgentAsync(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions, CancellationToken cancellationToken)
+    {
+        if (conversation.Agent is not null && IsConversationAgentCurrent(conversation, requestOptions))
+        {
+            return conversation.Agent;
+        }
+
+        ResetConversationRuntime(conversation);
+        conversation.Agent = await agentService.CreateAgentAsync(requestOptions, cancellationToken);
+        conversation.AgentOptions = requestOptions;
+        return conversation.Agent;
+    }
+
+    private async ValueTask<AgentSession> EnsureConversationSessionAsync(AgentConversationViewModel conversation, ChatClientAgent agent, CancellationToken cancellationToken)
+    {
+        if (conversation.Session is not null)
+        {
+            return conversation.Session;
+        }
+
+        if (conversation.SerializedSessionState is JsonElement serializedState)
+        {
+            conversation.Session = await agentService.DeserializeSessionAsync(agent, serializedState, cancellationToken);
+        }
+        else
+        {
+            conversation.Session = await agentService.CreateSessionAsync(agent, cancellationToken);
+        }
+
+        return conversation.Session;
+    }
+
+    private async ValueTask PersistConversationSessionAsync(AgentConversationViewModel conversation, ChatClientAgent agent, AgentSession session, CancellationToken cancellationToken)
+    {
+        JsonElement serializedState = await agentService.SerializeSessionAsync(agent, session, cancellationToken);
+        conversation.SerializedSessionState = serializedState.Clone();
+
+        if (ReferenceEquals(SelectedConversation, conversation))
+        {
+            RebuildHistorySummary(Messages);
+        }
+
+        SaveConversation(conversation);
+    }
+
+    private static async ValueTask<SpanStatus> AddMissingApiKeyMessagesAsync(string input, DateTimeOffset? createdAt, string? authorName, ObservableChatMessageCollection collection, TaskScheduler taskScheduler, CancellationToken cancellationToken)
+    {
+        SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "ui");
+
+        ObservableChatMessage inputMessage = ObservableChatMessage.Create(ChatRole.User, createdAt, authorName, ObservableTextContent.Create(input));
+        await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
+
+        // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
+        ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesAgentPageMessageConfigureApiKey));
+        await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
+        return SpanStatus.FailedPrecondition;
+    }
+
+    private static bool IsConversationAgentCurrent(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions)
+    {
+        if (conversation.AgentOptions is not { } agentOptions)
+        {
+            return false;
+        }
+
+        return agentOptions.ProviderType == requestOptions.ProviderType
+            && string.Equals(agentOptions.Endpoint, requestOptions.Endpoint, StringComparison.Ordinal)
+            && string.Equals(agentOptions.ApiKey, requestOptions.ApiKey, StringComparison.Ordinal)
+            && string.Equals(agentOptions.ModelId, requestOptions.ModelId, StringComparison.Ordinal)
+            && agentOptions.ThinkingEnabled == requestOptions.ThinkingEnabled
+            && string.Equals(agentOptions.SystemPrompt, requestOptions.SystemPrompt, StringComparison.Ordinal);
+    }
+
+    private void SaveConversation(AgentConversationViewModel conversation)
+    {
+        conversationStore.SaveConversation(conversation.ToData());
+    }
+
+    private void UpdateConversationProfile(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions)
+    {
+        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.CurrentItem;
+        ModelProfile? modelProfile = providerProfile?.ModelProfiles.CurrentItem;
+
+        conversation.ModelProviderProfileId = providerProfile?.Id;
+        conversation.ModelProfileId = modelProfile?.Id;
+        conversation.ProviderType = requestOptions.ProviderType;
+        conversation.ModelId = requestOptions.ModelId;
+    }
+
+    private void RefreshConversationModelId(AgentConversationViewModel conversation)
+    {
+        if (!conversation.ModelProviderProfileId.HasValue || !conversation.ModelProfileId.HasValue)
+        {
+            conversation.ModelId = string.Empty;
+            return;
+        }
+
+        Guid providerProfileId = conversation.ModelProviderProfileId.Value;
+        Guid modelProfileId = conversation.ModelProfileId.Value;
+        ModelProviderProfile? providerProfile = Settings.ModelProviderProfiles.FirstOrDefault(item => item.Id == providerProfileId);
+        ModelProfile? modelProfile = providerProfile?.ModelProfiles.FirstOrDefault(item => item.Id == modelProfileId);
+        conversation.ModelId = modelProfile?.ModelId ?? string.Empty;
+    }
+
+    private void ApplyConversationProfile(AgentConversationViewModel? conversation)
+    {
+        if (conversation is null)
+        {
+            return;
+        }
+
+        isApplyingConversationSelection = true;
+        try
+        {
+            if (conversation.ModelProviderProfileId.HasValue)
+            {
+                Settings.ModelProviderProfiles.CurrentItemId = conversation.ModelProviderProfileId;
+            }
+
+            if (conversation.ModelProfileId.HasValue)
+            {
+                Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.MoveCurrentTo(conversation.ModelProfileId.Value);
+            }
+        }
+        finally
+        {
+            isApplyingConversationSelection = false;
+        }
+    }
+
+    private void RebuildActiveConversation(AgentConversationViewModel? conversation)
+    {
+        if (conversation is null)
+        {
+            Messages = [];
+            RebuildHistorySummary([]);
+            return;
+        }
+
+        Messages = conversation.Messages;
+        RebuildHistorySummary(Messages);
+    }
+
+    private void RebuildHistorySummary(IEnumerable<ObservableChatMessage> messages)
+    {
+        HistorySummary = AgentHistorySummaryViewModel.Create(messages);
     }
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -206,7 +523,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
             SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
-            ResetSession();
+            ResetSelectedRuntime();
         }
     }
 
@@ -219,7 +536,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
-            ResetSession();
+            ResetSelectedRuntime();
         }
     }
 
@@ -267,12 +584,37 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         modelProfiles = null;
     }
 
-    private void ResetSession()
+    private void ResetSelectedRuntime()
     {
-        session = null;
+        if (isApplyingConversationSelection)
+        {
+            return;
+        }
+
+        if (SelectedConversation is not null)
+        {
+            ResetConversationRuntime(SelectedConversation);
+        }
+
         SendMessageCommand.NotifyCanExecuteChanged();
     }
 
-    [UnsafeAccessor(UnsafeAccessorKind.Constructor)]
-    private static extern ChatClientAgentSession ChatClientAgentSessionCreate();
+    private static void ResetConversationRuntime(AgentConversationViewModel conversation)
+    {
+        conversation.Agent = null;
+        conversation.AgentOptions = null;
+        conversation.Session = null;
+    }
+
+    private static string CreateTitle(string input)
+    {
+        string title = input.ReplaceLineEndings(" ").Trim();
+        const int maxLength = 40;
+        if (title.Length <= maxLength)
+        {
+            return title;
+        }
+
+        return title[..maxLength] + "...";
+    }
 }

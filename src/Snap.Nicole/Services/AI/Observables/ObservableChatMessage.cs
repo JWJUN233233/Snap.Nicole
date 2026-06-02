@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.AI;
+using System.Text.Json;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
@@ -20,7 +21,7 @@ internal sealed partial class ObservableChatMessage : ObservableObject
     [ObservableProperty]
     public partial string? MessageId { get; set; }
 
-    public static ObservableChatMessage Create(ChatMessage chatMessage)
+    public static ObservableChatMessage Create(ChatMessage chatMessage, JsonSerializerOptions jsonOptions)
     {
         ObservableChatMessage observableChatMessage = new()
         {
@@ -32,7 +33,7 @@ internal sealed partial class ObservableChatMessage : ObservableObject
 
         foreach (AIContent content in chatMessage.Contents)
         {
-            observableChatMessage.Contents.Append(ObservableAIContent.Create(content));
+            observableChatMessage.Contents.Append(ObservableAIContent.Create(content, jsonOptions));
         }
 
         return observableChatMessage;
