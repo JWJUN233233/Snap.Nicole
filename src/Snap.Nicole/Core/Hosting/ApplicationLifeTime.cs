@@ -11,7 +11,7 @@ internal sealed class ApplicationLifeTime(IHost host) : IApplicationLifeTime
 
     public async Task ShutdownAsync()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("app.shutdown", "Shutdown application");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.AppShutdown, "Shutdown application");
 
         try
         {
@@ -25,7 +25,7 @@ internal sealed class ApplicationLifeTime(IHost host) : IApplicationLifeTime
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "app.shutdown");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.AppShutdown);
             throw;
         }
     }

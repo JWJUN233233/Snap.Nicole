@@ -7,9 +7,9 @@ internal static class SentryDiagnostics
 {
     public static void CaptureUnhandledException(Exception exception, bool isTerminating)
     {
-        CaptureException(exception, "app.unhandled_exception", scope =>
+        CaptureException(exception, SentryOperations.AppUnhandledException, scope =>
         {
-            scope.SetTag("exception.is_terminating", isTerminating ? "true" : "false");
+            scope.SetTag(SentryTags.ExceptionIsTerminating, SentryTagValues.FromBoolean(isTerminating));
         });
 
         if (isTerminating)
@@ -57,7 +57,7 @@ internal static class SentryDiagnostics
     {
         SentrySdk.CaptureException(exception, scope =>
         {
-            scope.SetTag("diagnostics.operation", operation);
+            scope.SetTag(SentryTags.DiagnosticsOperation, operation);
             configureScope?.Invoke(scope);
         });
     }

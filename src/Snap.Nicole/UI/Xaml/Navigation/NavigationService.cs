@@ -61,7 +61,7 @@ internal sealed class NavigationService(IServiceProvider serviceProvider) : INav
 
     public void Receive(NavigationGoBackMessage message)
     {
-        SentryDiagnostics.AddBreadcrumb("Navigate back", "ui.navigation", "navigation");
+        SentryDiagnostics.AddBreadcrumb("Navigate back", SentryBreadcrumbCategories.UINavigation, SentryBreadcrumbTypes.Navigation);
 
         if (Frame?.CanGoBack is true)
         {
@@ -71,9 +71,9 @@ internal sealed class NavigationService(IServiceProvider serviceProvider) : INav
 
     public void Receive(NavigationPaneToggleMessage message)
     {
-        SentryDiagnostics.AddBreadcrumb("Toggle navigation pane", "ui.navigation", "ui", new Dictionary<string, string>
+        SentryDiagnostics.AddBreadcrumb("Toggle navigation pane", SentryBreadcrumbCategories.UINavigation, SentryBreadcrumbTypes.UI, new Dictionary<string, string>
         {
-            ["is_open"] = (NavigationView?.IsPaneOpen is true ? "false" : "true"),
+            [SentryData.IsOpen] = SentryTagValues.FromBoolean(NavigationView?.IsPaneOpen is not true),
         });
 
         NavigationView?.IsPaneOpen = !NavigationView.IsPaneOpen;
@@ -82,11 +82,11 @@ internal sealed class NavigationService(IServiceProvider serviceProvider) : INav
     public bool NavigateTo(Type pageType)
     {
         string pageName = TypeNameHelper.GetTypeDisplayName(pageType, fullName: false);
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.navigation.navigate", pageName);
-        span.SetTag("ui.page", pageName);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UINavigationNavigate, pageName);
+        span.SetTag(SentryTags.UIPage, pageName);
 
         bool succeeded = Frame?.Navigate(pageType) is true;
-        span.SetTag("ui.navigation.succeeded", succeeded);
+        span.SetTag(SentryTags.UINavigationSucceeded, succeeded);
         span.Finish(succeeded ? SpanStatus.Ok : SpanStatus.FailedPrecondition);
 
         return succeeded;
@@ -96,9 +96,9 @@ internal sealed class NavigationService(IServiceProvider serviceProvider) : INav
     {
         if (NavigationExtensions.GetNavigateTo(item) is not Type pageType)
         {
-            SentryDiagnostics.AddBreadcrumb("Navigation target missing", "ui.navigation", "navigation", new Dictionary<string, string>
+            SentryDiagnostics.AddBreadcrumb("Navigation target missing", SentryBreadcrumbCategories.UINavigation, SentryBreadcrumbTypes.Navigation, new Dictionary<string, string>
             {
-                ["item"] = item.Name ?? string.Empty,
+                [SentryData.Item] = item.Name ?? string.Empty,
             }, BreadcrumbLevel.Warning);
             return false;
         }
@@ -133,9 +133,9 @@ internal sealed class NavigationService(IServiceProvider serviceProvider) : INav
 
     private void OnFrameNavigated(object sender, NavigationEventArgs e)
     {
-        SentryDiagnostics.AddBreadcrumb("Navigated", "ui.navigation", "navigation", new Dictionary<string, string>
+        SentryDiagnostics.AddBreadcrumb("Navigated", SentryBreadcrumbCategories.UINavigation, SentryBreadcrumbTypes.Navigation, new Dictionary<string, string>
         {
-            ["page"] = TypeNameHelper.GetTypeDisplayName(e.SourcePageType, fullName: false),
+            [SentryData.Page] = TypeNameHelper.GetTypeDisplayName(e.SourcePageType, fullName: false),
         });
 
         UpdateSelectedItem(e.SourcePageType);

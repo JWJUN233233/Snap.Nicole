@@ -16,7 +16,7 @@ internal sealed class AgentConversationFileProvider(IServiceProvider serviceProv
 
     public IReadOnlyList<AgentConversation> LoadConversations()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("agent.conversation.load", "Load agent conversation");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.AgentConversationLoad, "Load agent conversation");
 
         if (!Directory.Exists(DirectoryFullPath))
         {
@@ -38,8 +38,8 @@ internal sealed class AgentConversationFileProvider(IServiceProvider serviceProv
             }
             catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
             {
-                span.SetData("agent.conversation.file", filePath);
-                SentryDiagnostics.CaptureException(ex, span, "agent.conversation.load");
+                span.SetData(SentryData.AgentConversationFile, filePath);
+                SentryDiagnostics.CaptureException(ex, span, SentryOperations.AgentConversationLoad);
             }
         }
 

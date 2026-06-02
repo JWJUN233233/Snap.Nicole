@@ -100,7 +100,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     [RelayCommand]
     private void OpenSettingsFolder()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.folder.open", "Open settings folder");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsFolderOpen, "Open settings folder");
 
         try
         {
@@ -113,7 +113,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or Win32Exception)
         {
-            SentryDiagnostics.CaptureException(ex, span, "settings.folder.open");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsFolderOpen);
             Debug.WriteLine(ex);
         }
     }
@@ -121,7 +121,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     [RelayCommand(CanExecute = nameof(CanRefreshRepositoryState))]
     private async Task RefreshRepositoryStateAsync(CancellationToken cancellationToken)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.refresh", "Refresh settings Git repository state");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitRefresh, "Refresh settings Git repository state");
 
         IsBusy = true;
         SetStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageGitStatusCheckingTitle, SR.UIXamlPagesSettingsPageGitStatusCheckingMessage);
@@ -137,7 +137,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "settings.git.refresh");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsGitRefresh);
             throw;
         }
         finally
@@ -150,7 +150,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     private async Task InitializeRepositoryAsync(CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
-            "settings.git.initialize",
+            SentryOperations.SettingsGitInitialize,
             SR.UIXamlPagesSettingsPageGitStatusInitializeMessage,
             gitSyncService.InitializeRepositoryAsync,
             SR.UIXamlPagesSettingsPageGitStatusInitializeSuccessTitle,
@@ -162,7 +162,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     private async Task PullRepositoryAsync(CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
-            "settings.git.pull",
+            SentryOperations.SettingsGitPull,
             SR.UIXamlPagesSettingsPageGitStatusPullMessage,
             gitSyncService.PullAsync,
             SR.UIXamlPagesSettingsPageGitStatusPullSuccessTitle,
@@ -174,7 +174,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     private async Task PushRepositoryAsync(CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
-            "settings.git.push",
+            SentryOperations.SettingsGitPush,
             SR.UIXamlPagesSettingsPageGitStatusPushMessage,
             gitSyncService.PushAsync,
             SR.UIXamlPagesSettingsPageGitStatusPushSuccessTitle,
@@ -241,14 +241,14 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
 
         if (result.Succeeded)
         {
-            span.SetTag("settings.git.succeeded", true);
-            span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+            span.SetTag(SentryTags.SettingsGitSucceeded, true);
+            span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
             SetStatus(InfoBarSeverity.Success, successTitle, successMessageFactory(result));
             return;
         }
 
-        span.SetTag("settings.git.succeeded", false);
-        span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+        span.SetTag(SentryTags.SettingsGitSucceeded, false);
+        span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
         span.Finish(SpanStatus.FailedPrecondition);
         SetStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, BuildFailureMessage(result));
     }

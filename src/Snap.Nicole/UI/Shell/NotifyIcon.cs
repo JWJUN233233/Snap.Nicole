@@ -28,7 +28,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
 
     public NotifyIcon(IServiceProvider serviceProvider)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.notify_icon.initialize", "Initialize notify icon");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UINotifyIconInitialize, "Initialize notify icon");
 
         try
         {
@@ -46,7 +46,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.notify_icon.initialize");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UINotifyIconInitialize);
             throw;
         }
     }
@@ -66,7 +66,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
 
     public unsafe void Create()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.notify_icon.create", "Create notify icon");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UINotifyIconCreate, "Create notify icon");
 
         try
         {
@@ -74,14 +74,14 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.notify_icon.create");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UINotifyIconCreate);
             throw;
         }
     }
 
     public void Recreate()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.notify_icon.recreate", "Recreate notify icon");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UINotifyIconRecreate, "Recreate notify icon");
 
         if (disposed)
         {
@@ -95,14 +95,14 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.notify_icon.recreate");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UINotifyIconRecreate);
             throw;
         }
     }
 
     public void RequestContextMenu(RECT iconRect, POINT cursorPos)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.notify_icon.context_menu", "Open notify icon context menu");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UINotifyIconContextMenu, "Open notify icon context menu");
 
         if (disposed)
         {
@@ -118,14 +118,14 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.notify_icon.context_menu");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UINotifyIconContextMenu);
             throw;
         }
     }
 
     public void RequestMainWindow()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.notify_icon.main_window", "Open main window from notify icon");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UINotifyIconMainWindow, "Open main window from notify icon");
 
         if (disposed)
         {
@@ -139,7 +139,7 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.notify_icon.main_window");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UINotifyIconMainWindow);
             throw;
         }
     }
@@ -149,9 +149,9 @@ internal sealed class NotifyIcon : INotifyIcon, IDisposable
     {
         Dictionary<string, string> data = new()
         {
-            ["kind"] = kind.ToString(),
+            [SentryData.Kind] = kind.ToString(),
         };
-        SentryDiagnostics.AddBreadcrumb("Notify icon callback", "ui.notify_icon", "ui", data);
+        SentryDiagnostics.AddBreadcrumb("Notify icon callback", SentryBreadcrumbCategories.UINotifyIcon, SentryBreadcrumbTypes.UI, data);
 
         if (userData.Target is not { } notifyIcon)
         {

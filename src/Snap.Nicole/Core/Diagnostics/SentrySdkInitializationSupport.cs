@@ -85,7 +85,7 @@ internal static class SentrySdkInitializationSupport
         {
             SentrySdk.CaptureException(ex, static scope =>
             {
-                scope.SetTag("diagnostics.operation", "sentry.configure_user");
+                scope.SetTag(SentryTags.DiagnosticsOperation, SentryOperations.SentryConfigureUser);
             });
         }
     }

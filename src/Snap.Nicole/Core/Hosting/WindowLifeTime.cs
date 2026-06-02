@@ -25,8 +25,8 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
         string windowTypeFullName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow));
         string windowTypeName = TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false);
 
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.window.show", windowTypeFullName);
-        span.SetTag("ui.window", windowTypeName);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowShow, windowTypeFullName);
+        span.SetTag(SentryTags.UIWindow, windowTypeName);
 
         try
         {
@@ -63,15 +63,15 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.window.show");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UIWindowShow);
             throw;
         }
     }
 
     public void Close()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.window.close", TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
-        span.SetTag("ui.window", TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowClose, TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
+        span.SetTag(SentryTags.UIWindow, TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
 
         try
         {
@@ -79,15 +79,15 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ui.window.close");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.UIWindowClose);
             throw;
         }
     }
 
     private void OnWindowClose(object ignore, WindowEventArgs args)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ui.window.closed", TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
-        span.SetTag("ui.window", TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.UIWindowClosed, TypeNameHelper.GetTypeDisplayName(typeof(TWindow)));
+        span.SetTag(SentryTags.UIWindow, TypeNameHelper.GetTypeDisplayName(typeof(TWindow), fullName: false));
 
         if (Window is not { } window)
         {
@@ -101,7 +101,7 @@ internal sealed class WindowLifeTime<TWindow>(IServiceProvider serviceProvider) 
             if (cancel)
             {
                 args.Handled = true;
-                span.SetTag("ui.window.close_cancelled", true);
+                span.SetTag(SentryTags.UIWindowCloseCancelled, true);
                 span.Finish(SpanStatus.Cancelled);
                 return;
             }

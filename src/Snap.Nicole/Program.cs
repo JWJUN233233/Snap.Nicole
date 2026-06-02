@@ -37,7 +37,7 @@ internal static class Program
         AppContext.SetSwitch("System.Net.Http.EnableActivityPropagation", true);
 
         using IDisposable sentry = SentrySdkInitializationSupport.Initialize();
-        using SentryDiagnosticSpan startupSpan = SentryDiagnostics.StartSpan("app.startup", "Initialize Snap.Nicole host");
+        using SentryDiagnosticSpan startupSpan = SentryDiagnostics.StartSpan(SentryOperations.AppStartup, "Initialize Snap.Nicole host");
 
         try
         {
@@ -88,13 +88,13 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, startupSpan, "app.startup");
+            SentryDiagnostics.CaptureException(ex, startupSpan, SentryOperations.AppStartup);
             throw;
         }
 
         Application.Start(static ignored =>
         {
-            using SentryDiagnosticSpan xamlSpan = SentryDiagnostics.StartSpan("app.xaml.start", "Start XAML application");
+            using SentryDiagnosticSpan xamlSpan = SentryDiagnostics.StartSpan(SentryOperations.AppXamlStart, "Start XAML application");
 
             SynchronizationContextPolyfill context = new(DispatcherQueue.GetForCurrentThread());
             SynchronizationContext.SetSynchronizationContext(context);
@@ -105,7 +105,7 @@ internal static class Program
             }
             catch (Exception ex)
             {
-                SentryDiagnostics.CaptureException(ex, xamlSpan, "app.xaml.start");
+                SentryDiagnostics.CaptureException(ex, xamlSpan, SentryOperations.AppXamlStart);
                 throw;
             }
         });

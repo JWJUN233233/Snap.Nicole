@@ -40,9 +40,9 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
 
     public async ValueTask<SpanStatus> RunStreamingAsync(ChatClientAgent agent, ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.stream", "Run streaming chat completion");
-        span.SetTag("ai.provider", options.ProviderType.ToString());
-        span.SetTag("ai.model", options.ModelId);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.AIChatStream, "Run streaming chat completion");
+        span.SetTag(SentryTags.AIProvider, options.ProviderType.ToString());
+        span.SetTag(SentryTags.AIModel, options.ModelId);
 
         try
         {
@@ -88,7 +88,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                 }, cancellationToken);
             }
 
-            span.SetData("ai.response_added", responseAdded);
+            span.SetData(SentryData.AIResponseAdded, responseAdded);
             return SpanStatus.Ok;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -98,7 +98,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ai.chat.stream");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.AIChatStream);
 
             ObservableChatMessage errorMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create($"Error: {ex.Message}"));
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, errorMessage, cancellationToken);

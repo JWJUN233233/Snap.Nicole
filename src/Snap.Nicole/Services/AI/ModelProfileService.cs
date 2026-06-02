@@ -27,8 +27,8 @@ internal sealed class ModelProfileService : IModelProfileService
 
     private static async Task<IReadOnlyList<ModelProfile>> GetModelsCoreAsync(ModelProviderProfile providerProfile, CancellationToken cancellationToken)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.model_profiles.fetch", "Fetch model list");
-        span.SetTag("ai.provider", providerProfile.ProviderType.Value.ToString());
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsModelProfilesFetch, "Fetch model list");
+        span.SetTag(SentryTags.AIProvider, providerProfile.ProviderType.Value.ToString());
 
         try
         {
@@ -39,7 +39,7 @@ internal sealed class ModelProfileService : IModelProfileService
                 _ => throw new NotSupportedException($"Unsupported model provider type: {providerProfile.ProviderType.Value}"),
             };
 
-            span.SetData("ai.model_count", result.Count);
+            span.SetData(SentryData.AIModelCount, result.Count);
             return result;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

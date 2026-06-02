@@ -117,7 +117,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             return;
         }
 
-        SentryDiagnostics.AddBreadcrumb("Delete chat conversation", "ai.chat", "ui");
+        SentryDiagnostics.AddBreadcrumb("Delete chat conversation", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
 
         int oldIndex = Conversations.IndexOf(conversation);
         conversationStore.DeleteConversation(conversation.Id);
@@ -171,9 +171,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             AuthorName = "You",
         };
 
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.send", "Send chat message");
-        span.SetTag("ai.provider", requestOptions.ProviderType.ToString());
-        span.SetTag("ai.model", requestOptions.ModelId);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.AIChatSend, "Send chat message");
+        span.SetTag(SentryTags.AIProvider, requestOptions.ProviderType.ToString());
+        span.SetTag(SentryTags.AIModel, requestOptions.ModelId);
 
         InputText = string.Empty;
         IsBusy = true;
@@ -226,7 +226,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "ai.chat.send");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.AIChatSend);
             throw;
         }
         finally
@@ -249,7 +249,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             return;
         }
 
-        SentryDiagnostics.AddBreadcrumb("Stop chat generation", "ai.chat", "ui");
+        SentryDiagnostics.AddBreadcrumb("Stop chat generation", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
         generationCts?.Cancel();
     }
 
@@ -398,7 +398,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
     private static async ValueTask<SpanStatus> AddMissingApiKeyMessagesAsync(string input, DateTimeOffset? createdAt, string? authorName, ObservableChatMessageCollection collection, TaskScheduler taskScheduler, CancellationToken cancellationToken)
     {
-        SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "ui");
+        SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
 
         ObservableChatMessage inputMessage = ObservableChatMessage.Create(ChatRole.User, createdAt, authorName, ObservableTextContent.Create(input));
         await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);

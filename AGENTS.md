@@ -29,6 +29,7 @@ src
 
 - Extensively adopt Microsoft.Extensions.Hosting and Microsoft.Extensions.DependencyInjection to manage the lifetime of applications, services, and objects.
 - Extensively adopt the Model-View-ViewModel (MVVM) pattern to handle data presentation and user interactions.
+- Extensively adopt Sentry to utilize it's error tracking and performance monitoring features.
 
 ### Type and file organization
 

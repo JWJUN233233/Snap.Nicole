@@ -25,7 +25,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
     public async Task<SettingsGitRepositoryState> GetRepositoryStateAsync(CancellationToken cancellationToken = default)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.state", "Get settings Git repository state");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitState, "Get settings Git repository state");
 
         try
         {
@@ -40,14 +40,14 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "settings.git.state");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsGitState);
             throw;
         }
     }
 
     public async Task<SettingsGitOperationResult> InitializeRepositoryAsync(string remoteUrl, CancellationToken cancellationToken = default)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.initialize", "Initialize settings Git repository");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitInitialize, "Initialize settings Git repository");
 
         try
         {
@@ -62,14 +62,14 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "settings.git.initialize");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsGitInitialize);
             throw;
         }
     }
 
     public async Task<SettingsGitOperationResult> PullAsync(CancellationToken cancellationToken = default)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.pull", "Pull settings Git repository");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitPull, "Pull settings Git repository");
 
         try
         {
@@ -84,7 +84,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "settings.git.pull");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsGitPull);
             throw;
         }
     }
@@ -127,7 +127,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
     public async Task<SettingsGitOperationResult> PushAsync(CancellationToken cancellationToken = default)
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.push", "Push settings Git repository");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitPush, "Push settings Git repository");
 
         try
         {
@@ -142,32 +142,32 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "settings.git.push");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsGitPush);
             throw;
         }
     }
 
     private static void CompleteRepositoryStateSpan(SentryDiagnosticSpan span, SettingsGitRepositoryState result)
     {
-        span.SetTag("settings.git.available", result.IsGitAvailable);
-        span.SetTag("settings.git.repository", result.IsRepository);
-        span.SetTag("settings.git.has_remote", !string.IsNullOrWhiteSpace(result.RemoteUrl));
-        span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+        span.SetTag(SentryTags.SettingsGitAvailable, result.IsGitAvailable);
+        span.SetTag(SentryTags.SettingsGitRepository, result.IsRepository);
+        span.SetTag(SentryTags.SettingsGitHasRemote, !string.IsNullOrWhiteSpace(result.RemoteUrl));
+        span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
         span.Finish(result.FailureKind is SettingsGitFailureKind.None ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
     }
 
     private static void CompleteOperationSpan(SentryDiagnosticSpan span, SettingsGitOperationResult result)
     {
-        span.SetTag("settings.git.succeeded", result.Succeeded);
-        span.SetTag("settings.git.failure_kind", result.FailureKind.ToString());
+        span.SetTag(SentryTags.SettingsGitSucceeded, result.Succeeded);
+        span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
         span.Finish(result.Succeeded ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
     }
 
     private static void CompleteCommandSpan(SentryDiagnosticSpan span, SettingsGitCommandResult result)
     {
-        span.SetTag("settings.git.command_succeeded", result.Succeeded);
-        span.SetTag("settings.git.failure_kind", result.Succeeded ? SettingsGitFailureKind.None.ToString() : result.FailureKind.ToString());
-        span.SetData("settings.git.exit_code", result.ExitCode);
+        span.SetTag(SentryTags.SettingsGitCommandSucceeded, result.Succeeded);
+        span.SetTag(SentryTags.SettingsGitFailureKind, result.Succeeded ? SettingsGitFailureKind.None.ToString() : result.FailureKind.ToString());
+        span.SetData(SentryData.SettingsGitExitCode, result.ExitCode);
         span.Finish(result.Succeeded ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
     }
 
@@ -541,8 +541,8 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
     private async Task<SettingsGitCommandResult> RunGitAsync(string[] arguments, string? workingDirectory, CancellationToken cancellationToken)
     {
         string commandName = GetGitCommandName(arguments);
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("settings.git.command", $"git {commandName}");
-        span.SetTag("settings.git.command", commandName);
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitCommand, $"git {commandName}");
+        span.SetTag(SentryTags.SettingsGitCommand, commandName);
 
         ProcessStartInfo startInfo = new()
         {

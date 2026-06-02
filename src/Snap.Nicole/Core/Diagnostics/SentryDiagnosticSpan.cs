@@ -18,7 +18,7 @@ internal sealed class SentryDiagnosticSpan(ISpan span) : IDisposable
 
     public void SetTag(string key, bool value)
     {
-        SetTag(key, value ? "true" : "false");
+        SetTag(key, SentryTagValues.FromBoolean(value));
     }
 
     public void SetData(string key, object? value)

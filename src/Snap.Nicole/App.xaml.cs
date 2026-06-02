@@ -63,7 +63,7 @@ public partial class App : Application
 
     private static async Task LaunchAsync()
     {
-        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("app.launch", "Launch application shell");
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.AppLaunch, "Launch application shell");
 
         try
         {
@@ -78,7 +78,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            SentryDiagnostics.CaptureException(ex, span, "app.launch");
+            SentryDiagnostics.CaptureException(ex, span, SentryOperations.AppLaunch);
         }
     }
 }

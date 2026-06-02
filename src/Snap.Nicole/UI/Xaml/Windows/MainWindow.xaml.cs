@@ -30,7 +30,7 @@ internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentInto
 
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
-        SentryDiagnostics.AddBreadcrumb("Main window loaded", "ui.window", "ui");
+        SentryDiagnostics.AddBreadcrumb("Main window loaded", SentryBreadcrumbCategories.UIWindow, SentryBreadcrumbTypes.UI);
 
         NavigationViewItem settingsItem = (NavigationViewItem)NavView.SettingsItem!;
         NavigationExtensions.SetNavigateTo(settingsItem, typeof(SettingsPage));
@@ -44,9 +44,9 @@ internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentInto
         {
             Dictionary<string, string> data = new()
             {
-                ["item"] = item.Name ?? string.Empty,
+                [SentryData.Item] = item.Name ?? string.Empty,
             };
-            SentryDiagnostics.AddBreadcrumb("Navigation item invoked", "ui.navigation", "ui", data);
+            SentryDiagnostics.AddBreadcrumb("Navigation item invoked", SentryBreadcrumbCategories.UINavigation, SentryBreadcrumbTypes.UI, data);
             navigationService.NavigateTo(item);
         }
     }
@@ -58,7 +58,7 @@ internal sealed partial class MainWindow : Window, IXamlWindowExtendsContentInto
 
     void IXamlWindowCloseHandler.OnWindowClosed()
     {
-        SentryDiagnostics.AddBreadcrumb("Main window closed", "ui.window", "ui");
+        SentryDiagnostics.AddBreadcrumb("Main window closed", SentryBreadcrumbCategories.UIWindow, SentryBreadcrumbTypes.UI);
         ContentFrame.Content = null;
         navigationService.Frame = null;
         navigationService.NavigationView = null;
