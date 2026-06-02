@@ -1,4 +1,3 @@
-using Sentry;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.IO;
 using Snap.Nicole.Core.Text.Json;

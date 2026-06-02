@@ -43,15 +43,20 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
     [ObservableProperty]
     public partial string ModelId { get; set; } = string.Empty;
 
-    [ObservableProperty]
-    public partial int MessageCount { get; set; }
-
     public AgentSession? Session { get; set; }
 
     [JsonIgnore]
     public JsonElement? SerializedSessionState { get; set; }
 
     public ObservableChatMessageCollection Messages { get; } = [];
+
+    public int MessageCount
+    {
+        get
+        {
+            return Messages.Count;
+        }
+    }
 
     public string TitleDisplay
     {
@@ -84,8 +89,6 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
         {
             Messages.Add(message);
         }
-
-        MessageCount = Messages.Count;
     }
 
     public AgentConversation ToData()
@@ -99,7 +102,6 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelProviderProfileId = ModelProviderProfileId,
             ModelProfileId = ModelProfileId,
             ProviderType = ProviderType,
-            MessageCount = MessageCount,
             SerializedSessionState = SerializedSessionState?.Clone(),
             Messages = [.. Messages],
         };
@@ -116,7 +118,6 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelProviderProfileId = data.ModelProviderProfileId,
             ModelProfileId = data.ModelProfileId,
             ProviderType = data.ProviderType,
-            MessageCount = data.MessageCount,
             SerializedSessionState = data.SerializedSessionState?.Clone(),
         };
 
@@ -124,13 +125,11 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
         {
             viewModel.SetMessages(messages);
         }
-
-        viewModel.MessageCount = viewModel.Messages.Count;
         return viewModel;
     }
 
     private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        MessageCount = Messages.Count;
+        OnPropertyChanged(nameof(MessageCount));
     }
 }
