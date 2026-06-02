@@ -4,7 +4,6 @@ using Sentry;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.Text.Json;
 using Snap.Nicole.Core.Threading;
-using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
@@ -39,7 +38,7 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         return agent.SerializeSessionAsync(session, cancellationToken: cancellationToken);
     }
 
-    public async ValueTask<SpanStatus> RunStreamingAsync(ChatClientAgent? agent, ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession? session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
+    public async ValueTask<SpanStatus> RunStreamingAsync(ChatClientAgent agent, ChatMessage message, ObservableChatMessageCollection collection, ExtendedAgentOptions options, AgentSession session, TaskScheduler taskScheduler, CancellationToken cancellationToken = default)
     {
         using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("ai.chat.stream", "Run streaming chat completion");
         span.SetTag("ai.provider", options.ProviderType.ToString());
@@ -49,22 +48,6 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
         {
             ObservableChatMessage inputMessage = ObservableChatMessage.Create(message, functionContentJsonOptions);
             await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
-
-            if (string.IsNullOrWhiteSpace(options.ApiKey))
-            {
-                SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "default");
-
-                // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
-                ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesAgentPageMessageConfigureApiKey));
-                await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
-                span.Finish(SpanStatus.FailedPrecondition);
-                return SpanStatus.FailedPrecondition;
-            }
-
-            if (agent is null || session is null)
-            {
-                throw new InvalidOperationException("Agent runtime must be initialized before streaming chat.");
-            }
 
             ObservableChatMessage? responseMessage = null;
             bool responseAdded = false;

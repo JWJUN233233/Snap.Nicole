@@ -8,38 +8,36 @@ using System.Text.Json;
 
 namespace Snap.Nicole.Services.AI;
 
-internal sealed class AgentConversationFileStore : IAgentConversationStore
+internal sealed class AgentConversationFileProvider(IServiceProvider serviceProvider) : IAgentConversationProvider
 {
-    private readonly string directoryPath;
-    private readonly JsonSerializerOptions jsonOptions;
+    private static readonly string DirectoryFullPath = Path.Combine(WellKnownLocations.Settings, "AgentConversations");
 
-    public AgentConversationFileStore([FromKeyedServices(JsonSerializerOptionsKey.AgentConversation)] JsonSerializerOptions jsonOptions)
-    {
-        this.jsonOptions = jsonOptions;
-        directoryPath = Path.Combine(WellKnownLocations.Settings, "AgentConversations");
-    }
+    private readonly JsonSerializerOptions jsonOptions = serviceProvider.GetRequiredKeyedService<JsonSerializerOptions>(JsonSerializerOptionsKey.AgentConversation);
 
     public IReadOnlyList<AgentConversation> LoadConversations()
     {
-        if (!Directory.Exists(directoryPath))
+        using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("agent.conversation.load", "Load agent conversation");
+
+        if (!Directory.Exists(DirectoryFullPath))
         {
             return [];
         }
 
         List<AgentConversation> conversations = [];
-        foreach (string filePath in Directory.EnumerateFiles(directoryPath, "*.json"))
+        foreach (string filePath in Directory.EnumerateFiles(DirectoryFullPath, "*.json"))
         {
             try
             {
-                using FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
-                if (JsonSerializer.Deserialize<AgentConversation>(stream, jsonOptions) is { } conversation)
+                using (FileStream stream = File.OpenRead(filePath))
                 {
-                    conversations.Add(conversation);
+                    if (JsonSerializer.Deserialize<AgentConversation>(stream, jsonOptions) is { } conversation)
+                    {
+                        conversations.Add(conversation);
+                    }
                 }
             }
             catch (Exception ex) when (ex is IOException or JsonException or UnauthorizedAccessException)
             {
-                using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan("agent.conversation.load", "Load agent conversation");
                 span.SetData("agent.conversation.file", filePath);
                 SentryDiagnostics.CaptureException(ex, span, "agent.conversation.load");
             }
@@ -50,7 +48,7 @@ internal sealed class AgentConversationFileStore : IAgentConversationStore
 
     public void SaveConversation(AgentConversation conversation)
     {
-        Directory.CreateDirectory(directoryPath);
+        Directory.CreateDirectory(DirectoryFullPath);
 
         string filePath = GetConversationFilePath(conversation.Id);
         string tempFilePath = $"{filePath}.tmp";
@@ -72,8 +70,8 @@ internal sealed class AgentConversationFileStore : IAgentConversationStore
         }
     }
 
-    private string GetConversationFilePath(Guid id)
+    private static string GetConversationFilePath(Guid id)
     {
-        return Path.Combine(directoryPath, $"{id:N}.json");
+        return Path.Combine(DirectoryFullPath, $"{id:N}.json");
     }
 }

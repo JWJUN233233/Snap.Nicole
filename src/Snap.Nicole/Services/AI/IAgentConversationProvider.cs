@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Snap.Nicole.Services.AI;
 
-internal interface IAgentConversationStore
+internal interface IAgentConversationProvider
 {
     IReadOnlyList<AgentConversation> LoadConversations();
 

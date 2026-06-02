@@ -20,11 +20,11 @@ internal interface IAgentService
     ValueTask<JsonElement> SerializeSessionAsync(ChatClientAgent agent, AgentSession session, CancellationToken cancellationToken = default);
 
     ValueTask<SpanStatus> RunStreamingAsync(
-        ChatClientAgent? agent,
+        ChatClientAgent agent,
         ChatMessage message,
         ObservableChatMessageCollection collection,
         ExtendedAgentOptions options,
-        AgentSession? session,
+        AgentSession session,
         TaskScheduler taskScheduler,
         CancellationToken cancellationToken = default);
 }

@@ -4,6 +4,8 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Sentry;
 using Snap.Nicole.Core.Diagnostics;
+using Snap.Nicole.Core.Threading;
+using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
@@ -21,7 +23,7 @@ namespace Snap.Nicole.ViewModels;
 internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 {
     private readonly IAgentService agentService;
-    private readonly IAgentConversationStore conversationStore;
+    private readonly IAgentConversationProvider conversationStore;
     private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
     private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
 
@@ -33,7 +35,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
     public AgentViewModel(IServiceProvider serviceProvider)
     {
         agentService = serviceProvider.GetRequiredService<IAgentService>();
-        conversationStore = serviceProvider.GetRequiredService<IAgentConversationStore>();
+        conversationStore = serviceProvider.GetRequiredService<IAgentConversationProvider>();
         Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
         Settings.PropertyChanged += OnSettingsPropertyChanged;
@@ -180,7 +182,22 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         try
         {
-            SpanStatus result = await agentService.RunStreamingAsync(agent, userMessage, Messages, requestOptions, session, App.Current.Threading.TaskScheduler, linkedCts.Token);
+            TaskScheduler taskScheduler = App.Current.Threading.TaskScheduler;
+            SpanStatus result;
+            if (string.IsNullOrWhiteSpace(requestOptions.ApiKey))
+            {
+                result = await AddMissingApiKeyMessagesAsync(input, userMessage.CreatedAt, userMessage.AuthorName, Messages, taskScheduler, linkedCts.Token);
+            }
+            else
+            {
+                if (agent is null || session is null)
+                {
+                    throw new InvalidOperationException("Agent runtime must be initialized before streaming chat.");
+                }
+
+                result = await agentService.RunStreamingAsync(agent, userMessage, Messages, requestOptions, session, taskScheduler, linkedCts.Token);
+            }
+
             span.Finish(result);
 
             conversation.UpdatedAt = DateTimeOffset.Now;
@@ -394,6 +411,19 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         }
 
         SaveConversation(conversation);
+    }
+
+    private static async ValueTask<SpanStatus> AddMissingApiKeyMessagesAsync(string input, DateTimeOffset? createdAt, string? authorName, ObservableChatMessageCollection collection, TaskScheduler taskScheduler, CancellationToken cancellationToken)
+    {
+        SentryDiagnostics.AddBreadcrumb("Chat blocked by missing API key", "ai.chat", "ui");
+
+        ObservableChatMessage inputMessage = ObservableChatMessage.Create(ChatRole.User, createdAt, authorName, ObservableTextContent.Create(input));
+        await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
+
+        // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
+        ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesAgentPageMessageConfigureApiKey));
+        await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
+        return SpanStatus.FailedPrecondition;
     }
 
     private static bool IsConversationAgentCurrent(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions)
