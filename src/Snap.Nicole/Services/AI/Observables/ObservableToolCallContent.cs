@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Observables;
 
-[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+[JsonPolymorphic]
 [JsonDerivedType(typeof(ObservableCodeInterpreterToolCallContent), "code_interpreter_tool_call")]
 [JsonDerivedType(typeof(ObservableFunctionCallContent), "function_call")]
 [JsonDerivedType(typeof(ObservableImageGenerationToolCallContent), "image_generation_tool_call")]

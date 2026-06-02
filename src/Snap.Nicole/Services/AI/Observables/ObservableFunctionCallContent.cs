@@ -15,7 +15,7 @@ internal sealed partial class ObservableFunctionCallContent : ObservableToolCall
     public partial string? Arguments { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
+    [JsonIgnore]
     public partial Exception? Exception { get; set; }
 
     [ObservableProperty]

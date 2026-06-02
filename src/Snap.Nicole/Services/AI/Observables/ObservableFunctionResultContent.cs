@@ -11,7 +11,7 @@ internal sealed partial class ObservableFunctionResultContent : ObservableToolRe
     public partial string? Result { get; set; }
 
     [ObservableProperty]
-    [property: JsonIgnore]
+    [JsonIgnore]
     public partial Exception? Exception { get; set; }
 
     public static ObservableFunctionResultContent Create(FunctionResultContent functionResultContent, JsonSerializerOptions jsonOptions)
