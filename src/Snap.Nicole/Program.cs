@@ -70,6 +70,7 @@ internal static class Program
                     .AddTransient<MainViewModel>()
                     .AddTransient<HomeViewModel>()
                     .AddTransient<SettingsGitSyncViewModel>()
+                    .AddTransient<SettingsModelConfigurationViewModel>()
                     .AddTransient<SettingsViewModel>()
                     .AddTransient<AgentViewModel>();
 

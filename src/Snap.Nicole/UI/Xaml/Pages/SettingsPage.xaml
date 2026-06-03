@@ -175,7 +175,8 @@
             <Border
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                CornerRadius="{ThemeResource ControlCornerRadius}">
+                CornerRadius="{ThemeResource ControlCornerRadius}"
+                DataContext="{Binding ModelConfiguration}">
                 <StackPanel Padding="16" Spacing="16">
                     <TextBlock
                         Margin="1,0,0,0"

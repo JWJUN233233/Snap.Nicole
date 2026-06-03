@@ -325,10 +325,20 @@ internal sealed class JsonSettingsOptionsProvider<TOptions> : IOptionsProvider<T
                 JsonSerializer.Serialize(stream, value, jsonOptions);
             }
 
+            FileHelper.ClearReadOnlyAttribute(filePath);
             File.Move(tempFile, filePath, true);
         }
         catch (Exception ex)
         {
+            try
+            {
+                File.Delete(tempFile);
+            }
+            catch (Exception ex2) when (ex2 is IOException or UnauthorizedAccessException)
+            {
+                // Preserve the original save failure as the observable error.
+            }
+
             SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsJsonSave);
             throw;
         }
