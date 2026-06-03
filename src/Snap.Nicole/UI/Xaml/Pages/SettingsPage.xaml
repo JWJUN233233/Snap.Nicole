@@ -2,25 +2,27 @@
     x:Class="Snap.Nicole.UI.Xaml.Pages.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cvt="using:CommunityToolkit.WinUI.Converters"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mxi="using:Microsoft.Xaml.Interactivity"
-    xmlns:snr="using:Snap.Nicole.Resources"
     xmlns:snuxb="using:Snap.Nicole.UI.Xaml.Behaviors"
     xmlns:snuxc="using:Snap.Nicole.UI.Xaml.Controls"
     xmlns:snuxd="using:Snap.Nicole.UI.Xaml.Data"
-    xmlns:snuxds="using:Snap.Nicole.UI.Xaml.Data.Specialized"
     xmlns:snuxm="using:Snap.Nicole.UI.Xaml.Markup"
     xmlns:snvs="using:Snap.Nicole.ViewModels.Settings"
     d:DataContext="{d:DesignInstance snvs:SettingsViewModel}"
     mc:Ignorable="d">
 
+    <mxi:Interaction.Behaviors>
+        <snuxb:DisposeDataContextOnUnloadedBehavior />
+    </mxi:Interaction.Behaviors>
+
     <Page.Resources>
+        <cvt:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
-        <snuxds:ModelProviderProfileEmptyStateResourceNameConverter x:Key="ModelProviderProfileEmptyStateResourceNameConverter" />
-        <snr:StringResourceConverter x:Key="StringResourceConverter" />
     </Page.Resources>
 
     <ScrollViewer Padding="24">
@@ -46,7 +48,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="{ThemeResource ControlCornerRadius}"
-                        Visibility="{Binding GitSync.SetupVisibility}">
+                        Visibility="{Binding GitSync.IsSetupVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Spacing="12">
                             <TextBox
                                 IsEnabled="{Binding GitSync.IsRepositoryUrlEnabled}"
@@ -82,7 +84,7 @@
                                     VerticalAlignment="Center"
                                     Orientation="Horizontal"
                                     Spacing="8"
-                                    Visibility="{Binding GitSync.ProgressVisibility}">
+                                    Visibility="{Binding GitSync.IsProgressVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <ProgressRing
                                         Width="20"
                                         Height="20"
@@ -90,7 +92,7 @@
                                     <TextBlock
                                         VerticalAlignment="Center"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding GitSync.CurrentOperationText}" />
+                                        Text="{Binding GitSync.CurrentOperationText.Value}" />
                                 </StackPanel>
 
                                 <Button
@@ -103,26 +105,31 @@
                                     </StackPanel>
                                 </Button>
 
-                                <Button BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Command="{Binding GitSync.PullRepositoryCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon FontSize="16" Glyph="&#xE896;" />
-                                        <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelPull}" />
-                                    </StackPanel>
-                                </Button>
+                                <StackPanel
+                                    Orientation="Horizontal"
+                                    Spacing="8"
+                                    Visibility="{Binding GitSync.IsOperationsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <Button BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Command="{Binding GitSync.PullRepositoryCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE896;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelPull}" />
+                                        </StackPanel>
+                                    </Button>
 
-                                <Button BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Command="{Binding GitSync.PushRepositoryCommand}">
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <FontIcon FontSize="16" Glyph="&#xE898;" />
-                                        <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelPush}" />
-                                    </StackPanel>
-                                </Button>
+                                    <Button BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Command="{Binding GitSync.PushRepositoryCommand}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon FontSize="16" Glyph="&#xE898;" />
+                                            <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelPush}" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
                             </StackPanel>
                         </cwc:SettingsCard>
                         <InfoBar
-                            Title="{Binding GitSync.StatusTitle}"
+                            Title="{Binding GitSync.StatusTitle.Value}"
                             IsClosable="False"
                             IsOpen="{Binding GitSync.IsStatusOpen, Mode=TwoWay}"
-                            Message="{Binding GitSync.StatusMessage}"
+                            Message="{Binding GitSync.StatusMessage.Value}"
                             Severity="{Binding GitSync.InfoBarSeverity}" />
                         <cwc:SettingsCard
                             Grid.Row="0"
@@ -137,7 +144,7 @@
                         </cwc:SettingsCard>
                         <cwc:SettingsCard
                             Grid.Row="1"
-                            Description="{Binding GitSync.RemoteUrl}"
+                            Description="{Binding GitSync.RemoteUrlDisplay.Value}"
                             Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRemoteRepository}" />
                     </StackPanel>
 
@@ -309,10 +316,10 @@
                                             </StackPanel>
                                         </cwc:SettingsCard>
                                         <InfoBar
-                                            Title="{Binding ModelListStatusTitle}"
+                                            Title="{Binding ModelListStatusTitle.Value}"
                                             IsClosable="False"
                                             IsOpen="{Binding IsModelListStatusOpen, Mode=TwoWay}"
-                                            Message="{Binding ModelListStatusMessage}"
+                                            Message="{Binding ModelListStatusMessage.Value}"
                                             Severity="{Binding ModelListInfoBarSeverity}"
                                             Visibility="{Binding IsModelListStatusOpen, Mode=OneWay}" />
                                         <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSelectedModel}">
@@ -348,7 +355,7 @@
                                         MaxWidth="320"
                                         HorizontalAlignment="Center"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding Settings.ModelProviderProfiles.Count, Converter={StaticResource StringResourceConverter}, ConverterParameter={StaticResource ModelProviderProfileEmptyStateResourceNameConverter}}"
+                                        Text="{Binding ModelProviderProfileEmptyStateText.Value}"
                                         TextAlignment="Center"
                                         TextWrapping="WrapWholeWords" />
                                 </StackPanel>

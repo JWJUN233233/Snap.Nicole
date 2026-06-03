@@ -56,8 +56,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
     }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
-    [NotifyCanExecuteChangedFor(nameof(DeleteConversationCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SendMessageCommand), nameof(DeleteConversationCommand))]
     public partial AgentConversationViewModel? SelectedConversation { get; set; }
 
     [ObservableProperty]
@@ -68,8 +67,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
     public partial string InputText { get; set; } = string.Empty;
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
-    [NotifyCanExecuteChangedFor(nameof(DeleteConversationCommand))]
+    [NotifyCanExecuteChangedFor(nameof(SendMessageCommand), nameof(DeleteConversationCommand))]
     public partial bool IsBusy { get; set; }
 
     private bool CanSendMessage
@@ -403,8 +401,8 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         ObservableChatMessage inputMessage = ObservableChatMessage.Create(ChatRole.User, createdAt, authorName, ObservableTextContent.Create(input));
         await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, inputMessage, cancellationToken);
 
-        // Unfortunately, Text is not a dependency property, so we cannot localize this string here.
-        ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(SR.UIXamlPagesAgentPageMessageConfigureApiKey));
+        // ObservableTextContent stores a text snapshot, so this message cannot hot-switch after it is added.
+        ObservableChatMessage configurationMessage = ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, content: ObservableTextContent.Create(StringResourceProxy.Default[SRName.UIXamlPagesAgentPageMessageConfigureApiKey]));
         await taskScheduler.Run(ObservableChatMessageCollection.Add, collection, configurationMessage, cancellationToken);
         return SpanStatus.FailedPrecondition;
     }

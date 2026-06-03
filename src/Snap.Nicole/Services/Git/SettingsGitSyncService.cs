@@ -108,7 +108,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
         if (string.IsNullOrWhiteSpace(remoteHeads.Output))
         {
-            return SettingsGitOperationResult.Success("RemoteEmpty");
+            return SettingsGitOperationResult.Success(SettingsGitOperationDetailKind.RemoteEmpty);
         }
 
         if (await PullWithMergeAsync(cancellationToken) is { Succeeded: true } pull)
@@ -357,7 +357,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
         if (await RunGitAsync(["rev-parse", "--verify", "HEAD"], RepositoryPath, cancellationToken) is { Succeeded: false})
         {
-            return SettingsGitOperationResult.Success("NoLocalCommits");
+            return SettingsGitOperationResult.Success(SettingsGitOperationDetailKind.NoLocalCommits);
         }
 
         if (await PushNormallyAsync(cancellationToken) is { Succeeded: true } push)
@@ -400,7 +400,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
             Directory.Exists(Path.Combine(gitDirectory, "rebase-apply")) ||
             Directory.Exists(Path.Combine(gitDirectory, "rebase-merge")))
         {
-            return SettingsGitOperationResult.Failure(SettingsGitFailureKind.Repository, "RepositoryOperationInProgress");
+            return SettingsGitOperationResult.Failure(SettingsGitFailureKind.Repository, SettingsGitOperationDetailKind.RepositoryOperationInProgress);
         }
 
         return SettingsGitOperationResult.Success();
@@ -416,7 +416,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         SettingsGitCommandResult diff = await RunGitAsync(["diff", "--cached", "--quiet"], RepositoryPath, cancellationToken);
         if (diff.ExitCode is 0)
         {
-            return SettingsGitOperationResult.Success("NoChanges");
+            return SettingsGitOperationResult.Success(SettingsGitOperationDetailKind.NoChanges);
         }
 
         if (diff.ExitCode is not 1)
@@ -425,7 +425,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
 
         SettingsGitCommandResult commit = await RunGitAsync(["-c", $"user.name={CommitAuthorName}", "-c", $"user.email={CommitAuthorEmail}", "commit", "-m", message], RepositoryPath, cancellationToken);
-        return SettingsGitOperationResult.Command(commit, "Committed");
+        return SettingsGitOperationResult.Command(commit, SettingsGitOperationDetailKind.Committed);
     }
 
     private async Task<SettingsGitCommandResult> PullFromDefaultRemoteBranchAsync(CancellationToken cancellationToken)

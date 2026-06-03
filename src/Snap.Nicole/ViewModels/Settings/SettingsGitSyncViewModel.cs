@@ -1,8 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Markup;
 using Sentry;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Resources;
@@ -18,28 +16,23 @@ namespace Snap.Nicole.ViewModels.Settings;
 internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService gitSyncService) : ObservableObject
 {
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PullRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PushRepositoryCommand))]
+    [NotifyPropertyChangedFor(nameof(IsRepositoryUrlEnabled), nameof(IsSetupVisible), nameof(IsOperationsVisible))]
+    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand), nameof(PullRepositoryCommand), nameof(PushRepositoryCommand))]
     public partial bool IsGitAvailable { get; set; }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PullRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PushRepositoryCommand))]
+    [NotifyPropertyChangedFor(nameof(IsRepositoryUrlEnabled), nameof(IsSetupVisible), nameof(IsOperationsVisible))]
+    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand), nameof(PullRepositoryCommand), nameof(PushRepositoryCommand))]
     public partial bool IsRepository { get; set; }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PullRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PushRepositoryCommand))]
+    [NotifyPropertyChangedFor(nameof(IsRepositoryUrlEnabled), nameof(IsSetupVisible), nameof(IsOperationsVisible))]
+    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand), nameof(PullRepositoryCommand), nameof(PushRepositoryCommand))]
     public partial bool HasRemote { get; set; }
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(RefreshRepositoryStateCommand))]
-    [NotifyCanExecuteChangedFor(nameof(InitializeRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PullRepositoryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(PushRepositoryCommand))]
+    [NotifyPropertyChangedFor(nameof(IsRepositoryUrlEnabled), nameof(IsProgressVisible))]
+    [NotifyCanExecuteChangedFor(nameof(RefreshRepositoryStateCommand), nameof(InitializeRepositoryCommand), nameof(PullRepositoryCommand), nameof(PushRepositoryCommand))]
     public partial bool IsBusy { get; set; }
 
     [ObservableProperty]
@@ -50,16 +43,16 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     public partial string RepositoryPath { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial string RemoteUrl { get; set; } = string.Empty;
+    public partial StringResourceValue RemoteUrlDisplay { get; set; } = StringResourceValue.FromText(string.Empty);
 
     [ObservableProperty]
-    public partial string CurrentOperationText { get; set; } = string.Empty;
+    public partial StringResourceValue CurrentOperationText { get; set; } = StringResourceValue.FromText(string.Empty);
 
     [ObservableProperty]
-    public partial string StatusTitle { get; set; } = string.Empty;
+    public partial StringResourceValue StatusTitle { get; set; } = StringResourceValue.FromText(string.Empty);
 
     [ObservableProperty]
-    public partial string StatusMessage { get; set; } = string.Empty;
+    public partial StringResourceValue StatusMessage { get; set; } = StringResourceValue.FromText(string.Empty);
 
     [ObservableProperty]
     public partial bool IsStatusOpen { get; set; }
@@ -67,35 +60,19 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     [ObservableProperty]
     public partial InfoBarSeverity InfoBarSeverity { get; set; } = InfoBarSeverity.Informational;
 
-    [ObservableProperty]
-    public partial Visibility SetupVisibility { get; set; } = Visibility.Collapsed;
+    public bool IsSetupVisible { get => IsGitAvailable && (!IsRepository || !HasRemote); }
 
-    [ObservableProperty]
-    public partial Visibility OperationsVisibility { get; set; } = Visibility.Collapsed;
+    public bool IsOperationsVisible { get => IsGitAvailable && IsRepository && HasRemote; }
 
-    [ObservableProperty]
-    public partial Visibility ProgressVisibility { get; set; } = Visibility.Collapsed;
+    public bool IsProgressVisible { get => IsBusy; }
 
-    [ObservableProperty]
-    public partial bool IsRepositoryUrlEnabled { get; set; }
+    public bool IsRepositoryUrlEnabled { get => IsGitAvailable && !IsBusy && (!IsRepository || !HasRemote); }
 
-    private bool CanRefreshRepositoryState
-    {
-        get => !IsBusy;
-    }
+    private bool CanRefreshRepositoryState { get => !IsBusy; }
 
-    private bool CanInitializeRepository
-    {
-        get => IsGitAvailable
-            && !IsBusy
-            && (!IsRepository || !HasRemote)
-            && !string.IsNullOrWhiteSpace(RepositoryUrl);
-    }
+    private bool CanInitializeRepository { get => IsRepositoryUrlEnabled && !string.IsNullOrWhiteSpace(RepositoryUrl); }
 
-    private bool CanOperateRepository
-    {
-        get => IsGitAvailable && IsRepository && HasRemote && !IsBusy;
-    }
+    private bool CanOperateRepository { get => IsGitAvailable && IsRepository && HasRemote && !IsBusy; }
 
     [RelayCommand]
     private void OpenSettingsFolder()
@@ -124,7 +101,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(SentryOperations.SettingsGitRefresh, "Refresh settings Git repository state");
 
         IsBusy = true;
-        SetStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageGitStatusCheckingTitle, SR.UIXamlPagesSettingsPageGitStatusCheckingMessage);
+        SetStatus(InfoBarSeverity.Informational, SRName.UIXamlPagesSettingsPageGitStatusCheckingTitle, SRName.UIXamlPagesSettingsPageGitStatusCheckingMessage);
 
         try
         {
@@ -151,10 +128,10 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     {
         await ExecuteOperationAsync(
             SentryOperations.SettingsGitInitialize,
-            SR.UIXamlPagesSettingsPageGitStatusInitializeMessage,
+            SRName.UIXamlPagesSettingsPageGitStatusInitializeMessage,
             gitSyncService.InitializeRepositoryAsync,
-            SR.UIXamlPagesSettingsPageGitStatusInitializeSuccessTitle,
-            static result => SR.UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage,
+            SRName.UIXamlPagesSettingsPageGitStatusInitializeSuccessTitle,
+            static result => StringResourceValue.FromName(SRName.UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage),
             cancellationToken);
     }
 
@@ -163,10 +140,12 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     {
         await ExecuteOperationAsync(
             SentryOperations.SettingsGitPull,
-            SR.UIXamlPagesSettingsPageGitStatusPullMessage,
+            SRName.UIXamlPagesSettingsPageGitStatusPullMessage,
             gitSyncService.PullAsync,
-            SR.UIXamlPagesSettingsPageGitStatusPullSuccessTitle,
-            GetPullSuccessMessage,
+            SRName.UIXamlPagesSettingsPageGitStatusPullSuccessTitle,
+            static result => StringResourceValue.FromName(result.DetailKind is SettingsGitOperationDetailKind.RemoteEmpty
+                ? SRName.UIXamlPagesSettingsPageGitStatusRemoteEmptyMessage
+                : SRName.UIXamlPagesSettingsPageGitStatusPullSuccessMessage),
             cancellationToken);
     }
 
@@ -175,46 +154,29 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
     {
         await ExecuteOperationAsync(
             SentryOperations.SettingsGitPush,
-            SR.UIXamlPagesSettingsPageGitStatusPushMessage,
+            SRName.UIXamlPagesSettingsPageGitStatusPushMessage,
             gitSyncService.PushAsync,
-            SR.UIXamlPagesSettingsPageGitStatusPushSuccessTitle,
-            GetPushSuccessMessage,
+            SRName.UIXamlPagesSettingsPageGitStatusPushSuccessTitle,
+            static result => StringResourceValue.FromName(result.DetailKind is SettingsGitOperationDetailKind.NoLocalCommits
+                ? SRName.UIXamlPagesSettingsPageGitStatusNoLocalCommitsMessage
+                : SRName.UIXamlPagesSettingsPageGitStatusPushSuccessMessage),
             cancellationToken);
-    }
-
-    partial void OnIsGitAvailableChanged(bool value)
-    {
-        UpdateUiState();
-    }
-
-    partial void OnIsRepositoryChanged(bool value)
-    {
-        UpdateUiState();
-    }
-
-    partial void OnHasRemoteChanged(bool value)
-    {
-        UpdateUiState();
-    }
-
-    partial void OnIsBusyChanged(bool value)
-    {
-        UpdateUiState();
     }
 
     private async Task ExecuteOperationAsync(
         string operationName,
-        string currentOperationText,
+        SRName currentOperationTextName,
         Func<string, CancellationToken, Task<SettingsGitOperationResult>> operation,
-        string successTitle,
-        Func<SettingsGitOperationResult, string> successMessageFactory,
+        SRName successTitleName,
+        Func<SettingsGitOperationResult, StringResourceValue> successMessageFactory,
         CancellationToken cancellationToken)
     {
+        string currentOperationText = StringResourceProxy.Default[currentOperationTextName];
         using SentryDiagnosticSpan span = SentryDiagnostics.StartSpan(operationName, currentOperationText);
 
         IsBusy = true;
-        CurrentOperationText = currentOperationText;
-        SetStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageGitStatusOperationTitle, currentOperationText);
+        CurrentOperationText = StringResourceValue.FromName(currentOperationTextName);
+        SetStatus(InfoBarSeverity.Informational, SRName.UIXamlPagesSettingsPageGitStatusOperationTitle, StringResourceValue.FromName(currentOperationTextName));
 
         SettingsGitOperationResult result;
         try
@@ -225,7 +187,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         catch (OperationCanceledException)
         {
             span.Finish(SpanStatus.Cancelled);
-            SetStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, SR.UIXamlPagesSettingsPageGitErrorCanceled);
+            SetStatus(InfoBarSeverity.Warning, SRName.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, SRName.UIXamlPagesSettingsPageGitErrorCanceled);
             return;
         }
         catch (Exception ex)
@@ -236,36 +198,36 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         finally
         {
             IsBusy = false;
-            CurrentOperationText = string.Empty;
+            CurrentOperationText = StringResourceValue.FromText(string.Empty);
         }
 
         if (result.Succeeded)
         {
             span.SetTag(SentryTags.SettingsGitSucceeded, true);
             span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
-            SetStatus(InfoBarSeverity.Success, successTitle, successMessageFactory(result));
+            SetStatus(InfoBarSeverity.Success, successTitleName, successMessageFactory(result));
             return;
         }
 
         span.SetTag(SentryTags.SettingsGitSucceeded, false);
         span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
         span.Finish(SpanStatus.FailedPrecondition);
-        SetStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, BuildFailureMessage(result));
+        SetStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, BuildFailureMessage(result));
     }
 
     private async Task ExecuteOperationAsync(
         string operationName,
-        string currentOperationText,
+        SRName currentOperationTextName,
         Func<CancellationToken, Task<SettingsGitOperationResult>> operation,
-        string successTitle,
-        Func<SettingsGitOperationResult, string> successMessageFactory,
+        SRName successTitleName,
+        Func<SettingsGitOperationResult, StringResourceValue> successMessageFactory,
         CancellationToken cancellationToken)
     {
         await ExecuteOperationAsync(
             operationName,
-            currentOperationText,
+            currentOperationTextName,
             (_, token) => operation(token),
-            successTitle,
+            successTitleName,
             successMessageFactory,
             cancellationToken);
     }
@@ -278,7 +240,9 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         IsGitAvailable = state.IsGitAvailable;
         IsRepository = state.IsRepository;
         HasRemote = !string.IsNullOrWhiteSpace(state.RemoteUrl);
-        RemoteUrl = state.RemoteUrl ?? SR.UIXamlPagesSettingsPageLabelUnavailable;
+        RemoteUrlDisplay = state.RemoteUrl is null
+            ? StringResourceValue.FromName(SRName.UIXamlPagesSettingsPageLabelUnavailable)
+            : StringResourceValue.FromText(state.RemoteUrl);
 
         if (!string.IsNullOrWhiteSpace(state.RemoteUrl))
         {
@@ -292,90 +256,64 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
 
         if (!state.IsGitAvailable)
         {
-            SetStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageGitStatusUnavailableTitle, BuildFailureMessage(SettingsGitOperationResult.Failure(SettingsGitFailureKind.GitUnavailable, state.Detail)));
+            SetStatus(InfoBarSeverity.Warning, SRName.UIXamlPagesSettingsPageGitStatusUnavailableTitle, BuildFailureMessage(SettingsGitOperationResult.Failure(SettingsGitFailureKind.GitUnavailable, state.Detail)));
             return;
         }
 
         if (state.IsRepository && HasRemote)
         {
-            SetStatus(InfoBarSeverity.Success, SR.UIXamlPagesSettingsPageGitStatusRepositoryReadyTitle, SR.UIXamlPagesSettingsPageGitStatusRepositoryReadyMessage);
+            SetStatus(InfoBarSeverity.Success, SRName.UIXamlPagesSettingsPageGitStatusRepositoryReadyTitle, SRName.UIXamlPagesSettingsPageGitStatusRepositoryReadyMessage);
             return;
         }
 
         if (state.IsRepository)
         {
-            SetStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageGitStatusRemoteMissingTitle, SR.UIXamlPagesSettingsPageGitStatusRemoteMissingMessage);
+            SetStatus(InfoBarSeverity.Warning, SRName.UIXamlPagesSettingsPageGitStatusRemoteMissingTitle, SRName.UIXamlPagesSettingsPageGitStatusRemoteMissingMessage);
             return;
         }
 
         if (state.FailureKind is SettingsGitFailureKind.Repository or SettingsGitFailureKind.Permission)
         {
-            SetStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageGitStatusInvalidRepositoryTitle, BuildFailureMessage(SettingsGitOperationResult.Failure(state.FailureKind, state.Detail)));
+            SetStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageGitStatusInvalidRepositoryTitle, BuildFailureMessage(SettingsGitOperationResult.Failure(state.FailureKind, state.Detail)));
             return;
         }
 
-        SetStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageGitStatusNotRepositoryTitle, SR.UIXamlPagesSettingsPageGitStatusNotRepositoryMessage);
+        SetStatus(InfoBarSeverity.Informational, SRName.UIXamlPagesSettingsPageGitStatusNotRepositoryTitle, SRName.UIXamlPagesSettingsPageGitStatusNotRepositoryMessage);
     }
 
-    private void UpdateUiState()
+    private void SetStatus(InfoBarSeverity severity, SRName titleName, SRName messageName)
     {
-        bool canConfigureRepository = IsGitAvailable && !IsBusy && (!IsRepository || !HasRemote);
-        bool canOperateRepository = IsGitAvailable && IsRepository && HasRemote;
-
-        IsRepositoryUrlEnabled = canConfigureRepository;
-        SetupVisibility = IsGitAvailable && (!IsRepository || !HasRemote)
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-        OperationsVisibility = canOperateRepository
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-        ProgressVisibility = IsBusy
-            ? Visibility.Visible
-            : Visibility.Collapsed;
+        SetStatus(severity, titleName, StringResourceValue.FromName(messageName));
     }
 
-    private void SetStatus(InfoBarSeverity severity, string title, string message)
+    private void SetStatus(InfoBarSeverity severity, SRName titleName, StringResourceValue message)
     {
         InfoBarSeverity = severity;
-        StatusTitle = title;
+        StatusTitle = StringResourceValue.FromName(titleName);
         StatusMessage = message;
         IsStatusOpen = true;
     }
 
-    private static string GetPullSuccessMessage(SettingsGitOperationResult result)
+    private static StringResourceValue BuildFailureMessage(SettingsGitOperationResult result)
     {
-        return result.Detail is "RemoteEmpty"
-            ? SR.UIXamlPagesSettingsPageGitStatusRemoteEmptyMessage
-            : SR.UIXamlPagesSettingsPageGitStatusPullSuccessMessage;
-    }
-
-    private static string GetPushSuccessMessage(SettingsGitOperationResult result)
-    {
-        return result.Detail is "NoLocalCommits"
-            ? SR.UIXamlPagesSettingsPageGitStatusNoLocalCommitsMessage
-            : SR.UIXamlPagesSettingsPageGitStatusPushSuccessMessage;
-    }
-
-    private static string BuildFailureMessage(SettingsGitOperationResult result)
-    {
-        string message = result.Detail is "RepositoryOperationInProgress"
-            ? SR.UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress
+        SRName messageName = result.DetailKind is SettingsGitOperationDetailKind.RepositoryOperationInProgress
+            ? SRName.UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress
             : result.FailureKind switch
             {
-                SettingsGitFailureKind.GitUnavailable => SR.UIXamlPagesSettingsPageGitErrorGitUnavailable,
-                SettingsGitFailureKind.Network => SR.UIXamlPagesSettingsPageGitErrorNetwork,
-                SettingsGitFailureKind.Permission => SR.UIXamlPagesSettingsPageGitErrorPermission,
-                SettingsGitFailureKind.Remote => SR.UIXamlPagesSettingsPageGitErrorRemote,
-                SettingsGitFailureKind.Repository => SR.UIXamlPagesSettingsPageGitErrorRepository,
-                SettingsGitFailureKind.Conflict => SR.UIXamlPagesSettingsPageGitErrorConflict,
-                _ => SR.UIXamlPagesSettingsPageGitErrorCommand,
+                SettingsGitFailureKind.GitUnavailable => SRName.UIXamlPagesSettingsPageGitErrorGitUnavailable,
+                SettingsGitFailureKind.Network => SRName.UIXamlPagesSettingsPageGitErrorNetwork,
+                SettingsGitFailureKind.Permission => SRName.UIXamlPagesSettingsPageGitErrorPermission,
+                SettingsGitFailureKind.Remote => SRName.UIXamlPagesSettingsPageGitErrorRemote,
+                SettingsGitFailureKind.Repository => SRName.UIXamlPagesSettingsPageGitErrorRepository,
+                SettingsGitFailureKind.Conflict => SRName.UIXamlPagesSettingsPageGitErrorConflict,
+                _ => SRName.UIXamlPagesSettingsPageGitErrorCommand,
             };
 
-        if (string.IsNullOrWhiteSpace(result.Detail) || result.Detail is "RepositoryOperationInProgress")
+        if (result.DetailKind is SettingsGitOperationDetailKind.RepositoryOperationInProgress)
         {
-            return message;
+            return StringResourceValue.FromName(messageName);
         }
 
-        return $"{message}{Environment.NewLine}{result.Detail}";
+        return StringResourceValue.FromName(messageName, result.Detail);
     }
 }

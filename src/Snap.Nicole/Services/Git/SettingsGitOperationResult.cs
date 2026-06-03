@@ -6,20 +6,26 @@ internal sealed record SettingsGitOperationResult
 
     public SettingsGitFailureKind FailureKind { get; init; }
 
+    public SettingsGitOperationDetailKind DetailKind { get; init; }
+
     public string Detail { get; init; } = string.Empty;
 
     public static SettingsGitOperationResult Success()
-    {
-        return Success(string.Empty);
-    }
-
-    public static SettingsGitOperationResult Success(string detail)
     {
         return new()
         {
             Succeeded = true,
             FailureKind = SettingsGitFailureKind.None,
-            Detail = detail,
+        };
+    }
+
+    public static SettingsGitOperationResult Success(SettingsGitOperationDetailKind detailKind)
+    {
+        return new()
+        {
+            Succeeded = true,
+            FailureKind = SettingsGitFailureKind.None,
+            DetailKind = detailKind,
         };
     }
 
@@ -38,14 +44,24 @@ internal sealed record SettingsGitOperationResult
         };
     }
 
+    public static SettingsGitOperationResult Failure(SettingsGitFailureKind failureKind, SettingsGitOperationDetailKind detailKind)
+    {
+        return new()
+        {
+            Succeeded = false,
+            FailureKind = failureKind,
+            DetailKind = detailKind,
+        };
+    }
+
     public static SettingsGitOperationResult Command(SettingsGitCommandResult result)
     {
         return result.Succeeded ? Success() : Failure(result.FailureKind, result.NormalizedCombinedOutput);
     }
 
-    public static SettingsGitOperationResult Command(SettingsGitCommandResult result, string detail)
+    public static SettingsGitOperationResult Command(SettingsGitCommandResult result, SettingsGitOperationDetailKind detailKind)
     {
-        return result.Succeeded ? Success(detail) : Failure(result.FailureKind, result.NormalizedCombinedOutput);
+        return result.Succeeded ? Success(detailKind) : Failure(result.FailureKind, result.NormalizedCombinedOutput);
     }
 
     public static SettingsGitOperationResult CommandFailure(SettingsGitCommandResult result)

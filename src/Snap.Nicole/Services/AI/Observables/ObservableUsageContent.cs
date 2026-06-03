@@ -12,8 +12,7 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
     public partial long? TotalTokenCount { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasCounts))]
-    [NotifyPropertyChangedFor(nameof(CacheHitRate))]
+    [NotifyPropertyChangedFor(nameof(HasCounts), nameof(CacheHitRate))]
     public partial long? InputTokenCount { get; set; }
 
     [ObservableProperty]
@@ -41,8 +40,7 @@ internal sealed partial class ObservableUsageContent : ObservableAIContent
     public partial long? OutputTextTokenCount { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasCounts))]
-    [NotifyPropertyChangedFor(nameof(CacheHitRate))]
+    [NotifyPropertyChangedFor(nameof(HasCounts), nameof(CacheHitRate))]
     public partial long? CachedInputTokenCount { get; set; }
 
     [JsonIgnore]

@@ -9,6 +9,7 @@ using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Globalization;
@@ -18,13 +19,24 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels.Settings;
 
-internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider) : ObservableObject
+internal sealed partial class SettingsViewModel : ObservableObject, IDisposable
 {
-    private readonly IModelProfileService modelProfileService = serviceProvider.GetRequiredService<IModelProfileService>();
+    private readonly IModelProfileService modelProfileService;
+    private bool disposed;
 
-    public AppSettings Settings { get; } = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
+    public SettingsViewModel(IServiceProvider serviceProvider)
+    {
+        modelProfileService = serviceProvider.GetRequiredService<IModelProfileService>();
+        Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
+        GitSync = serviceProvider.GetRequiredService<SettingsGitSyncViewModel>();
 
-    public SettingsGitSyncViewModel GitSync { get; } = serviceProvider.GetRequiredService<SettingsGitSyncViewModel>();
+        Settings.ModelProviderProfiles.CollectionChanged += OnModelProviderProfilesCollectionChanged;
+        ModelProviderProfileEmptyStateText = CreateModelProviderProfileEmptyStateText();
+    }
+
+    public AppSettings Settings { get; }
+
+    public SettingsGitSyncViewModel GitSync { get; }
 
     // TODO: Potentially cache this list
     public IReadOnlyList<SettingsItem<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsItem<string>(CultureInfo.GetCultureInfo(name).NativeName, name))];
@@ -41,10 +53,13 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
     public partial bool IsModelListBusy { get; set; }
 
     [ObservableProperty]
-    public partial string ModelListStatusTitle { get; set; } = string.Empty;
+    public partial StringResourceValue ModelListStatusTitle { get; set; } = StringResourceValue.FromText(string.Empty);
 
     [ObservableProperty]
-    public partial string ModelListStatusMessage { get; set; } = string.Empty;
+    public partial StringResourceValue ModelListStatusMessage { get; set; } = StringResourceValue.FromText(string.Empty);
+
+    [ObservableProperty]
+    public partial StringResourceValue ModelProviderProfileEmptyStateText { get; set; } = StringResourceValue.FromText(string.Empty);
 
     [ObservableProperty]
     public partial bool IsModelListStatusOpen { get; set; }
@@ -129,7 +144,7 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
 
         if (Settings.ModelProviderProfiles.CurrentItem is not { } providerProfile)
         {
-            SetModelListStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusNoProviderMessage);
+            SetModelListStatus(InfoBarSeverity.Warning, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, SRName.UIXamlPagesSettingsPageModelListStatusNoProviderMessage);
             span.Finish(SpanStatus.FailedPrecondition);
             return;
         }
@@ -144,30 +159,30 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
 
         if (string.IsNullOrWhiteSpace(providerProfile.ApiKey))
         {
-            SetModelListStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusApiKeyMissingMessage);
+            SetModelListStatus(InfoBarSeverity.Warning, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, SRName.UIXamlPagesSettingsPageModelListStatusApiKeyMissingMessage);
             span.Finish(SpanStatus.FailedPrecondition);
             return;
         }
 
         IsModelListBusy = true;
-        SetModelListStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageModelListStatusFetchingTitle, SR.UIXamlPagesSettingsPageModelListStatusFetchingMessage);
+        SetModelListStatus(InfoBarSeverity.Informational, SRName.UIXamlPagesSettingsPageModelListStatusFetchingTitle, SRName.UIXamlPagesSettingsPageModelListStatusFetchingMessage);
 
         try
         {
             IReadOnlyList<ModelProfile> modelProfiles = await modelProfileService.GetModelsAsync(providerProfile, cancellationToken);
             MergeModelProfiles(providerProfile, modelProfiles);
-            SetModelListStatus(InfoBarSeverity.Success, SR.UIXamlPagesSettingsPageModelListStatusSuccessTitle, string.Format(CultureInfo.CurrentCulture, SR.UIXamlPagesSettingsPageModelListStatusSuccessMessage, modelProfiles.Count));
+            SetModelListStatus(InfoBarSeverity.Success, SRName.UIXamlPagesSettingsPageModelListStatusSuccessTitle, StringResourceValue.FromName(SRName.UIXamlPagesSettingsPageModelListStatusSuccessMessage, modelProfiles.Count));
             span.SetData(SentryData.AIModelCount, modelProfiles.Count);
         }
         catch (OperationCanceledException)
         {
-            SetModelListStatus(InfoBarSeverity.Warning, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusCanceledMessage);
+            SetModelListStatus(InfoBarSeverity.Warning, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, SRName.UIXamlPagesSettingsPageModelListStatusCanceledMessage);
             span.Finish(SpanStatus.Cancelled);
         }
         catch (Exception ex)
         {
             SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsModelProfilesRefresh);
-            SetModelListStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, ex.Message);
+            SetModelListStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, StringResourceValue.FromText(ex.Message));
         }
         finally
         {
@@ -182,7 +197,7 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
         string trimmedLink = link.Trim();
         if (!Uri.TryCreate(trimmedLink, UriKind.Absolute, out Uri? uri) || uri.Scheme is not "http" and not "https")
         {
-            SetModelListStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, SR.UIXamlPagesSettingsPageModelListStatusInvalidDocumentationLinkMessage);
+            SetModelListStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, SRName.UIXamlPagesSettingsPageModelListStatusInvalidDocumentationLinkMessage);
             span.Finish(SpanStatus.InvalidArgument);
             return;
         }
@@ -196,12 +211,12 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
                 UseShellExecute = true,
             });
 
-            SetModelListStatus(InfoBarSeverity.Informational, SR.UIXamlPagesSettingsPageModelListStatusDocumentationOpenedTitle, SR.UIXamlPagesSettingsPageModelListStatusDocumentationOpenedMessage);
+            SetModelListStatus(InfoBarSeverity.Informational, SRName.UIXamlPagesSettingsPageModelListStatusDocumentationOpenedTitle, SRName.UIXamlPagesSettingsPageModelListStatusDocumentationOpenedMessage);
         }
         catch (Exception ex) when (ex is Win32Exception or InvalidOperationException)
         {
             SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsModelProfilesOpenDocs);
-            SetModelListStatus(InfoBarSeverity.Error, SR.UIXamlPagesSettingsPageModelListStatusFailedTitle, ex.Message);
+            SetModelListStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, StringResourceValue.FromText(ex.Message));
         }
     }
 
@@ -254,11 +269,39 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
         }
     }
 
-    private void SetModelListStatus(InfoBarSeverity severity, string title, string message)
+    private void SetModelListStatus(InfoBarSeverity severity, SRName titleName, SRName messageName)
+    {
+        SetModelListStatus(severity, titleName, StringResourceValue.FromName(messageName));
+    }
+
+    private void SetModelListStatus(InfoBarSeverity severity, SRName titleName, StringResourceValue message)
     {
         ModelListInfoBarSeverity = severity;
-        ModelListStatusTitle = title;
+        ModelListStatusTitle = StringResourceValue.FromName(titleName);
         ModelListStatusMessage = message;
         IsModelListStatusOpen = true;
+    }
+
+    public void Dispose()
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        Settings.ModelProviderProfiles.CollectionChanged -= OnModelProviderProfilesCollectionChanged;
+    }
+
+    private void OnModelProviderProfilesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        ModelProviderProfileEmptyStateText = CreateModelProviderProfileEmptyStateText();
+    }
+
+    private StringResourceValue CreateModelProviderProfileEmptyStateText()
+    {
+        return StringResourceValue.FromName(Settings.ModelProviderProfiles.Count > 0
+            ? SRName.UIXamlPagesSettingsPageDescriptionSelectModelProviderProfileToEdit
+            : SRName.UIXamlPagesSettingsPageDescriptionAddModelProviderProfileToEdit);
     }
 }

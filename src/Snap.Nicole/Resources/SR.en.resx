@@ -200,25 +200,32 @@
     <value>The operation was canceled</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorGitUnavailable" xml:space="preserve">
-    <value>No usable git command was found. Install Git for Windows and make sure git is available in PATH</value>
+    <value>No usable git command was found. Install Git for Windows and make sure git is available in PATH
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorNetwork" xml:space="preserve">
-    <value>The network connection failed, so the remote repository could not be reached</value>
+    <value>The network connection failed, so the remote repository could not be reached
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorPermission" xml:space="preserve">
-    <value>Permission or authentication failed. Check repository access, credentials, or your SSH key</value>
+    <value>Permission or authentication failed. Check repository access, credentials, or your SSH key
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRemote" xml:space="preserve">
-    <value>The remote repository configuration is invalid. Confirm the URL exists and points to an empty or accessible repository</value>
+    <value>The remote repository configuration is invalid. Confirm the URL exists and points to an empty or accessible repository
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepository" xml:space="preserve">
-    <value>The local repository state is invalid. Check the Git repository under the Settings folder</value>
+    <value>The local repository state is invalid. Check the Git repository under the Settings folder
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorConflict" xml:space="preserve">
-    <value>The repository has conflicts or a non-fast-forward push. Resolve it manually, then sync again</value>
+    <value>The repository has conflicts or a non-fast-forward push. Resolve it manually, then sync again
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorCommand" xml:space="preserve">
-    <value>The Git command failed</value>
+    <value>The Git command failed
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
     <value>An unfinished merge, rebase, or lock file was detected. Complete or clean up that Git operation first</value>

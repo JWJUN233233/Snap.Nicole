@@ -12,6 +12,10 @@
     d:DataContext="{d:DesignInstance snv:AgentViewModel}"
     mc:Ignorable="d">
 
+    <mxi:Interaction.Behaviors>
+        <snuxb:DisposeDataContextOnUnloadedBehavior />
+    </mxi:Interaction.Behaviors>
+
     <Grid ColumnSpacing="0">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="280" />
@@ -81,7 +85,7 @@
                                 <TextBlock
                                     Grid.Row="0"
                                     FontWeight="SemiBold"
-                                    Text="{Binding TitleDisplay}"
+                                    Text="{Binding TitleDisplay.Value}"
                                     TextTrimming="CharacterEllipsis" />
 
                                 <StackPanel

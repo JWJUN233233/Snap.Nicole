@@ -261,25 +261,32 @@
     <value>操作已取消</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorGitUnavailable" xml:space="preserve">
-    <value>没有检测到可用的 git 命令。请安装 Git for Windows，并确认 git 已加入 PATH</value>
+    <value>没有检测到可用的 git 命令。请安装 Git for Windows，并确认 git 已加入 PATH
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorNetwork" xml:space="preserve">
-    <value>网络连接失败，无法访问远程仓库</value>
+    <value>网络连接失败，无法访问远程仓库
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorPermission" xml:space="preserve">
-    <value>权限或认证失败，请检查仓库访问权限、凭据或 SSH Key</value>
+    <value>权限或认证失败，请检查仓库访问权限、凭据或 SSH Key
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRemote" xml:space="preserve">
-    <value>远程仓库配置异常，请确认仓库地址存在且是空仓库或可访问仓库</value>
+    <value>远程仓库配置异常，请确认仓库地址存在且是空仓库或可访问仓库
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepository" xml:space="preserve">
-    <value>本地仓库状态异常，请检查 Settings 文件夹中的 Git 仓库</value>
+    <value>本地仓库状态异常，请检查 Settings 文件夹中的 Git 仓库
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorConflict" xml:space="preserve">
-    <value>仓库存在冲突或非快进推送，需要手动解决后再同步</value>
+    <value>仓库存在冲突或非快进推送，需要手动解决后再同步
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorCommand" xml:space="preserve">
-    <value>Git 命令执行失败</value>
+    <value>Git 命令执行失败
+{0}</value>
   </data>
   <data name="UIXamlPagesSettingsPageGitErrorRepositoryOperationInProgress" xml:space="preserve">
     <value>检测到未完成的合并、变基或锁文件，请先完成或清理该 Git 操作</value>

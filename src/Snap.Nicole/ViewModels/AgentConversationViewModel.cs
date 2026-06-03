@@ -12,6 +12,8 @@ namespace Snap.Nicole.ViewModels;
 
 internal sealed partial class AgentConversationViewModel : ObservableObject
 {
+    private StringResourceValue titleDisplay = StringResourceValue.FromName(SRName.UIXamlPagesAgentPageLabelNewConversation);
+
     public Guid Id { get; set; } = Guid.NewGuid();
 
     public AgentConversationViewModel()
@@ -20,7 +22,6 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
     }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TitleDisplay))]
     public partial string Title { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -65,12 +66,10 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
         }
     }
 
-    public string TitleDisplay
+    public StringResourceValue TitleDisplay
     {
-        get
-        {
-            return string.IsNullOrWhiteSpace(Title) ? SR.UIXamlPagesAgentPageLabelNewConversation : Title;
-        }
+        get => titleDisplay;
+        private set => SetProperty(ref titleDisplay, value);
     }
 
     public string CreatedAtDisplay
@@ -135,8 +134,20 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
         return viewModel;
     }
 
+    partial void OnTitleChanged(string value)
+    {
+        TitleDisplay = CreateTitleDisplay(value);
+    }
+
     private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         OnPropertyChanged(nameof(MessageCount));
+    }
+
+    private static StringResourceValue CreateTitleDisplay(string title)
+    {
+        return string.IsNullOrWhiteSpace(title)
+            ? StringResourceValue.FromName(SRName.UIXamlPagesAgentPageLabelNewConversation)
+            : StringResourceValue.FromText(title);
     }
 }
