@@ -21,7 +21,6 @@ internal sealed class ModelProfileService : IModelProfileService
     public Task<IReadOnlyList<ModelProfile>> GetModelsAsync(ModelProviderProfile providerProfile, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(providerProfile);
-
         return GetModelsCoreAsync(providerProfile, cancellationToken);
     }
 

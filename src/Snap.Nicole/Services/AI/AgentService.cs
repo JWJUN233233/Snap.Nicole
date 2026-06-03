@@ -69,23 +69,28 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
                     continue;
                 }
 
-                await taskScheduler.Run(() =>
+                State state = new(collection, options, observableContents, responseMessage, responseAdded);
+
+                await taskScheduler.Run(static (state) =>
                 {
                     // TODOO: this should be possible to lift out of the UI thread dispatch,
                     // but currently if this is created on a background thread, the UI gets stuck and doesn't update at all.
-                    responseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, options.ModelId);
+                    state.ResponseMessage ??= ObservableChatMessage.Create(ChatRole.Assistant, DateTimeOffset.Now, state.Options.ModelId);
 
-                    if (!responseAdded)
+                    if (!state.ResponseAdded)
                     {
-                        collection.Add(responseMessage);
-                        responseAdded = true;
+                        state.Collection.Add(state.ResponseMessage);
+                        state.ResponseAdded = true;
                     }
 
-                    foreach (ObservableAIContent observableContent in observableContents)
+                    foreach (ObservableAIContent observableContent in state.ObservableContents)
                     {
-                        responseMessage.Contents.AddOrUpdate(observableContent);
+                        state.ResponseMessage.Contents.AddOrUpdate(observableContent);
                     }
-                }, cancellationToken);
+                }, state, cancellationToken);
+
+                responseMessage = state.ResponseMessage;
+                responseAdded = state.ResponseAdded;
             }
 
             span.SetData(SentryData.AIResponseAdded, responseAdded);
@@ -109,5 +114,18 @@ internal sealed class AgentService(IServiceProvider serviceProvider) : IAgentSer
     private static IList<AITool> CreateBuiltInTools()
     {
         return [AIFunctionFactory.Create(BuiltInFunctions.GetCurrentTime)];
+    }
+
+    private sealed class State(ObservableChatMessageCollection collection, ExtendedAgentOptions options, List<ObservableAIContent> observableContents, ObservableChatMessage? responseMessage, bool responseAdded)
+    {
+        public ObservableChatMessageCollection Collection { get; } = collection;
+
+        public ExtendedAgentOptions Options { get; } = options;
+
+        public List<ObservableAIContent> ObservableContents { get; } = observableContents;
+
+        public ObservableChatMessage? ResponseMessage { get; set; } = responseMessage;
+
+        public bool ResponseAdded { get; set; } = responseAdded;
     }
 }

@@ -7,7 +7,7 @@ using System.Linq;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableCollection<TItem>, ICopyFrom<ObservableSettingsCollection<TItem, TId>>
+internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableCollection<TItem>, ICopyFrom<ObservableSettingsCollection<TItem, TId>>, IOptionsObservableChildrenProvider
     where TItem : class, INotifyPropertyChanged, IIdentifiable<TId>, ICopyFrom<TItem>, new()
     where TId : struct, IEquatable<TId>
 {
@@ -95,6 +95,24 @@ internal sealed class ObservableSettingsCollection<TItem, TId> : ObservableColle
         }
 
         EnsureCurrentItem();
+    }
+
+    public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()
+    {
+        yield return this;
+
+        foreach (TItem item in this)
+        {
+            if (item is not IOptionsObservableChildrenProvider provider)
+            {
+                continue;
+            }
+
+            foreach (INotifyPropertyChanged source in provider.EnumerateObservableChildren())
+            {
+                yield return source;
+            }
+        }
     }
 
     protected override void OnCollectionChanged(NotifyCollectionChangedEventArgs e)

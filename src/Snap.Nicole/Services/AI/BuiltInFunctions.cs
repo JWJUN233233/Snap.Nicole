@@ -12,8 +12,7 @@ internal static class BuiltInFunctions
 
         try
         {
-            string result = DateTimeOffset.Now.ToString("O");
-            return result;
+            return DateTimeOffset.Now.ToString("O");
         }
         catch (Exception ex)
         {

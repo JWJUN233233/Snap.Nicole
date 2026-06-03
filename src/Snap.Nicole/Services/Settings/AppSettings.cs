@@ -41,11 +41,6 @@ internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IO
 
     public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()
     {
-        yield return ModelProviderProfiles;
-
-        foreach (ModelProviderProfile providerProfile in ModelProviderProfiles)
-        {
-            yield return providerProfile.ModelProfiles;
-        }
+        return ModelProviderProfiles.EnumerateObservableChildren();
     }
 }

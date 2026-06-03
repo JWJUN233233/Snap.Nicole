@@ -1,10 +1,12 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Snap.Nicole.Core;
 using Snap.Nicole.Services.Settings;
+using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Models;
 
-internal sealed partial class ModelProviderProfile : ObservableObject, IIdentifiable<Guid>, ICopyFrom<ModelProviderProfile>
+internal sealed partial class ModelProviderProfile : ObservableObject, IIdentifiable<Guid>, ICopyFrom<ModelProviderProfile>, IOptionsObservableChildrenProvider
 {
     [ObservableProperty]
     public partial Guid Id { get; set; } = Guid.NewGuid();
@@ -44,5 +46,10 @@ internal sealed partial class ModelProviderProfile : ObservableObject, IIdentifi
         ModelListDocumentationLink = source.ModelListDocumentationLink;
         ModelProfiles.CopyFrom(source.ModelProfiles);
         SelectedModelProfileId = source.SelectedModelProfileId;
+    }
+
+    public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()
+    {
+        return ModelProfiles.EnumerateObservableChildren();
     }
 }

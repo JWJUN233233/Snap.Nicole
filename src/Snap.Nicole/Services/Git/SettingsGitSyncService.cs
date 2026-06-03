@@ -29,9 +29,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
         try
         {
-            SettingsGitRepositoryState result = await GetRepositoryStateCoreAsync(cancellationToken);
-            CompleteRepositoryStateSpan(span, result);
-            return result;
+            return CompleteRepositoryStateSpan(span, await GetRepositoryStateCoreAsync(cancellationToken));
         }
         catch (OperationCanceledException)
         {
@@ -51,9 +49,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
         try
         {
-            SettingsGitOperationResult result = await InitializeRepositoryCoreAsync(remoteUrl, cancellationToken);
-            CompleteOperationSpan(span, result);
-            return result;
+            return CompleteOperationSpan(span, await InitializeRepositoryCoreAsync(remoteUrl, cancellationToken));
         }
         catch (OperationCanceledException)
         {
@@ -73,9 +69,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
         try
         {
-            SettingsGitOperationResult result = await PullCoreAsync(cancellationToken);
-            CompleteOperationSpan(span, result);
-            return result;
+            return CompleteOperationSpan(span, await PullCoreAsync(cancellationToken));
         }
         catch (OperationCanceledException)
         {
@@ -131,9 +125,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
 
         try
         {
-            SettingsGitOperationResult result = await PushCoreAsync(cancellationToken);
-            CompleteOperationSpan(span, result);
-            return result;
+            return CompleteOperationSpan(span, await PushCoreAsync(cancellationToken));
         }
         catch (OperationCanceledException)
         {
@@ -147,28 +139,34 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
     }
 
-    private static void CompleteRepositoryStateSpan(SentryDiagnosticSpan span, SettingsGitRepositoryState result)
+    private static SettingsGitRepositoryState CompleteRepositoryStateSpan(SentryDiagnosticSpan span, SettingsGitRepositoryState result)
     {
         span.SetTag(SentryTags.SettingsGitAvailable, result.IsGitAvailable);
         span.SetTag(SentryTags.SettingsGitRepository, result.IsRepository);
         span.SetTag(SentryTags.SettingsGitHasRemote, !string.IsNullOrWhiteSpace(result.RemoteUrl));
         span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
         span.Finish(result.FailureKind is SettingsGitFailureKind.None ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
+
+        return result;
     }
 
-    private static void CompleteOperationSpan(SentryDiagnosticSpan span, SettingsGitOperationResult result)
+    private static SettingsGitOperationResult CompleteOperationSpan(SentryDiagnosticSpan span, SettingsGitOperationResult result)
     {
         span.SetTag(SentryTags.SettingsGitSucceeded, result.Succeeded);
         span.SetTag(SentryTags.SettingsGitFailureKind, result.FailureKind.ToString());
         span.Finish(result.Succeeded ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
+
+        return result;
     }
 
-    private static void CompleteCommandSpan(SentryDiagnosticSpan span, SettingsGitCommandResult result)
+    private static SettingsGitCommandResult CompleteCommandSpan(SentryDiagnosticSpan span, SettingsGitCommandResult result)
     {
         span.SetTag(SentryTags.SettingsGitCommandSucceeded, result.Succeeded);
         span.SetTag(SentryTags.SettingsGitFailureKind, result.Succeeded ? SettingsGitFailureKind.None.ToString() : result.FailureKind.ToString());
         span.SetData(SentryData.SettingsGitExitCode, result.ExitCode);
         span.Finish(result.Succeeded ? SpanStatus.Ok : GetFailureSpanStatus(result.FailureKind));
+
+        return result;
     }
 
     private static SpanStatus GetFailureSpanStatus(SettingsGitFailureKind failureKind)
@@ -186,12 +184,10 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         };
     }
 
-    private static string GetBranchNameFromRemoteReference(string remoteReference)
+    private static ReadOnlySpan<char> GetBranchNameFromRemoteReference(ReadOnlySpan<char> remoteReference)
     {
         int separatorIndex = remoteReference.IndexOf('/');
-        return separatorIndex >= 0
-            ? remoteReference[(separatorIndex + 1)..]
-            : remoteReference;
+        return separatorIndex >= 0 ? remoteReference[(separatorIndex + 1)..] : remoteReference;
     }
 
     private static string GetGitCommandName(string[] arguments)
@@ -199,13 +195,15 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         for (int i = 0; i < arguments.Length; i++)
         {
             string argument = arguments[i];
+
+            // Skip configuration arguments
             if (argument is "-c")
             {
                 i++;
                 continue;
             }
 
-            if (argument.StartsWith("-", StringComparison.Ordinal))
+            if (argument.StartsWith('-'))
             {
                 continue;
             }
@@ -367,8 +365,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
             return SettingsGitOperationResult.Command(push);
         }
 
-        SettingsGitCommandResult forcePush = await ForcePushAsync(cancellationToken);
-        return SettingsGitOperationResult.Command(forcePush);
+        return SettingsGitOperationResult.Command(await ForcePushAsync(cancellationToken));
     }
 
     private async Task<SettingsGitOperationResult> EnsureRepositoryReadyAsync(CancellationToken cancellationToken)
@@ -469,7 +466,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         SettingsGitCommandResult upstream = await RunGitAsync(GetUpstreamArguments, RepositoryPath, cancellationToken);
         if (upstream.Succeeded && !string.IsNullOrWhiteSpace(upstream.Output))
         {
-            string remoteBranch = GetBranchNameFromRemoteReference(upstream.Output.Trim());
+            ReadOnlySpan<char> remoteBranch = GetBranchNameFromRemoteReference(upstream.Output.AsSpan().Trim());
             return await RunGitAsync(["push", "--force", RemoteName, $"HEAD:{remoteBranch}"], RepositoryPath, cancellationToken);
         }
 
@@ -479,8 +476,6 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
     private async Task<SettingsGitOperationResult> ForcePullAsync(CancellationToken cancellationToken)
     {
         string remoteReference = await GetPullRemoteReferenceAsync(cancellationToken);
-        string remoteBranch = GetBranchNameFromRemoteReference(remoteReference);
-
         if (await RunGitAsync(["fetch", "--prune", RemoteName], RepositoryPath, cancellationToken) is { Succeeded: false } fetch)
         {
             return SettingsGitOperationResult.CommandFailure(fetch);
@@ -497,7 +492,9 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
         }
 
         SettingsGitCommandResult currentBranch = await RunGitAsync(["branch", "--show-current"], RepositoryPath, cancellationToken);
-        if (currentBranch.Succeeded && string.Equals(currentBranch.Output.Trim(), remoteBranch, StringComparison.Ordinal))
+
+        ReadOnlySpan<char> remoteBranch = GetBranchNameFromRemoteReference(remoteReference);
+        if (currentBranch.Succeeded && currentBranch.Output.AsSpan().Trim().Equals(remoteBranch, StringComparison.Ordinal))
         {
             _ = await RunGitAsync(["branch", "--set-upstream-to", remoteReference], RepositoryPath, cancellationToken);
         }
@@ -593,8 +590,8 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
                     Output = await process.StandardOutput.ReadToEndAsync(cancellationToken),
                     Error = await process.StandardError.ReadToEndAsync(cancellationToken),
                 };
-                CompleteCommandSpan(span, result);
-                return result;
+
+                return CompleteCommandSpan(span, result);
             }
         }
         catch (OperationCanceledException)
@@ -611,8 +608,8 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
                 Error = ex.Message,
                 GitUnavailable = true,
             };
-            CompleteCommandSpan(span, result);
-            return result;
+
+            return CompleteCommandSpan(span, result);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
         {
@@ -622,8 +619,8 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
                 Output = string.Empty,
                 Error = ex.Message,
             };
-            CompleteCommandSpan(span, result);
-            return result;
+
+            return CompleteCommandSpan(span, result);
         }
     }
 
@@ -656,12 +653,7 @@ internal sealed class SettingsGitSyncService : ISettingsGitSyncService
             gitDirectory = Path.GetFullPath(path, RepositoryPath);
             return Directory.Exists(gitDirectory);
         }
-        catch (IOException)
-        {
-            gitDirectory = string.Empty;
-            return false;
-        }
-        catch (UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             gitDirectory = string.Empty;
             return false;
