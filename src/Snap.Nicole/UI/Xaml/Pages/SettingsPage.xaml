@@ -25,12 +25,12 @@
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
     </Page.Resources>
 
-    <ScrollViewer Padding="24">
+    <ScrollViewer>
         <mxi:Interaction.Behaviors>
             <snuxb:InvokeCommandOnLoadedBehavior Command="{Binding GitSync.RefreshRepositoryStateCommand}" />
         </mxi:Interaction.Behaviors>
 
-        <StackPanel Spacing="24">
+        <StackPanel Margin="24" Spacing="24">
             <Border
                 Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"

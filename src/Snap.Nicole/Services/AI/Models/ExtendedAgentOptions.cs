@@ -28,9 +28,9 @@ internal sealed class ExtendedAgentOptions
 
     // Extended options
     // TODO: Create a separate class for these options and configure them in UI
-    public float Temperature { get; init; } = 0.3f;
+    public float? Temperature { get; init; } = 0.3f;
 
-    public float TopP { get; init; } = 0.95f;
+    public float? TopP { get; init; } = 0.95f;
 
     public ReasoningEffort? ReasoningEffort { get; init; }
 
@@ -53,7 +53,7 @@ internal sealed class ExtendedAgentOptions
             ToolMode = ChatToolMode.Auto,
         };
 
-        if (!OmitReasoningEffortWhenThinkingDisabled)
+        if (ThinkingEnabled is not false || !OmitReasoningEffortWhenThinkingDisabled)
         {
             chatOptions.Reasoning = new()
             {

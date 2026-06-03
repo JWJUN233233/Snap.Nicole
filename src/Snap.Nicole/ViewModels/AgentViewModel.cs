@@ -344,6 +344,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             ApiKey = providerProfile.ApiKey,
             Temperature = 0.3f,
             TopP = 0.95f,
+            ReasoningEffort = ReasoningEffort.High,
             ThinkingEnabled = true,
             OmitReasoningEffortWhenThinkingDisabled = true,
         };
