@@ -54,7 +54,11 @@ internal sealed class RoundTripInMemoryChatHistoryProvider(ObjectPool<StringBuil
                 }
 
                 OpenAI.Chat.ChatMessage rawRepresentation = rawRepresentations[i];
-                rawRepresentation.Patch.Set("$.reasoning_content"u8, reasoningContentBuilderLease.Value.ToString());
+                if (reasoningContentBuilderLease.Value.Length > 0)
+                {
+                    rawRepresentation.Patch.Set("$.reasoning_content"u8, reasoningContentBuilderLease.Value.ToString());
+                }
+
                 responseMessage.RawRepresentation = rawRepresentation;
             }
 

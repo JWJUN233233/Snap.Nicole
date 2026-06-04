@@ -138,13 +138,13 @@
 
                             <ComboBox Grid.Column="0" DisplayMemberPath="Name">
                                 <mxi:Interaction.Behaviors>
-                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
                                 </mxi:Interaction.Behaviors>
                             </ComboBox>
 
                             <ComboBox Grid.Column="1" DisplayMemberPath="DisplayName">
                                 <mxi:Interaction.Behaviors>
-                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
                                 </mxi:Interaction.Behaviors>
                             </ComboBox>
                         </Grid>

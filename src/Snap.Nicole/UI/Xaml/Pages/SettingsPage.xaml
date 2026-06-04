@@ -164,10 +164,14 @@
                         <ComboBox
                             MinWidth="160"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                            DisplayMemberPath="Label"
-                            ItemsSource="{Binding Languages}"
-                            SelectedValue="{Binding Settings.Language, Mode=TwoWay}"
-                            SelectedValuePath="Value" />
+                            DisplayMemberPath="Label">
+                            <mxi:Interaction.Behaviors>
+                                <snuxb:SelectorSelectedValueBindingWorkaroundBehavior
+                                    ItemsSource="{Binding Languages}"
+                                    SelectedValue="{Binding Settings.Language, Mode=TwoWay}"
+                                    SelectedValuePath="Value" />
+                            </mxi:Interaction.Behaviors>
+                        </ComboBox>
                     </cwc:SettingsCard>
                 </StackPanel>
             </Border>
@@ -233,9 +237,11 @@
                                     Grid.Row="1"
                                     AllowDrop="True"
                                     CanReorderItems="True"
-                                    DisplayMemberPath="Name"
-                                    ItemsSource="{Binding Settings.ModelProviderProfiles}"
-                                    SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                                    DisplayMemberPath="Name">
+                                    <mxi:Interaction.Behaviors>
+                                        <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                                    </mxi:Interaction.Behaviors>
+                                </ListView>
                             </Grid>
                         </Border>
 
@@ -256,10 +262,14 @@
                                         MinWidth="240"
                                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                         DisplayMemberPath="Label"
-                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}"
-                                        ItemsSource="{Binding ModelProviderTypes}"
-                                        SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
-                                        SelectedValuePath="Value" />
+                                        Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileProviderType}">
+                                        <mxi:Interaction.Behaviors>
+                                            <snuxb:SelectorSelectedValueBindingWorkaroundBehavior
+                                                ItemsSource="{Binding ModelProviderTypes}"
+                                                SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ProviderType, Mode=TwoWay}"
+                                                SelectedValuePath="Value" />
+                                        </mxi:Interaction.Behaviors>
+                                    </ComboBox>
                                     <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Endpoint, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                     <PasswordBox
                                         snuxc:PasswordBoxExtensions.Password="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
@@ -329,7 +339,7 @@
                                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                                 DisplayMemberPath="DisplayName">
                                                 <mxi:Interaction.Behaviors>
-                                                    <snuxb:ComboBoxBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles, Mode=OneWay}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles, Mode=OneWay}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
                                                 </mxi:Interaction.Behaviors>
                                             </ComboBox>
                                         </cwc:SettingsCard>

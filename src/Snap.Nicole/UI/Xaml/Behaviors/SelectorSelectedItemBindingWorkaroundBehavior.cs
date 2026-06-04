@@ -1,13 +1,14 @@
 using CommunityToolkit.WinUI.Behaviors;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Snap.Nicole.Core;
 
 namespace Snap.Nicole.UI.Xaml.Behaviors;
 
 [GeneratedDependencyProperty<object>("ItemsSource", PropertyChangedCallbackName = nameof(OnItemsSourceChanged))]
 [GeneratedDependencyProperty<object>("SelectedItem", PropertyChangedCallbackName = nameof(OnSelectedItemChanged))]
-internal sealed partial class ComboBoxBindingWorkaroundBehavior : BehaviorBase<ComboBox>
+internal sealed partial class SelectorSelectedItemBindingWorkaroundBehavior : BehaviorBase<Selector>
 {
     // ItemsSource/SelectedItem changed, updating associated object
     private bool isUpdatingAssociatedObject;
@@ -40,7 +41,7 @@ internal sealed partial class ComboBoxBindingWorkaroundBehavior : BehaviorBase<C
 
     private static void OnItemsSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not ComboBoxBindingWorkaroundBehavior behavior)
+        if (d is not SelectorSelectedItemBindingWorkaroundBehavior behavior)
         {
             return;
         }
@@ -50,7 +51,7 @@ internal sealed partial class ComboBoxBindingWorkaroundBehavior : BehaviorBase<C
 
     private static void OnSelectedItemChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is not ComboBoxBindingWorkaroundBehavior behavior)
+        if (d is not SelectorSelectedItemBindingWorkaroundBehavior behavior)
         {
             return;
         }
@@ -78,7 +79,7 @@ internal sealed partial class ComboBoxBindingWorkaroundBehavior : BehaviorBase<C
 
     private void UpdateAssociatedObject()
     {
-        if (AssociatedObject is null)
+        if (AssociatedObject == null)
         {
             return;
         }
@@ -92,7 +93,7 @@ internal sealed partial class ComboBoxBindingWorkaroundBehavior : BehaviorBase<C
 
     private void UpdateAssociatedSelectedItem()
     {
-        if (AssociatedObject is null)
+        if (AssociatedObject == null)
         {
             return;
         }
