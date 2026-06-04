@@ -17,6 +17,7 @@ using Snap.Nicole.UI.Shell;
 using Snap.Nicole.UI.Xaml.Navigation;
 using Snap.Nicole.UI.Xaml.Windows;
 using Snap.Nicole.ViewModels;
+using Snap.Nicole.ViewModels.Agent;
 using Snap.Nicole.ViewModels.NotifyIcon;
 using Snap.Nicole.ViewModels.Settings;
 using System.Runtime.CompilerServices;

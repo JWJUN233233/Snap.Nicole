@@ -8,7 +8,7 @@ using System.Collections.Specialized;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Snap.Nicole.ViewModels;
+namespace Snap.Nicole.ViewModels.Agent;
 
 internal sealed partial class AgentConversationViewModel : ObservableObject
 {

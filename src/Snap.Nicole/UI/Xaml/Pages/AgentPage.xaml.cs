@@ -1,5 +1,5 @@
 using Microsoft.UI.Xaml.Controls;
-using Snap.Nicole.ViewModels;
+using Snap.Nicole.ViewModels.Agent;
 
 namespace Snap.Nicole.UI.Xaml.Pages;
 

@@ -18,7 +18,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Snap.Nicole.ViewModels;
+namespace Snap.Nicole.ViewModels.Agent;
 
 internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 {

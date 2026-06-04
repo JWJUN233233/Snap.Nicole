@@ -1,7 +1,7 @@
 using Snap.Nicole.Services.AI.Observables;
 using System.Collections.Generic;
 
-namespace Snap.Nicole.ViewModels;
+namespace Snap.Nicole.ViewModels.Agent;
 
 internal sealed class AgentHistorySummaryViewModel
 {
