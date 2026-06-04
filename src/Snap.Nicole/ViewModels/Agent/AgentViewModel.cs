@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Sentry;
+using Snap.Nicole.Core;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Core.Threading;
 using Snap.Nicole.Resources;
@@ -11,7 +12,6 @@ using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
 using Snap.Nicole.Services.Settings;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json;
@@ -24,10 +24,10 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 {
     private readonly IAgentService agentService;
     private readonly IAgentConversationProvider conversationStore;
-    private ObservableSettingsCollection<ModelProviderProfile, Guid>? modelProviderProfiles;
-    private ObservableSettingsCollection<ModelProfile, Guid>? modelProfiles;
+    private INotifyPropertyChanged? settingsSubscription;
+    private INotifyPropertyChanged? modelProviderProfilesSubscription;
+    private INotifyPropertyChanged? modelProfilesSubscription;
 
-    private ObservableChatMessageCollection messages = [];
     private CancellationTokenSource? generationCts;
     private bool disposed;
     private bool isApplyingConversationSelection;
@@ -38,29 +38,23 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         conversationStore = serviceProvider.GetRequiredService<IAgentConversationProvider>();
         Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
-        Settings.PropertyChanged += OnSettingsPropertyChanged;
-        SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
-        SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
+        UpdatePropertyChangedSubscription(ref settingsSubscription, Settings, OnSettingsPropertyChanged);
+        UpdateModelProviderProfilesSubscription();
+        UpdateModelProfilesSubscription();
+        ((INotifyPropertyChanged)Conversations).PropertyChanged += OnConversationsPropertyChanged;
 
         LoadConversations();
     }
 
     public AppSettings Settings { get; }
 
-    public ObservableCollection<AgentConversationViewModel> Conversations { get; } = [];
-
-    public ObservableChatMessageCollection Messages
-    {
-        get => messages;
-        private set => SetProperty(ref messages, value);
-    }
+    public AdvancedObservableCollection<AgentConversationViewModel> Conversations { get; } = [];
 
     [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SendMessageCommand), nameof(DeleteConversationCommand))]
-    public partial AgentConversationViewModel? SelectedConversation { get; set; }
+    public partial ObservableChatMessageCollection Messages { get; private set; } = [];
 
     [ObservableProperty]
-    public partial AgentHistorySummaryViewModel HistorySummary { get; set; } = new();
+    public partial AgentConversationStatisticsViewModel ConversationStatistics { get; set; } = new();
 
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SendMessageCommand))]
@@ -74,24 +68,15 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
     {
         get
         {
-            ModelProfile? modelProfile = Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.CurrentItem;
             return !disposed
                 && !IsBusy
-                && SelectedConversation is not null
+                && Conversations.CurrentItem is not null
                 && !string.IsNullOrWhiteSpace(InputText)
-                && !string.IsNullOrWhiteSpace(modelProfile?.ModelId);
+                && !string.IsNullOrWhiteSpace(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.CurrentItem?.ModelId);
         }
     }
 
-    private bool CanDeleteConversation
-    {
-        get
-        {
-            return !disposed
-                && !IsBusy
-                && SelectedConversation is not null;
-        }
-    }
+    private bool CanDeleteConversation { get => !disposed && !IsBusy && Conversations.CurrentItem is not null; }
 
     [RelayCommand]
     private void CreateConversation()
@@ -103,14 +88,14 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         AgentConversationViewModel conversation = CreateConversationCore();
         Conversations.Insert(0, conversation);
-        SelectedConversation = conversation;
+        Conversations.CurrentItem = conversation;
         SaveConversation(conversation);
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteConversation))]
     private void DeleteConversation()
     {
-        if (!CanDeleteConversation || SelectedConversation is not AgentConversationViewModel conversation)
+        if (!CanDeleteConversation || Conversations.CurrentItem is not AgentConversationViewModel conversation)
         {
             return;
         }
@@ -118,22 +103,23 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         SentryDiagnostics.AddBreadcrumb("Delete chat conversation", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
 
         int oldIndex = Conversations.IndexOf(conversation);
+        AgentConversationViewModel? nextConversation = GetNextConversationAfterDelete(oldIndex);
+        Conversations.CurrentItem = nextConversation;
         conversationStore.DeleteConversation(conversation.Id);
         Conversations.Remove(conversation);
 
         if (Conversations.Count is 0)
         {
-            Conversations.Add(CreateConversationCore());
+            AgentConversationViewModel newConversation = CreateConversationCore();
+            Conversations.Add(newConversation);
+            Conversations.CurrentItem = newConversation;
         }
-
-        int newIndex = Math.Clamp(oldIndex, 0, Conversations.Count - 1);
-        SelectedConversation = Conversations[newIndex];
     }
 
     [RelayCommand(CanExecute = nameof(CanSendMessage))]
     private async Task SendMessageAsync(CancellationToken cancellationToken)
     {
-        if (disposed || SelectedConversation is not AgentConversationViewModel conversation)
+        if (disposed || Conversations.CurrentItem is not AgentConversationViewModel conversation)
         {
             return;
         }
@@ -210,9 +196,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             }
             else
             {
-                if (ReferenceEquals(SelectedConversation, conversation))
+                if (ReferenceEquals(Conversations.CurrentItem, conversation))
                 {
-                    RebuildHistorySummary(Messages);
+                    RebuildConversationStatistics(Messages);
                 }
 
                 SaveConversation(conversation);
@@ -260,15 +246,15 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         disposed = true;
 
-        Settings.PropertyChanged -= OnSettingsPropertyChanged;
-        UnsubscribeModelProviderProfiles();
-        UnsubscribeModelProfiles();
+        ((INotifyPropertyChanged)Conversations).PropertyChanged -= OnConversationsPropertyChanged;
+        ClearPropertyChangedSubscriptions();
 
         generationCts?.Cancel();
         SendMessageCommand.NotifyCanExecuteChanged();
+        DeleteConversationCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnSelectedConversationChanged(AgentConversationViewModel? value)
+    private void OnCurrentConversationChanged(AgentConversationViewModel? value)
     {
         if (disposed)
         {
@@ -278,6 +264,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         ApplyConversationProfile(value);
         RebuildActiveConversation(value);
         SendMessageCommand.NotifyCanExecuteChanged();
+        DeleteConversationCommand.NotifyCanExecuteChanged();
     }
 
     private void LoadConversations()
@@ -294,7 +281,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             Conversations.Add(CreateConversationCore());
         }
 
-        SelectedConversation = Conversations[0];
+        Conversations.MoveCurrentToFirst();
     }
 
     private AgentConversationViewModel CreateConversationCore()
@@ -385,9 +372,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         JsonElement serializedState = await agentService.SerializeSessionAsync(agent, session, cancellationToken);
         conversation.SerializedSessionState = serializedState.Clone();
 
-        if (ReferenceEquals(SelectedConversation, conversation))
+        if (ReferenceEquals(Conversations.CurrentItem, conversation))
         {
-            RebuildHistorySummary(Messages);
+            RebuildConversationStatistics(Messages);
         }
 
         SaveConversation(conversation);
@@ -483,17 +470,46 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         if (conversation is null)
         {
             Messages = [];
-            RebuildHistorySummary([]);
+            RebuildConversationStatistics([]);
             return;
         }
 
         Messages = conversation.Messages;
-        RebuildHistorySummary(Messages);
+        RebuildConversationStatistics(Messages);
     }
 
-    private void RebuildHistorySummary(IEnumerable<ObservableChatMessage> messages)
+    private void RebuildConversationStatistics(IEnumerable<ObservableChatMessage> messages)
     {
-        HistorySummary = AgentHistorySummaryViewModel.Create(messages);
+        ConversationStatistics = AgentConversationStatisticsViewModel.Create(messages);
+    }
+
+    private AgentConversationViewModel? GetNextConversationAfterDelete(int oldIndex)
+    {
+        if (Conversations.Count <= 1)
+        {
+            return null;
+        }
+
+        int newIndex = Math.Clamp(oldIndex, 0, Conversations.Count - 2);
+        if (newIndex < oldIndex)
+        {
+            return Conversations[newIndex];
+        }
+
+        return Conversations[newIndex + 1];
+    }
+
+    private void OnConversationsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (disposed)
+        {
+            return;
+        }
+
+        if (e.PropertyName is nameof(AdvancedObservableCollection<>.CurrentItem))
+        {
+            OnCurrentConversationChanged(Conversations.CurrentItem);
+        }
     }
 
     private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -505,8 +521,8 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         if (e.PropertyName is nameof(AppSettings.ModelProviderProfiles))
         {
-            SubscribeModelProviderProfiles(Settings.ModelProviderProfiles);
-            SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
+            UpdateModelProviderProfilesSubscription();
+            UpdateModelProfilesSubscription();
         }
     }
 
@@ -519,7 +535,7 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
 
         if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
         {
-            SubscribeModelProfiles(Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles);
+            UpdateModelProfilesSubscription();
             ResetSelectedRuntime();
         }
     }
@@ -537,48 +553,41 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
         }
     }
 
-    private void SubscribeModelProviderProfiles(ObservableSettingsCollection<ModelProviderProfile, Guid> providerProfiles)
+    private void ClearPropertyChangedSubscriptions()
     {
-        if (disposed)
+        UpdatePropertyChangedSubscription(ref settingsSubscription, null, OnSettingsPropertyChanged);
+        UpdatePropertyChangedSubscription(ref modelProviderProfilesSubscription, null, OnModelProviderProfilesPropertyChanged);
+        UpdatePropertyChangedSubscription(ref modelProfilesSubscription, null, OnModelProfilesPropertyChanged);
+    }
+
+    private void UpdateModelProviderProfilesSubscription()
+    {
+        UpdatePropertyChangedSubscription(ref modelProviderProfilesSubscription, Settings.ModelProviderProfiles, OnModelProviderProfilesPropertyChanged);
+    }
+
+    private void UpdateModelProfilesSubscription()
+    {
+        UpdatePropertyChangedSubscription(ref modelProfilesSubscription, Settings.ModelProviderProfiles.CurrentItem?.ModelProfiles, OnModelProfilesPropertyChanged);
+    }
+
+    private static void UpdatePropertyChangedSubscription(ref INotifyPropertyChanged? subscription, INotifyPropertyChanged? source, PropertyChangedEventHandler handler)
+    {
+        if (ReferenceEquals(subscription, source))
         {
             return;
         }
 
-        if (ReferenceEquals(modelProviderProfiles, providerProfiles))
+        if (subscription is not null)
         {
-            return;
+            subscription.PropertyChanged -= handler;
         }
 
-        UnsubscribeModelProviderProfiles();
-        modelProviderProfiles = providerProfiles;
-        (modelProviderProfiles as INotifyPropertyChanged).PropertyChanged += OnModelProviderProfilesPropertyChanged;
-    }
+        subscription = source;
 
-    private void UnsubscribeModelProviderProfiles()
-    {
-        (modelProviderProfiles as INotifyPropertyChanged)?.PropertyChanged -= OnModelProviderProfilesPropertyChanged;
-        modelProviderProfiles = null;
-    }
-
-    private void SubscribeModelProfiles(ObservableSettingsCollection<ModelProfile, Guid>? profiles)
-    {
-        if (disposed || ReferenceEquals(modelProfiles, profiles))
+        if (subscription is not null)
         {
-            return;
+            subscription.PropertyChanged += handler;
         }
-
-        UnsubscribeModelProfiles();
-        modelProfiles = profiles;
-        if (modelProfiles is not null)
-        {
-            (modelProfiles as INotifyPropertyChanged).PropertyChanged += OnModelProfilesPropertyChanged;
-        }
-    }
-
-    private void UnsubscribeModelProfiles()
-    {
-        (modelProfiles as INotifyPropertyChanged)?.PropertyChanged -= OnModelProfilesPropertyChanged;
-        modelProfiles = null;
     }
 
     private void ResetSelectedRuntime()
@@ -588,9 +597,9 @@ internal sealed partial class AgentViewModel : ObservableObject, IDisposable
             return;
         }
 
-        if (SelectedConversation is not null)
+        if (Conversations.CurrentItem is not null)
         {
-            ResetConversationRuntime(SelectedConversation);
+            ResetConversationRuntime(Conversations.CurrentItem);
         }
 
         SendMessageCommand.NotifyCanExecuteChanged();

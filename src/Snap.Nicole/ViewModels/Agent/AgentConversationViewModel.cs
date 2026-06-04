@@ -3,8 +3,6 @@ using Microsoft.Agents.AI;
 using Snap.Nicole.Resources;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.AI.Observables;
-using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -12,16 +10,10 @@ namespace Snap.Nicole.ViewModels.Agent;
 
 internal sealed partial class AgentConversationViewModel : ObservableObject
 {
-    private StringResourceValue titleDisplay = StringResourceValue.FromName(SRName.UIXamlPagesAgentPageLabelNewConversation);
-
     public Guid Id { get; set; } = Guid.NewGuid();
 
-    public AgentConversationViewModel()
-    {
-        Messages.CollectionChanged += OnMessagesCollectionChanged;
-    }
-
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TitleDisplay))]
     public partial string Title { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -56,46 +48,13 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
     [JsonIgnore]
     public JsonElement? SerializedSessionState { get; set; }
 
-    public ObservableChatMessageCollection Messages { get; } = [];
+    public ObservableChatMessageCollection Messages { get; private set; } = [];
 
-    public int MessageCount
-    {
-        get
-        {
-            return Messages.Count;
-        }
-    }
+    public StringResourceValue TitleDisplay { get => string.IsNullOrWhiteSpace(Title) ? SRName.UIXamlPagesAgentPageLabelNewConversation : Title; }
 
-    public StringResourceValue TitleDisplay
-    {
-        get => titleDisplay;
-        private set => SetProperty(ref titleDisplay, value);
-    }
+    public string CreatedAtDisplay { get => CreatedAt.ToString("yyyy-MM-dd HH:mm:ss"); }
 
-    public string CreatedAtDisplay
-    {
-        get
-        {
-            return CreatedAt.ToString("G");
-        }
-    }
-
-    public string UpdatedAtDisplay
-    {
-        get
-        {
-            return UpdatedAt.ToString("G");
-        }
-    }
-
-    public void SetMessages(IEnumerable<ObservableChatMessage> messages)
-    {
-        Messages.Clear();
-        foreach (ObservableChatMessage message in messages)
-        {
-            Messages.Add(message);
-        }
-    }
+    public string UpdatedAtDisplay { get => UpdatedAt.ToString("yyyy-MM-dd HH:mm:ss"); }
 
     public AgentConversation ToData()
     {
@@ -109,13 +68,13 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelProfileId = ModelProfileId,
             ProviderType = ProviderType,
             SerializedSessionState = SerializedSessionState?.Clone(),
-            Messages = [.. Messages],
+            Messages = new(Messages),
         };
     }
 
     public static AgentConversationViewModel Create(AgentConversation data)
     {
-        AgentConversationViewModel viewModel = new()
+        return new()
         {
             Id = data.Id,
             Title = data.Title,
@@ -125,29 +84,7 @@ internal sealed partial class AgentConversationViewModel : ObservableObject
             ModelProfileId = data.ModelProfileId,
             ProviderType = data.ProviderType,
             SerializedSessionState = data.SerializedSessionState?.Clone(),
+            Messages = new(data.Messages),
         };
-
-        if (data.Messages is { Count: > 0 } messages)
-        {
-            viewModel.SetMessages(messages);
-        }
-        return viewModel;
-    }
-
-    partial void OnTitleChanged(string value)
-    {
-        TitleDisplay = CreateTitleDisplay(value);
-    }
-
-    private void OnMessagesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        OnPropertyChanged(nameof(MessageCount));
-    }
-
-    private static StringResourceValue CreateTitleDisplay(string title)
-    {
-        return string.IsNullOrWhiteSpace(title)
-            ? StringResourceValue.FromName(SRName.UIXamlPagesAgentPageLabelNewConversation)
-            : StringResourceValue.FromText(title);
     }
 }

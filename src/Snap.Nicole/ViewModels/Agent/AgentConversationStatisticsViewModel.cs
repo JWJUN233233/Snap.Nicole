@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Snap.Nicole.ViewModels.Agent;
 
-internal sealed class AgentHistorySummaryViewModel
+internal sealed class AgentConversationStatisticsViewModel
 {
     public int MessageCount { get; set; }
 
@@ -17,48 +17,48 @@ internal sealed class AgentHistorySummaryViewModel
 
     public int ToolResultCount { get; set; }
 
-    public long? TotalTokenCount { get; set; }
+    public long TotalTokenCount { get; set; }
 
-    public long? InputTokenCount { get; set; }
+    public long InputTokenCount { get; set; }
 
-    public long? OutputTokenCount { get; set; }
+    public long OutputTokenCount { get; set; }
 
-    public long? ReasoningTokenCount { get; set; }
+    public long ReasoningTokenCount { get; set; }
 
-    public long? CachedInputTokenCount { get; set; }
+    public long CachedInputTokenCount { get; set; }
 
-    public static AgentHistorySummaryViewModel Create(IEnumerable<ObservableChatMessage> messages)
+    public static AgentConversationStatisticsViewModel Create(IEnumerable<ObservableChatMessage> messages)
     {
-        AgentHistorySummaryViewModel summary = new();
+        AgentConversationStatisticsViewModel statistics = new();
 
         foreach (ObservableChatMessage message in messages)
         {
-            summary.MessageCount++;
+            statistics.MessageCount++;
             foreach (ObservableAIContent content in message.Contents)
             {
-                summary.ContentCount++;
+                statistics.ContentCount++;
                 switch (content)
                 {
                     case ObservableTextContent:
-                        summary.TextContentCount++;
+                        statistics.TextContentCount++;
                         break;
                     case ObservableTextReasoningContent:
-                        summary.ReasoningContentCount++;
+                        statistics.ReasoningContentCount++;
                         break;
                     case ObservableToolCallContent:
-                        summary.ToolCallCount++;
+                        statistics.ToolCallCount++;
                         break;
                     case ObservableToolResultContent:
-                        summary.ToolResultCount++;
+                        statistics.ToolResultCount++;
                         break;
                     case ObservableUsageContent usageContent:
-                        summary.AddUsage(usageContent);
+                        statistics.AddUsage(usageContent);
                         break;
                 }
             }
         }
 
-        return summary;
+        return statistics;
     }
 
     private void AddUsage(ObservableUsageContent usageContent)
@@ -70,13 +70,13 @@ internal sealed class AgentHistorySummaryViewModel
         CachedInputTokenCount = AddCounts(CachedInputTokenCount, usageContent.CachedInputTokenCount);
     }
 
-    private static long? AddCounts(long? current, long? value)
+    private static long AddCounts(long current, long? value)
     {
         if (value is not long count || count <= 0)
         {
             return current;
         }
 
-        return (current ?? 0) + count;
+        return current + count;
     }
 }
