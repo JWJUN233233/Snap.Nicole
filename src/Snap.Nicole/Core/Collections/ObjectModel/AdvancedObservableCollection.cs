@@ -2,7 +2,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 
-namespace Snap.Nicole.Core;
+namespace Snap.Nicole.Core.Collections.ObjectModel;
 
 internal sealed class AdvancedObservableCollection<T> : ObservableCollection<T>
     where T : class
