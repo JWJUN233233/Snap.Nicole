@@ -9,7 +9,6 @@ using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
@@ -17,23 +16,13 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels.Settings;
 
-internal sealed partial class SettingsModelConfigurationViewModel : ObservableObject, IDisposable
+internal sealed partial class SettingsModelConfigurationViewModel(IServiceProvider serviceProvider) : ObservableObject
 {
-    private const string RemovedModelNameSuffix = "[Removed]";
+    private const string RemovedModelNameSuffix = " [Removed]";
 
-    private readonly IModelProfileService modelProfileService;
-    private bool disposed;
+    private readonly IModelProfileService modelProfileService = serviceProvider.GetRequiredService<IModelProfileService>();
 
-    public SettingsModelConfigurationViewModel(IServiceProvider serviceProvider)
-    {
-        modelProfileService = serviceProvider.GetRequiredService<IModelProfileService>();
-        Settings = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
-
-        Settings.ModelProviderProfiles.CollectionChanged += OnModelProviderProfilesCollectionChanged;
-        ModelProviderProfileEmptyStateText = CreateModelProviderProfileEmptyStateText();
-    }
-
-    public AppSettings Settings { get; }
+    public AppSettings Settings { get; } = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
     public IReadOnlyList<SettingsItem<EnumBox<ModelProviderType>>> ModelProviderTypes { get; } =
     [
@@ -47,13 +36,10 @@ internal sealed partial class SettingsModelConfigurationViewModel : ObservableOb
     public partial bool IsModelListBusy { get; set; }
 
     [ObservableProperty]
-    public partial StringResourceValue ModelListStatusTitle { get; set; } = StringResourceValue.FromText(string.Empty);
+    public partial StringResourceValue ModelListStatusTitle { get; set; } = string.Empty;
 
     [ObservableProperty]
-    public partial StringResourceValue ModelListStatusMessage { get; set; } = StringResourceValue.FromText(string.Empty);
-
-    [ObservableProperty]
-    public partial StringResourceValue ModelProviderProfileEmptyStateText { get; set; } = StringResourceValue.FromText(string.Empty);
+    public partial StringResourceValue ModelListStatusMessage { get; set; } = string.Empty;
 
     [ObservableProperty]
     public partial bool IsModelListStatusOpen { get; set; }
@@ -61,9 +47,80 @@ internal sealed partial class SettingsModelConfigurationViewModel : ObservableOb
     [ObservableProperty]
     public partial InfoBarSeverity ModelListInfoBarSeverity { get; set; } = InfoBarSeverity.Informational;
 
-    private bool CanRefreshModels
+    private bool CanRefreshModels { get => !IsModelListBusy; }
+
+    private static void MergeModelProfiles(ObservableSettingsCollection<ModelProfile, Guid> destination, IReadOnlyList<ModelProfile> source)
     {
-        get => !IsModelListBusy;
+        // There can potentially be models with the same ModelId, so we didn't use ToDictionary.
+        Dictionary<string, ModelProfile> existingMap = new(StringComparer.Ordinal);
+        foreach (ModelProfile destModelProfile in destination)
+        {
+            if (!string.IsNullOrWhiteSpace(destModelProfile.ModelId))
+            {
+                existingMap.TryAdd(destModelProfile.ModelId, destModelProfile);
+            }
+        }
+
+        HashSet<string> visitedModelIds = new(StringComparer.Ordinal);
+        bool shouldSelectFirstFetched = destination.CurrentItem is null || string.IsNullOrWhiteSpace(destination.CurrentItem.ModelId);
+        ModelProfile? firstFetched = null;
+        int targetIndex = 0;
+
+        foreach (ModelProfile sourceModelProfile in source)
+        {
+            if (string.IsNullOrWhiteSpace(sourceModelProfile.ModelId) || !visitedModelIds.Add(sourceModelProfile.ModelId))
+            {
+                continue;
+            }
+
+            if (!existingMap.TryGetValue(sourceModelProfile.ModelId, out ModelProfile? current))
+            {
+                current = new();
+                destination.Insert(targetIndex, current);
+            }
+            else
+            {
+                int currentIndex = destination.IndexOf(current);
+                if (currentIndex != targetIndex)
+                {
+                    destination.Move(currentIndex, targetIndex);
+                }
+            }
+
+            // Keep Id stable because conversations and selections reference model profiles by Guid.
+            current.Name = sourceModelProfile.Name;
+            current.ModelId = sourceModelProfile.ModelId;
+
+            firstFetched ??= current;
+            targetIndex++;
+        }
+
+        for (int i = targetIndex; i < destination.Count; i++)
+        {
+            ModelProfile modelProfile = destination[i];
+            if (string.IsNullOrWhiteSpace(modelProfile.ModelId) || visitedModelIds.Contains(modelProfile.ModelId))
+            {
+                continue;
+            }
+
+            modelProfile.Name = GetRemovedModelProfileName(modelProfile);
+        }
+
+        if (shouldSelectFirstFetched && firstFetched is not null)
+        {
+            destination.CurrentItem = firstFetched;
+        }
+    }
+
+    private static string GetRemovedModelProfileName(ModelProfile modelProfile)
+    {
+        string name = string.IsNullOrWhiteSpace(modelProfile.Name) ? modelProfile.ModelId : modelProfile.Name;
+        if (name.EndsWith(RemovedModelNameSuffix, StringComparison.Ordinal))
+        {
+            return name;
+        }
+
+        return $"{name}{RemovedModelNameSuffix}";
     }
 
     [RelayCommand]
@@ -165,7 +222,8 @@ internal sealed partial class SettingsModelConfigurationViewModel : ObservableOb
         try
         {
             IReadOnlyList<ModelProfile> modelProfiles = await modelProfileService.GetModelsAsync(providerProfile, cancellationToken);
-            MergeModelProfiles(providerProfile, modelProfiles);
+            MergeModelProfiles(providerProfile.ModelProfiles, modelProfiles);
+
             SetModelListStatus(InfoBarSeverity.Success, SRName.UIXamlPagesSettingsPageModelListStatusSuccessTitle, StringResourceValue.FromName(SRName.UIXamlPagesSettingsPageModelListStatusSuccessMessage, modelProfiles.Count));
             span.SetData(SentryData.AIModelCount, modelProfiles.Count);
         }
@@ -177,7 +235,7 @@ internal sealed partial class SettingsModelConfigurationViewModel : ObservableOb
         catch (Exception ex)
         {
             SentryDiagnostics.CaptureException(ex, span, SentryOperations.SettingsModelProfilesRefresh);
-            SetModelListStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, StringResourceValue.FromText(ex.Message));
+            SetModelListStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageModelListStatusFailedTitle, ex.Message);
         }
         finally
         {
@@ -215,115 +273,11 @@ internal sealed partial class SettingsModelConfigurationViewModel : ObservableOb
         }
     }
 
-    private static void MergeModelProfiles(ModelProviderProfile providerProfile, IReadOnlyList<ModelProfile> source)
-    {
-        // There can potentially be models with the same ModelId, so we didn't use ToDictionary.
-        Dictionary<string, ModelProfile> existingMap = new(StringComparer.Ordinal);
-        foreach (ModelProfile modelProfile in providerProfile.ModelProfiles)
-        {
-            if (!string.IsNullOrWhiteSpace(modelProfile.ModelId))
-            {
-                existingMap.TryAdd(modelProfile.ModelId, modelProfile);
-            }
-        }
-
-        HashSet<string> visitedModelIds = new(StringComparer.Ordinal);
-        bool shouldSelectFirstFetched = providerProfile.ModelProfiles.CurrentItem is null || string.IsNullOrWhiteSpace(providerProfile.ModelProfiles.CurrentItem.ModelId);
-        ModelProfile? firstFetched = null;
-        int targetIndex = 0;
-
-        foreach (ModelProfile sourceModelProfile in source)
-        {
-            if (string.IsNullOrWhiteSpace(sourceModelProfile.ModelId) || !visitedModelIds.Add(sourceModelProfile.ModelId))
-            {
-                continue;
-            }
-
-            if (!existingMap.TryGetValue(sourceModelProfile.ModelId, out ModelProfile? targetModelProfile))
-            {
-                targetModelProfile = new();
-                providerProfile.ModelProfiles.Insert(targetIndex, targetModelProfile);
-            }
-            else
-            {
-                int currentIndex = providerProfile.ModelProfiles.IndexOf(targetModelProfile);
-                if (currentIndex != targetIndex)
-                {
-                    providerProfile.ModelProfiles.Move(currentIndex, targetIndex);
-                }
-            }
-
-            // Keep Id stable because conversations and selections reference model profiles by Guid.
-            targetModelProfile.Name = sourceModelProfile.Name;
-            targetModelProfile.ModelId = sourceModelProfile.ModelId;
-
-            firstFetched ??= targetModelProfile;
-            targetIndex++;
-        }
-
-        for (int i = targetIndex; i < providerProfile.ModelProfiles.Count; i++)
-        {
-            ModelProfile modelProfile = providerProfile.ModelProfiles[i];
-            if (string.IsNullOrWhiteSpace(modelProfile.ModelId) || visitedModelIds.Contains(modelProfile.ModelId))
-            {
-                continue;
-            }
-
-            modelProfile.Name = GetRemovedModelProfileName(modelProfile);
-        }
-
-        if (shouldSelectFirstFetched && firstFetched is not null)
-        {
-            providerProfile.ModelProfiles.CurrentItem = firstFetched;
-        }
-    }
-
-    private static string GetRemovedModelProfileName(ModelProfile modelProfile)
-    {
-        string name = string.IsNullOrWhiteSpace(modelProfile.Name) ? modelProfile.ModelId : modelProfile.Name;
-        if (name.EndsWith(RemovedModelNameSuffix, StringComparison.Ordinal))
-        {
-            return name;
-        }
-
-        return string.Concat(name, RemovedModelNameSuffix);
-    }
-
-    private void SetModelListStatus(InfoBarSeverity severity, SRName titleName, SRName messageName)
-    {
-        SetModelListStatus(severity, titleName, StringResourceValue.FromName(messageName));
-    }
-
-    private void SetModelListStatus(InfoBarSeverity severity, SRName titleName, StringResourceValue message)
+    private void SetModelListStatus(InfoBarSeverity severity, StringResourceValue title, StringResourceValue message)
     {
         ModelListInfoBarSeverity = severity;
-        ModelListStatusTitle = StringResourceValue.FromName(titleName);
+        ModelListStatusTitle = title;
         ModelListStatusMessage = message;
         IsModelListStatusOpen = true;
-    }
-
-    public void Dispose()
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        disposed = true;
-        Settings.ModelProviderProfiles.CollectionChanged -= OnModelProviderProfilesCollectionChanged;
-    }
-
-    private void OnModelProviderProfilesCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        ModelProviderProfileEmptyStateText = CreateModelProviderProfileEmptyStateText();
-    }
-
-    private StringResourceValue CreateModelProviderProfileEmptyStateText()
-    {
-        SRName name = Settings.ModelProviderProfiles.Count > 0
-            ? SRName.UIXamlPagesSettingsPageDescriptionSelectModelProviderProfileToEdit
-            : SRName.UIXamlPagesSettingsPageDescriptionAddModelProviderProfileToEdit;
-
-        return StringResourceValue.FromName(name);
     }
 }

@@ -129,9 +129,9 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         await ExecuteOperationAsync(
             SentryOperations.SettingsGitInitialize,
             SRName.UIXamlPagesSettingsPageGitStatusInitializeMessage,
-            gitSyncService.InitializeRepositoryAsync,
+            static (gitSyncService, remoteUrl, token) => gitSyncService.InitializeRepositoryAsync(remoteUrl, token),
             SRName.UIXamlPagesSettingsPageGitStatusInitializeSuccessTitle,
-            static result => StringResourceValue.FromName(SRName.UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage),
+            static result => SRName.UIXamlPagesSettingsPageGitStatusInitializeSuccessMessage,
             cancellationToken);
     }
 
@@ -141,11 +141,11 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         await ExecuteOperationAsync(
             SentryOperations.SettingsGitPull,
             SRName.UIXamlPagesSettingsPageGitStatusPullMessage,
-            gitSyncService.PullAsync,
+            static (gitSyncService, remoteUrl, token) => gitSyncService.PullAsync(token),
             SRName.UIXamlPagesSettingsPageGitStatusPullSuccessTitle,
-            static result => StringResourceValue.FromName(result.DetailKind is SettingsGitOperationDetailKind.RemoteEmpty
+            static result => result.DetailKind is SettingsGitOperationDetailKind.RemoteEmpty
                 ? SRName.UIXamlPagesSettingsPageGitStatusRemoteEmptyMessage
-                : SRName.UIXamlPagesSettingsPageGitStatusPullSuccessMessage),
+                : SRName.UIXamlPagesSettingsPageGitStatusPullSuccessMessage,
             cancellationToken);
     }
 
@@ -155,18 +155,18 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         await ExecuteOperationAsync(
             SentryOperations.SettingsGitPush,
             SRName.UIXamlPagesSettingsPageGitStatusPushMessage,
-            gitSyncService.PushAsync,
+            static (gitSyncService, remoteUrl, token) => gitSyncService.PushAsync(token),
             SRName.UIXamlPagesSettingsPageGitStatusPushSuccessTitle,
-            static result => StringResourceValue.FromName(result.DetailKind is SettingsGitOperationDetailKind.NoLocalCommits
+            static result => result.DetailKind is SettingsGitOperationDetailKind.NoLocalCommits
                 ? SRName.UIXamlPagesSettingsPageGitStatusNoLocalCommitsMessage
-                : SRName.UIXamlPagesSettingsPageGitStatusPushSuccessMessage),
+                : SRName.UIXamlPagesSettingsPageGitStatusPushSuccessMessage,
             cancellationToken);
     }
 
     private async Task ExecuteOperationAsync(
         string operationName,
         SRName currentOperationTextName,
-        Func<string, CancellationToken, Task<SettingsGitOperationResult>> operation,
+        Func<ISettingsGitSyncService, string, CancellationToken, Task<SettingsGitOperationResult>> operation,
         SRName successTitleName,
         Func<SettingsGitOperationResult, StringResourceValue> successMessageFactory,
         CancellationToken cancellationToken)
@@ -181,7 +181,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         SettingsGitOperationResult result;
         try
         {
-            result = await operation(RepositoryUrl.Trim(), cancellationToken);
+            result = await operation(gitSyncService, RepositoryUrl.Trim(), cancellationToken);
             await RefreshRepositoryStateCoreAsync(false, cancellationToken);
         }
         catch (OperationCanceledException)
@@ -215,23 +215,6 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         SetStatus(InfoBarSeverity.Error, SRName.UIXamlPagesSettingsPageGitStatusOperationFailedTitle, BuildFailureMessage(result));
     }
 
-    private async Task ExecuteOperationAsync(
-        string operationName,
-        SRName currentOperationTextName,
-        Func<CancellationToken, Task<SettingsGitOperationResult>> operation,
-        SRName successTitleName,
-        Func<SettingsGitOperationResult, StringResourceValue> successMessageFactory,
-        CancellationToken cancellationToken)
-    {
-        await ExecuteOperationAsync(
-            operationName,
-            currentOperationTextName,
-            (_, token) => operation(token),
-            successTitleName,
-            successMessageFactory,
-            cancellationToken);
-    }
-
     private async Task RefreshRepositoryStateCoreAsync(bool updateStatus, CancellationToken cancellationToken)
     {
         SettingsGitRepositoryState state = await gitSyncService.GetRepositoryStateAsync(cancellationToken);
@@ -240,9 +223,7 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         IsGitAvailable = state.IsGitAvailable;
         IsRepository = state.IsRepository;
         HasRemote = !string.IsNullOrWhiteSpace(state.RemoteUrl);
-        RemoteUrlDisplay = state.RemoteUrl is null
-            ? StringResourceValue.FromName(SRName.UIXamlPagesSettingsPageLabelUnavailable)
-            : StringResourceValue.FromText(state.RemoteUrl);
+        RemoteUrlDisplay = state.RemoteUrl is null ? SRName.UIXamlPagesSettingsPageLabelUnavailable : state.RemoteUrl;
 
         if (!string.IsNullOrWhiteSpace(state.RemoteUrl))
         {
@@ -281,15 +262,10 @@ internal sealed partial class SettingsGitSyncViewModel(ISettingsGitSyncService g
         SetStatus(InfoBarSeverity.Informational, SRName.UIXamlPagesSettingsPageGitStatusNotRepositoryTitle, SRName.UIXamlPagesSettingsPageGitStatusNotRepositoryMessage);
     }
 
-    private void SetStatus(InfoBarSeverity severity, SRName titleName, SRName messageName)
-    {
-        SetStatus(severity, titleName, StringResourceValue.FromName(messageName));
-    }
-
-    private void SetStatus(InfoBarSeverity severity, SRName titleName, StringResourceValue message)
+    private void SetStatus(InfoBarSeverity severity, StringResourceValue title, StringResourceValue message)
     {
         InfoBarSeverity = severity;
-        StatusTitle = StringResourceValue.FromName(titleName);
+        StatusTitle = title;
         StatusMessage = message;
         IsStatusOpen = true;
     }

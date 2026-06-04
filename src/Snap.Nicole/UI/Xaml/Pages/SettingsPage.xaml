@@ -21,6 +21,7 @@
 
     <Page.Resources>
         <cvt:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <cvt:DoubleToVisibilityConverter x:Key="PositiveCountVisibilityConverter" GreaterThan="0" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
     </Page.Resources>
@@ -366,9 +367,18 @@
                                         MaxWidth="320"
                                         HorizontalAlignment="Center"
                                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding ModelProviderProfileEmptyStateText.Value}"
+                                        Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionSelectModelProviderProfileToEdit}"
                                         TextAlignment="Center"
-                                        TextWrapping="WrapWholeWords" />
+                                        TextWrapping="WrapWholeWords"
+                                        Visibility="{Binding Settings.ModelProviderProfiles.Count, Converter={StaticResource PositiveCountVisibilityConverter}}" />
+                                    <TextBlock
+                                        MaxWidth="320"
+                                        HorizontalAlignment="Center"
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionAddModelProviderProfileToEdit}"
+                                        TextAlignment="Center"
+                                        TextWrapping="WrapWholeWords"
+                                        Visibility="{Binding Settings.ModelProviderProfiles.Count, Converter={StaticResource PositiveCountVisibilityConverter}, ConverterParameter=True}" />
                                 </StackPanel>
                             </Grid>
                         </Border>

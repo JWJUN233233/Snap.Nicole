@@ -46,6 +46,16 @@ internal sealed class StringResourceValue : ObservableObject
         }
     }
 
+    public static implicit operator StringResourceValue(SRName name)
+    {
+        return FromName(name);
+    }
+
+    public static implicit operator StringResourceValue(string? text)
+    {
+        return FromText(text);
+    }
+
     public static StringResourceValue FromName(SRName name)
     {
         return new()

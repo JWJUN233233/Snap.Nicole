@@ -4,14 +4,11 @@ using Snap.Nicole.Services.Settings;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Threading;
 
 namespace Snap.Nicole.ViewModels.Settings;
 
-internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider) : ObservableObject, IDisposable
+internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider) : ObservableObject
 {
-    private bool disposed;
-
     public AppSettings Settings { get; } = serviceProvider.GetRequiredService<IOptionsProvider<AppSettings>>().CurrentValue;
 
     public SettingsGitSyncViewModel GitSync { get; } = serviceProvider.GetRequiredService<SettingsGitSyncViewModel>();
@@ -19,14 +16,4 @@ internal sealed partial class SettingsViewModel(IServiceProvider serviceProvider
     public SettingsModelConfigurationViewModel ModelConfiguration { get; } = serviceProvider.GetRequiredService<SettingsModelConfigurationViewModel>();
 
     public IReadOnlyList<SettingsItem<string>> Languages { get; } = [.. StringResourceProxy.SupportedCultures.Select(name => new SettingsItem<string>(CultureInfo.GetCultureInfo(name).NativeName, name))];
-
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref disposed, true))
-        {
-            return;
-        }
-
-        ModelConfiguration.Dispose();
-    }
 }
