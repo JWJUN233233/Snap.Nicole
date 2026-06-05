@@ -40,7 +40,6 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <TextBlock
@@ -54,13 +53,6 @@
                         Command="{x:Bind ViewModel.CreateConversationCommand}"
                         ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelNewConversation}">
                         <FontIcon FontSize="16" Glyph="&#xE710;" />
-                    </Button>
-
-                    <Button
-                        Grid.Column="2"
-                        Command="{x:Bind ViewModel.DeleteConversationCommand}"
-                        ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelDeleteConversation}">
-                        <FontIcon FontSize="16" Glyph="&#xE74D;" />
                     </Button>
                 </Grid>
 
@@ -82,6 +74,18 @@
                                     <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
+                                <Grid.ContextFlyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem
+                                            Command="{Binding DeleteConversationCommand}"
+                                            Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelDeleteConversation}">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon Glyph="&#xE74D;" />
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                    </MenuFlyout>
+                                </Grid.ContextFlyout>
+
                                 <TextBlock
                                     Grid.Row="0"
                                     FontWeight="SemiBold"
@@ -96,12 +100,6 @@
                                         Opacity="0.7"
                                         Style="{ThemeResource CaptionTextBlockStyle}"
                                         Text="{Binding Messages.Count}" />
-                                    <TextBlock
-                                        MaxWidth="160"
-                                        Opacity="0.7"
-                                        Style="{ThemeResource CaptionTextBlockStyle}"
-                                        Text="{Binding ModelId}"
-                                        TextTrimming="CharacterEllipsis" />
                                 </StackPanel>
 
                                 <TextBlock
@@ -138,13 +136,13 @@
 
                             <ComboBox Grid.Column="0" DisplayMemberPath="Name">
                                 <mxi:Interaction.Behaviors>
-                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem, Mode=TwoWay}" />
+                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles}" SelectedItem="{Binding Conversations.CurrentItem.ModelProviderProfile, Mode=TwoWay}" />
                                 </mxi:Interaction.Behaviors>
                             </ComboBox>
 
                             <ComboBox Grid.Column="1" DisplayMemberPath="DisplayName">
                                 <mxi:Interaction.Behaviors>
-                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
+                                    <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Conversations.CurrentItem.ModelProviderProfile.ModelProfiles, Mode=OneWay}" SelectedItem="{Binding Conversations.CurrentItem.ModelProfile, Mode=TwoWay}" />
                                 </mxi:Interaction.Behaviors>
                             </ComboBox>
                         </Grid>
@@ -161,7 +159,10 @@
                                         <Setter Property="MinWidth" Value="360" />
                                     </Style>
                                 </Flyout.FlyoutPresenterStyle>
-                                <Grid ColumnSpacing="12" RowSpacing="8">
+                                <Grid
+                                    ColumnSpacing="12"
+                                    DataContext="{x:Bind ViewModel}"
+                                    RowSpacing="8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
@@ -180,77 +181,77 @@
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelMessages}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.MessageCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.MessageCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="0" Grid.Column="1">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelContents}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.ContentCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.ContentCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="0">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTextContents}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.TextContentCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.TextContentCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="1" Grid.Column="1">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningContents}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.ReasoningContentCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.ReasoningContentCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="2" Grid.Column="0">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolCalls}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.ToolCallCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.ToolCallCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="2" Grid.Column="1">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelToolResults}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.ToolResultCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.ToolResultCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="3" Grid.Column="0">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelTotalTokens}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.TotalTokenCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.TotalTokenCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="3" Grid.Column="1">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelInputTokens}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.InputTokenCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.InputTokenCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="4" Grid.Column="0">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelOutputTokens}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.OutputTokenCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.OutputTokenCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="4" Grid.Column="1">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelReasoningTokens}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.ReasoningTokenCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.ReasoningTokenCount}" />
                                     </StackPanel>
                                     <StackPanel Grid.Row="5" Grid.Column="0">
                                         <TextBlock
                                             Opacity="0.7"
                                             Style="{ThemeResource CaptionTextBlockStyle}"
                                             Text="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelCachedInputTokens}" />
-                                        <TextBlock Text="{x:Bind ViewModel.ConversationStatistics.CachedInputTokenCount, Mode=OneWay}" />
+                                        <TextBlock Text="{Binding Conversations.CurrentItem.ConversationStatistics.CachedInputTokenCount}" />
                                     </StackPanel>
                                 </Grid>
                             </Flyout>
@@ -263,7 +264,7 @@
                 <ItemsControl
                     Margin="16,16,16,8"
                     ItemContainerTransitions="{ThemeResource AddDeleteThemeTransitions}"
-                    ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
+                    ItemsSource="{Binding Conversations.CurrentItem.Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <snuxcc:ChatMessageView Margin="0,0,0,8" Message="{Binding}" />
@@ -295,16 +296,16 @@
                     AcceptsReturn="True"
                     IsSpellCheckEnabled="False"
                     PlaceholderText="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelPlaceholder}"
-                    Text="{x:Bind ViewModel.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    Text="{Binding Conversations.CurrentItem.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                     <mxi:Interaction.Behaviors>
-                        <snuxb:SubmitOnEnterTextBoxBehavior Command="{x:Bind ViewModel.SendMessageCommand}" />
+                        <snuxb:SubmitOnEnterTextBoxBehavior Command="{Binding Conversations.CurrentItem.SendMessageCommand}" />
                     </mxi:Interaction.Behaviors>
                 </TextBox>
 
                 <Button
                     Grid.Column="1"
                     VerticalAlignment="Bottom"
-                    Command="{x:Bind ViewModel.SendMessageCommand}"
+                    Command="{Binding Conversations.CurrentItem.SendMessageCommand}"
                     Content="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSend}" />
             </Grid>
         </Grid>

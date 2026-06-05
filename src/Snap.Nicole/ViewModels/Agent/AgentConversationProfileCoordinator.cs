@@ -1,92 +1,22 @@
-using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.AI;
-using Snap.Nicole.Core.ComponentModel;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
-using System.ComponentModel;
 using System.Linq;
-using System.Threading;
 
 namespace Snap.Nicole.ViewModels.Agent;
 
-internal sealed class AgentConversationProfileCoordinator : IDisposable
+internal sealed class AgentConversationProfileCoordinator(AppSettings settings)
 {
-    private readonly IMessenger messenger;
-    private readonly Guid messengerToken;
-    private readonly AppSettings settings;
-    private readonly NotifyPropertyChangedEventRevoker settingsChangedEventRevoker;
-    private INotifyPropertyChanged? modelProviderProfilesSubscription;
-    private INotifyPropertyChanged? modelProfilesSubscription;
-    private NotifyPropertyChangedEventRevoker? modelProviderProfilesChangedEventRevoker;
-    private NotifyPropertyChangedEventRevoker? modelProfilesChangedEventRevoker;
-    private bool disposed;
-    private bool isApplyingConversationSelection;
+    private readonly AppSettings settings = settings;
 
-    public AgentConversationProfileCoordinator(AppSettings settings, IMessenger messenger, Guid messengerToken)
+    public static ExtendedAgentOptions? CreateRequestOptions(AgentConversationViewModel conversation)
     {
-        this.messenger = messenger;
-        this.messengerToken = messengerToken;
-        this.settings = settings;
-
-        settingsChangedEventRevoker = NotifyPropertyChangedEvents.AutoRevoke(settings, OnSettingsPropertyChanged);
-        UpdateModelProviderProfilesSubscription();
-        UpdateModelProfilesSubscription();
-    }
-
-    public AppSettings Settings
-    {
-        get
-        {
-            return settings;
-        }
-    }
-
-    public bool HasSelectedModel
-    {
-        get
-        {
-            return !string.IsNullOrWhiteSpace(settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.CurrentItem?.ModelId);
-        }
-    }
-
-    public void Dispose()
-    {
-        if (Interlocked.Exchange(ref disposed, true))
-        {
-            return;
-        }
-
-        settingsChangedEventRevoker.Dispose();
-        ClearPropertyChangedSubscriptions();
-    }
-
-    public void InitializeConversationProfile(AgentConversationViewModel conversation)
-    {
-        ModelProviderProfile? providerProfile = settings.ModelProviderProfiles.CurrentItem;
-        ModelProfile? modelProfile = providerProfile?.ModelProfiles.CurrentItem;
-        if (providerProfile is not null)
-        {
-            conversation.ModelProviderProfileId = providerProfile.Id;
-            conversation.ProviderType = providerProfile.ProviderType.Value;
-        }
-
-        if (modelProfile is not null)
-        {
-            conversation.ModelProfileId = modelProfile.Id;
-            conversation.ModelId = modelProfile.ModelId;
-        }
-    }
-
-    public ExtendedAgentOptions? CreateRequestOptions()
-    {
-        ModelProviderProfile? providerProfile = settings.ModelProviderProfiles.CurrentItem;
-        if (providerProfile is null)
+        if (conversation.ModelProviderProfile is not { } providerProfile)
         {
             return null;
         }
 
-        ModelProfile? modelProfile = providerProfile.ModelProfiles.CurrentItem;
-        if (modelProfile is null || string.IsNullOrWhiteSpace(modelProfile.ModelId))
+        if (conversation.ModelProfile is not { } modelProfile || string.IsNullOrWhiteSpace(modelProfile.ModelId))
         {
             return null;
         }
@@ -103,139 +33,37 @@ internal sealed class AgentConversationProfileCoordinator : IDisposable
         };
     }
 
-    public void UpdateConversationProfile(AgentConversationViewModel conversation, ExtendedAgentOptions requestOptions)
+    public void ResolveConversationProfile(AgentConversationViewModel conversation, Guid? providerProfileId, Guid? modelProfileId)
     {
-        ModelProviderProfile? providerProfile = settings.ModelProviderProfiles.CurrentItem;
-        ModelProfile? modelProfile = providerProfile?.ModelProfiles.CurrentItem;
+        ModelProviderProfile? providerProfile = FindModelProviderProfile(settings.ModelProviderProfiles, providerProfileId);
+        ModelProfile? modelProfile = FindModelProfile(providerProfile?.ModelProfiles, modelProfileId);
 
-        conversation.ModelProviderProfileId = providerProfile?.Id;
-        conversation.ModelProfileId = modelProfile?.Id;
-        conversation.ProviderType = requestOptions.ProviderType;
-        conversation.ModelId = requestOptions.ModelId;
+        conversation.ModelProviderProfile = providerProfile;
+        conversation.ModelProfile = modelProfile;
     }
 
-    public void RefreshConversationModelId(AgentConversationViewModel conversation)
+    private static ModelProviderProfile? FindModelProviderProfile(ObservableSettingsCollection<ModelProviderProfile, Guid> collection, Guid? providerProfileId)
     {
-        if (!conversation.ModelProviderProfileId.HasValue || !conversation.ModelProfileId.HasValue)
+        if (!providerProfileId.HasValue)
         {
-            conversation.ModelId = string.Empty;
-            return;
+            return collection.CurrentItem;
         }
 
-        Guid providerProfileId = conversation.ModelProviderProfileId.Value;
-        Guid modelProfileId = conversation.ModelProfileId.Value;
-        ModelProviderProfile? providerProfile = settings.ModelProviderProfiles.FirstOrDefault(item => item.Id == providerProfileId);
-        ModelProfile? modelProfile = providerProfile?.ModelProfiles.FirstOrDefault(item => item.Id == modelProfileId);
-        conversation.ModelId = modelProfile?.ModelId ?? string.Empty;
+        return collection.FirstOrDefault(profile => profile.Id == providerProfileId.Value) ?? collection.CurrentItem;
     }
 
-    public void ApplyConversationProfile(AgentConversationViewModel? conversation)
+    private static ModelProfile? FindModelProfile(ObservableSettingsCollection<ModelProfile, Guid>? collection, Guid? modelProfileId)
     {
-        if (conversation is null)
+        if (collection is null)
         {
-            return;
+            return null;
         }
 
-        isApplyingConversationSelection = true;
-        try
+        if (!modelProfileId.HasValue)
         {
-            if (conversation.ModelProviderProfileId.HasValue)
-            {
-                settings.ModelProviderProfiles.CurrentItemId = conversation.ModelProviderProfileId;
-            }
-
-            if (conversation.ModelProfileId.HasValue)
-            {
-                settings.ModelProviderProfiles.CurrentItem?.ModelProfiles.MoveCurrentTo(conversation.ModelProfileId.Value);
-            }
-        }
-        finally
-        {
-            isApplyingConversationSelection = false;
-        }
-    }
-
-    private void OnSettingsPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (disposed)
-        {
-            return;
+            return collection.CurrentItem;
         }
 
-        if (e.PropertyName is nameof(AppSettings.ModelProviderProfiles))
-        {
-            UpdateModelProviderProfilesSubscription();
-            UpdateModelProfilesSubscription();
-        }
-    }
-
-    private void OnModelProviderProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
-        {
-            UpdateModelProfilesSubscription();
-            NotifyCurrentProfileChanged();
-        }
-    }
-
-    private void OnModelProfilesPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        if (e.PropertyName is nameof(ObservableSettingsCollection<,>.CurrentItem) or nameof(ObservableSettingsCollection<,>.CurrentItemId))
-        {
-            NotifyCurrentProfileChanged();
-        }
-    }
-
-    private void NotifyCurrentProfileChanged()
-    {
-        if (isApplyingConversationSelection)
-        {
-            return;
-        }
-
-        messenger.Send(new AgentConversationProfileChangedMessage(), messengerToken);
-    }
-
-    private void ClearPropertyChangedSubscriptions()
-    {
-        UpdatePropertyChangedSubscription(ref modelProviderProfilesSubscription, ref modelProviderProfilesChangedEventRevoker, null, OnModelProviderProfilesPropertyChanged);
-        UpdatePropertyChangedSubscription(ref modelProfilesSubscription, ref modelProfilesChangedEventRevoker, null, OnModelProfilesPropertyChanged);
-    }
-
-    private void UpdateModelProviderProfilesSubscription()
-    {
-        UpdatePropertyChangedSubscription(ref modelProviderProfilesSubscription, ref modelProviderProfilesChangedEventRevoker, settings.ModelProviderProfiles, OnModelProviderProfilesPropertyChanged);
-    }
-
-    private void UpdateModelProfilesSubscription()
-    {
-        UpdatePropertyChangedSubscription(ref modelProfilesSubscription, ref modelProfilesChangedEventRevoker, settings.ModelProviderProfiles.CurrentItem?.ModelProfiles, OnModelProfilesPropertyChanged);
-    }
-
-    private static void UpdatePropertyChangedSubscription(ref INotifyPropertyChanged? subscription, ref NotifyPropertyChangedEventRevoker? eventRevoker, INotifyPropertyChanged? source, PropertyChangedEventHandler handler)
-    {
-        if (ReferenceEquals(subscription, source))
-        {
-            return;
-        }
-
-        eventRevoker?.Dispose();
-        eventRevoker = null;
-        subscription = source;
-
-        if (subscription is not null)
-        {
-            eventRevoker = NotifyPropertyChangedEvents.AutoRevoke(subscription, handler);
-        }
+        return collection.FirstOrDefault(profile => profile.Id == modelProfileId.Value) ?? collection.CurrentItem;
     }
 }

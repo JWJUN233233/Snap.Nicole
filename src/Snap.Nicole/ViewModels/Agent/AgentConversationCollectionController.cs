@@ -1,33 +1,22 @@
-using CommunityToolkit.Mvvm.Messaging;
 using Snap.Nicole.Core.Collections.ObjectModel;
-using Snap.Nicole.Core.ComponentModel;
 using Snap.Nicole.Core.Diagnostics;
 using Snap.Nicole.Services.AI;
 using Snap.Nicole.Services.AI.Models;
-using System.ComponentModel;
+using Snap.Nicole.Services.Settings;
 using System.Linq;
 using System.Threading;
 
 namespace Snap.Nicole.ViewModels.Agent;
 
-internal sealed class AgentConversationCollectionController : IDisposable
+internal sealed class AgentConversationCollectionController(IAgentConversationProvider conversationProvider, IAgentService agentService, AppSettings settings)
+    : IAgentConversationOwner, IDisposable
 {
-    private readonly IMessenger messenger;
-    private readonly Guid messengerToken;
-    private readonly IAgentConversationProvider conversationStore;
-    private readonly AgentConversationProfileCoordinator profileCoordinator;
-    private readonly NotifyPropertyChangedEventRevoker conversationsChangedEventRevoker;
+    private readonly IAgentConversationProvider conversationProvider = conversationProvider;
+    private readonly IAgentService agentService = agentService;
+    private readonly AgentConversationRuntimeCoordinator runtimeCoordinator = new(agentService);
+    private readonly AgentConversationProfileCoordinator profileCoordinator = new(settings);
+
     private bool disposed;
-
-    public AgentConversationCollectionController(IAgentConversationProvider conversationStore, AgentConversationProfileCoordinator profileCoordinator, IMessenger messenger, Guid messengerToken)
-    {
-        this.messenger = messenger;
-        this.messengerToken = messengerToken;
-        this.conversationStore = conversationStore;
-        this.profileCoordinator = profileCoordinator;
-
-        conversationsChangedEventRevoker = NotifyPropertyChangedEvents.AutoRevoke(Conversations, OnConversationsPropertyChanged);
-    }
 
     public AdvancedObservableCollection<AgentConversationViewModel> Conversations { get; } = [];
 
@@ -38,15 +27,61 @@ internal sealed class AgentConversationCollectionController : IDisposable
             return;
         }
 
-        conversationsChangedEventRevoker.Dispose();
+        foreach (AgentConversationViewModel conversation in Conversations)
+        {
+            conversation.Dispose();
+        }
+    }
+
+    public bool DeleteConversation(AgentConversationViewModel conversation)
+    {
+        if (!Conversations.Contains(conversation) || conversation.IsBusy)
+        {
+            return false;
+        }
+
+        SentryDiagnostics.AddBreadcrumb("Delete chat conversation", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
+
+        bool isCurrentConversation = ReferenceEquals(Conversations.CurrentItem, conversation);
+        int oldIndex = Conversations.IndexOf(conversation);
+        if (isCurrentConversation && Conversations.Count > 1)
+        {
+            int newIndex = Math.Clamp(oldIndex, 0, Conversations.Count - 2);
+            if (newIndex < oldIndex)
+            {
+                Conversations.CurrentItem = Conversations[newIndex];
+            }
+            else
+            {
+                Conversations.CurrentItem = Conversations[newIndex + 1];
+            }
+        }
+
+        conversationProvider.DeleteConversation(conversation.Id);
+        Conversations.Remove(conversation);
+        conversation.Dispose();
+
+        if (Conversations.Count is 0)
+        {
+            AgentConversationViewModel newConversation = CreateConversationCore();
+            Conversations.Add(newConversation);
+            Conversations.CurrentItem = newConversation;
+        }
+
+        return true;
+    }
+
+    public void SaveConversation(AgentConversationViewModel conversation)
+    {
+        conversationProvider.SaveConversation(conversation.ToData());
     }
 
     public void LoadConversations()
     {
-        foreach (AgentConversation conversation in conversationStore.LoadConversations().OrderByDescending(static item => item.UpdatedAt))
+        foreach (AgentConversation conversation in conversationProvider.LoadConversations().OrderByDescending(static item => item.UpdatedAt))
         {
-            AgentConversationViewModel viewModel = AgentConversationViewModel.Create(conversation);
-            profileCoordinator.RefreshConversationModelId(viewModel);
+            AgentConversationViewModel viewModel = AgentConversationViewModel.Create(conversation, agentService, runtimeCoordinator, profileCoordinator, this);
+            profileCoordinator.ResolveConversationProfile(viewModel, conversation.ModelProviderProfileId, conversation.ModelProfileId);
             Conversations.Add(viewModel);
         }
 
@@ -67,74 +102,10 @@ internal sealed class AgentConversationCollectionController : IDisposable
         return conversation;
     }
 
-    public bool DeleteCurrentConversation()
-    {
-        if (Conversations.CurrentItem is not AgentConversationViewModel conversation)
-        {
-            return false;
-        }
-
-        SentryDiagnostics.AddBreadcrumb("Delete chat conversation", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
-
-        int oldIndex = Conversations.IndexOf(conversation);
-        AgentConversationViewModel? nextConversation = GetNextConversationAfterDelete(oldIndex);
-        Conversations.CurrentItem = nextConversation;
-        conversationStore.DeleteConversation(conversation.Id);
-        Conversations.Remove(conversation);
-
-        if (Conversations.Count is 0)
-        {
-            AgentConversationViewModel newConversation = CreateConversationCore();
-            Conversations.Add(newConversation);
-            Conversations.CurrentItem = newConversation;
-        }
-
-        return true;
-    }
-
-    public void SaveConversation(AgentConversationViewModel conversation)
-    {
-        conversationStore.SaveConversation(conversation.ToData());
-    }
-
     private AgentConversationViewModel CreateConversationCore()
     {
-        AgentConversationViewModel conversation = new()
-        {
-            CreatedAt = DateTimeOffset.Now,
-            UpdatedAt = DateTimeOffset.Now,
-        };
-
-        profileCoordinator.InitializeConversationProfile(conversation);
+        AgentConversationViewModel conversation = new(agentService, runtimeCoordinator, profileCoordinator, this);
+        profileCoordinator.ResolveConversationProfile(conversation, null, null);
         return conversation;
-    }
-
-    private AgentConversationViewModel? GetNextConversationAfterDelete(int oldIndex)
-    {
-        if (Conversations.Count <= 1)
-        {
-            return null;
-        }
-
-        int newIndex = Math.Clamp(oldIndex, 0, Conversations.Count - 2);
-        if (newIndex < oldIndex)
-        {
-            return Conversations[newIndex];
-        }
-
-        return Conversations[newIndex + 1];
-    }
-
-    private void OnConversationsPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (disposed)
-        {
-            return;
-        }
-
-        if (e.PropertyName is nameof(AdvancedObservableCollection<>.CurrentItem))
-        {
-            messenger.Send(new AgentCurrentConversationChangedMessage(Conversations.CurrentItem), messengerToken);
-        }
     }
 }

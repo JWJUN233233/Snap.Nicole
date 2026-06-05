@@ -17,8 +17,6 @@ internal sealed class AgentConversation
 
     public Guid? ModelProfileId { get; set; }
 
-    public ModelProviderType ProviderType { get; set; }
-
     public JsonElement? SerializedSessionState { get; set; }
 
     public ObservableChatMessageCollection Messages { get; set; } = [];

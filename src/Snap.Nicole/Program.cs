@@ -60,7 +60,7 @@ internal static class Program
                             .AddXamlWindow<MainWindow>()
                             .AddXamlWindow<NotifyIconXamlHostWindow>();
                     })
-                    .AddSingleton<IMessenger, WeakReferenceMessenger>()
+                    .AddSingleton<IMessenger>(WeakReferenceMessenger.Default)
                     .AddSingleton<INavigationService, NavigationService>()
                     .AddSingleton<INotifyIcon, NotifyIcon>()
                     .AddSingleton<IAgentService, AgentService>()
