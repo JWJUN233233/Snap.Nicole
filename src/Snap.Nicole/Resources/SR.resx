@@ -297,6 +297,9 @@
   <data name="UIXamlPagesAgentPageLabelSend" xml:space="preserve">
     <value>发送</value>
   </data>
+  <data name="UIXamlPagesAgentPageLabelStopGeneration" xml:space="preserve">
+    <value>停止生成</value>
+  </data>
   <data name="UIXamlPagesAgentPageLabelPlaceholder" xml:space="preserve">
     <value>输入消息...</value>
   </data>

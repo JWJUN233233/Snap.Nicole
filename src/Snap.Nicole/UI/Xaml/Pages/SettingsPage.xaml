@@ -2,8 +2,8 @@
     x:Class="Snap.Nicole.UI.Xaml.Pages.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:cvt="using:CommunityToolkit.WinUI.Converters"
-    xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
+    xmlns:cwcont="using:CommunityToolkit.WinUI.Controls"
+    xmlns:cwconv="using:CommunityToolkit.WinUI.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mxi="using:Microsoft.Xaml.Interactivity"
@@ -20,8 +20,8 @@
     </mxi:Interaction.Behaviors>
 
     <Page.Resources>
-        <cvt:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-        <cvt:DoubleToVisibilityConverter x:Key="PositiveCountVisibilityConverter" GreaterThan="0" />
+        <cwconv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <cwconv:DoubleToVisibilityConverter x:Key="PositiveCountVisibilityConverter" GreaterThan="0" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
     </Page.Resources>
@@ -75,7 +75,7 @@
                     </Border>
 
                     <StackPanel Spacing="3">
-                        <cwc:SettingsCard Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionSettingsSync}" Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelGitSync}">
+                        <cwcont:SettingsCard Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionSettingsSync}" Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelGitSync}">
                             <StackPanel
                                 Grid.Column="1"
                                 Orientation="Horizontal"
@@ -125,14 +125,14 @@
                                     </Button>
                                 </StackPanel>
                             </StackPanel>
-                        </cwc:SettingsCard>
+                        </cwcont:SettingsCard>
                         <InfoBar
                             Title="{Binding GitSync.StatusTitle.Value}"
                             IsClosable="False"
                             IsOpen="{Binding GitSync.IsStatusOpen, Mode=TwoWay}"
                             Message="{Binding GitSync.StatusMessage.Value}"
                             Severity="{Binding GitSync.InfoBarSeverity}" />
-                        <cwc:SettingsCard
+                        <cwcont:SettingsCard
                             Grid.Row="0"
                             Description="{Binding GitSync.RepositoryPath}"
                             Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRepositoryPath}">
@@ -142,8 +142,8 @@
                                     <TextBlock Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelOpenSettingsFolder}" />
                                 </StackPanel>
                             </Button>
-                        </cwc:SettingsCard>
-                        <cwc:SettingsCard
+                        </cwcont:SettingsCard>
+                        <cwcont:SettingsCard
                             Grid.Row="1"
                             Description="{Binding GitSync.RemoteUrlDisplay.Value}"
                             Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelRemoteRepository}" />
@@ -161,7 +161,7 @@
                         Margin="1,0,0,0"
                         Style="{ThemeResource BaseTextBlockStyle}"
                         Text="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelAppearance}" />
-                    <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelLanguage}">
+                    <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelLanguage}">
                         <ComboBox
                             MinWidth="160"
                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -173,7 +173,7 @@
                                     SelectedValuePath="Value" />
                             </mxi:Interaction.Behaviors>
                         </ComboBox>
-                    </cwc:SettingsCard>
+                    </cwcont:SettingsCard>
                 </StackPanel>
             </Border>
 
@@ -280,10 +280,10 @@
                                         PasswordRevealMode="Peek" />
 
                                     <StackPanel Spacing="3">
-                                        <cwc:SettingsCard Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionModelListDocumentationLink}" Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListDocumentationLink}">
+                                        <cwcont:SettingsCard Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionModelListDocumentationLink}" Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListDocumentationLink}">
                                             <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelListDocumentationLink, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                        </cwc:SettingsCard>
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListActions}">
+                                        </cwcont:SettingsCard>
+                                        <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelListActions}">
                                             <StackPanel Orientation="Horizontal" Spacing="8">
                                                 <Button
                                                     Grid.Column="1"
@@ -326,7 +326,7 @@
                                                     </StackPanel>
                                                 </Button>
                                             </StackPanel>
-                                        </cwc:SettingsCard>
+                                        </cwcont:SettingsCard>
                                         <InfoBar
                                             Title="{Binding ModelListStatusTitle.Value}"
                                             IsClosable="False"
@@ -334,7 +334,7 @@
                                             Message="{Binding ModelListStatusMessage.Value}"
                                             Severity="{Binding ModelListInfoBarSeverity}"
                                             Visibility="{Binding IsModelListStatusOpen, Mode=OneWay}" />
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSelectedModel}">
+                                        <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelSelectedModel}">
                                             <ComboBox
                                                 MinWidth="240"
                                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -343,13 +343,13 @@
                                                     <snuxb:SelectorSelectedItemBindingWorkaroundBehavior ItemsSource="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles, Mode=OneWay}" SelectedItem="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem, Mode=TwoWay}" />
                                                 </mxi:Interaction.Behaviors>
                                             </ComboBox>
-                                        </cwc:SettingsCard>
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}">
+                                        </cwcont:SettingsCard>
+                                        <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileModelId}">
                                             <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.ModelId, Mode=TwoWay}" />
-                                        </cwc:SettingsCard>
-                                        <cwc:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}">
+                                        </cwcont:SettingsCard>
+                                        <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}">
                                             <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay}" />
-                                        </cwc:SettingsCard>
+                                        </cwcont:SettingsCard>
                                     </StackPanel>
 
                                 </StackPanel>

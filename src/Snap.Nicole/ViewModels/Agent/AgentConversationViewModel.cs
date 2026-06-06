@@ -16,22 +16,15 @@ using System.Threading.Tasks;
 
 namespace Snap.Nicole.ViewModels.Agent;
 
-internal sealed partial class AgentConversationViewModel : ObservableObject, IDisposable
+internal sealed partial class AgentConversationViewModel(IAgentService agentService, AgentConversationRuntimeCoordinator conversationRuntimeCoordinator, AgentConversationProfileCoordinator conversationProfileCoordinator, IAgentConversationOwner conversationOwner)
+    : ObservableObject, IDisposable
 {
-    private readonly IAgentService agentService;
-    private readonly AgentConversationRuntimeCoordinator conversationRuntimeCoordinator;
-    private readonly AgentConversationProfileCoordinator conversationProfileCoordinator;
-    private readonly IAgentConversationOwner conversationOwner;
+    private readonly IAgentService agentService = agentService;
+    private readonly AgentConversationRuntimeCoordinator conversationRuntimeCoordinator = conversationRuntimeCoordinator;
+    private readonly AgentConversationProfileCoordinator conversationProfileCoordinator = conversationProfileCoordinator;
+    private readonly IAgentConversationOwner conversationOwner = conversationOwner;
     private CancellationTokenSource? generationCts;
     private bool disposed;
-
-    public AgentConversationViewModel(IAgentService agentService, AgentConversationRuntimeCoordinator conversationRuntimeCoordinator, AgentConversationProfileCoordinator conversationProfileCoordinator, IAgentConversationOwner conversationOwner)
-    {
-        this.agentService = agentService;
-        this.conversationRuntimeCoordinator = conversationRuntimeCoordinator;
-        this.conversationProfileCoordinator = conversationProfileCoordinator;
-        this.conversationOwner = conversationOwner;
-    }
 
     public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -194,9 +187,7 @@ internal sealed partial class AgentConversationViewModel : ObservableObject, IDi
         InputText = string.Empty;
         IsBusy = true;
         CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        generationCts = linkedCts;
-        SendMessageCommand.NotifyCanExecuteChanged();
-        StopGenerationCommand.NotifyCanExecuteChanged();
+        SetGenerationCancellationTokenSource(linkedCts);
 
         try
         {
@@ -242,11 +233,7 @@ internal sealed partial class AgentConversationViewModel : ObservableObject, IDi
         }
         finally
         {
-            if (ReferenceEquals(generationCts, linkedCts))
-            {
-                generationCts = null;
-            }
-
+            SetGenerationCancellationTokenSource(null);
             RebuildConversationStatistics();
             linkedCts.Dispose();
             IsBusy = false;
@@ -263,8 +250,14 @@ internal sealed partial class AgentConversationViewModel : ObservableObject, IDi
             return;
         }
 
+        CancellationTokenSource? cancellationTokenSource = SetGenerationCancellationTokenSource(null);
+        if (cancellationTokenSource is null)
+        {
+            return;
+        }
+
         SentryDiagnostics.AddBreadcrumb("Stop chat generation", SentryBreadcrumbCategories.AIChat, SentryBreadcrumbTypes.UI);
-        generationCts?.Cancel();
+        cancellationTokenSource.Cancel();
     }
 
     [RelayCommand(CanExecute = nameof(CanDeleteConversation))]
@@ -285,9 +278,8 @@ internal sealed partial class AgentConversationViewModel : ObservableObject, IDi
             return;
         }
 
-        generationCts?.Cancel();
-        SendMessageCommand.NotifyCanExecuteChanged();
-        StopGenerationCommand.NotifyCanExecuteChanged();
+        CancellationTokenSource? cancellationTokenSource = SetGenerationCancellationTokenSource(null);
+        cancellationTokenSource?.Cancel();
         DeleteConversationCommand.NotifyCanExecuteChanged();
     }
 
@@ -329,5 +321,20 @@ internal sealed partial class AgentConversationViewModel : ObservableObject, IDi
         }
 
         return title[..maxLength] + "...";
+    }
+
+    private CancellationTokenSource? SetGenerationCancellationTokenSource(CancellationTokenSource? value)
+    {
+        CancellationTokenSource? previous = Interlocked.Exchange(ref generationCts, value);
+        if (ReferenceEquals(previous, value))
+        {
+            return previous;
+        }
+
+        OnPropertyChanged(nameof(CanSendMessage));
+        OnPropertyChanged(nameof(CanStopGeneration));
+        SendMessageCommand.NotifyCanExecuteChanged();
+        StopGenerationCommand.NotifyCanExecuteChanged();
+        return previous;
     }
 }

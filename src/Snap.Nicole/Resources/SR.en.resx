@@ -236,6 +236,9 @@
   <data name="UIXamlPagesAgentPageLabelSend" xml:space="preserve">
     <value>Send</value>
   </data>
+  <data name="UIXamlPagesAgentPageLabelStopGeneration" xml:space="preserve">
+    <value>Stop generation</value>
+  </data>
   <data name="UIXamlPagesAgentPageLabelPlaceholder" xml:space="preserve">
     <value>Type a message...</value>
   </data>
