@@ -78,9 +78,15 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
 
         foreach (CopyFromPropertyInfo property in source.Properties)
         {
-            statements.Add(ExpressionStatement(SimpleAssignmentExpression(
-                SimpleMemberAccessExpression(ThisExpression(), IdentifierName(property.TargetName)),
-                SimpleMemberAccessExpression(sourceParameterName, IdentifierName(property.SourceName)))));
+            ExpressionSyntax targetExpression = SimpleMemberAccessExpression(ThisExpression(), IdentifierName(property.TargetName));
+            ExpressionSyntax sourceExpression = SimpleMemberAccessExpression(sourceParameterName, IdentifierName(property.SourceName));
+            statements.Add(ExpressionStatement(property.Strategy switch
+            {
+                CopyFromPropertyStrategy.Assignment => SimpleAssignmentExpression(targetExpression, sourceExpression),
+                CopyFromPropertyStrategy.CopyFrom => InvocationExpression(SimpleMemberAccessExpression(targetExpression, IdentifierName("CopyFrom")))
+                    .WithArgumentList(ArgumentList(SingletonSeparatedList(Argument(sourceExpression)))),
+                _ => throw new InvalidOperationException("Unsupported copy-from property strategy: " + property.Strategy)
+            }));
         }
 
         return MethodDeclaration(VoidType, Identifier("CopyFrom"))
@@ -162,17 +168,12 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
             {
                 token.ThrowIfCancellationRequested();
 
-                if (!CanWriteTargetProperty(targetProperty))
-                {
-                    continue;
-                }
-
                 if (!sourceProperties.TryGetValue(targetProperty.Name, out IPropertySymbol? sourceProperty))
                 {
                     continue;
                 }
 
-                if (!compilation.ClassifyConversion(sourceProperty.Type, targetProperty.Type).IsImplicit)
+                if (!TryGetPropertyStrategy(targetProperty, sourceProperty, compilation, out CopyFromPropertyStrategy strategy))
                 {
                     continue;
                 }
@@ -181,6 +182,7 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
                 {
                     TargetName = targetProperty.Name,
                     SourceName = sourceProperty.Name,
+                    Strategy = strategy,
                 });
             }
 
@@ -216,12 +218,62 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
                 && property.SetMethod is { IsInitOnly: false };
         }
 
+        private static bool CanReadTargetProperty(IPropertySymbol property)
+        {
+            return !property.IsStatic
+                && !property.IsIndexer
+                && property.GetMethod is not null;
+        }
+
         private static bool CanReadSourceProperty(IPropertySymbol property)
         {
             return !property.IsStatic
                 && !property.IsIndexer
                 && property.GetMethod is not null
                 && property.GetMethod.DeclaredAccessibility is Accessibility.Public;
+        }
+
+        private static bool TryGetPropertyStrategy(IPropertySymbol targetProperty, IPropertySymbol sourceProperty, Compilation compilation, out CopyFromPropertyStrategy strategy)
+        {
+            if (CanReadTargetProperty(targetProperty) && targetProperty.Type.IsReferenceType && CanCopyFromProperty(targetProperty.Type, sourceProperty.Type, compilation))
+            {
+                strategy = CopyFromPropertyStrategy.CopyFrom;
+                return true;
+            }
+
+            if (CanWriteTargetProperty(targetProperty) && compilation.ClassifyConversion(sourceProperty.Type, targetProperty.Type).IsImplicit)
+            {
+                strategy = CopyFromPropertyStrategy.Assignment;
+                return true;
+            }
+
+            strategy = default;
+            return false;
+        }
+
+        private static bool CanCopyFromProperty(ITypeSymbol targetType, ITypeSymbol sourceType, Compilation compilation)
+        {
+            if (targetType is INamedTypeSymbol targetNamedType && CanCopyFromInterface(targetNamedType, sourceType, compilation))
+            {
+                return true;
+            }
+
+            foreach (INamedTypeSymbol interfaceType in targetType.AllInterfaces)
+            {
+                if (CanCopyFromInterface(interfaceType, sourceType, compilation))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool CanCopyFromInterface(INamedTypeSymbol interfaceType, ITypeSymbol sourceType, Compilation compilation)
+        {
+            return interfaceType.TypeArguments.Length is 1
+                && interfaceType.HasFullyQualifiedMetadataName(WellKnownMetadataNames.ICopyFromT)
+                && compilation.ClassifyConversion(sourceType, interfaceType.TypeArguments[0]).IsImplicit;
         }
     }
 
@@ -237,5 +289,13 @@ internal sealed class CopyFromGenerator : IIncrementalGenerator
         public required string TargetName { get; init; }
 
         public required string SourceName { get; init; }
+
+        public required CopyFromPropertyStrategy Strategy { get; init; }
+    }
+
+    private enum CopyFromPropertyStrategy
+    {
+        Assignment,
+        CopyFrom,
     }
 }

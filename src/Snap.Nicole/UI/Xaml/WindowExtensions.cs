@@ -2,7 +2,6 @@
 using Snap.Nicole.Native;
 using Snap.Nicole.Native.Foundation;
 using Snap.Nicole.Native.UI.Shell;
-using System;
 using WinRT;
 using WinRT.Interop;
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.AI;
 using Snap.Nicole.Services.AI.Models;
 using Snap.Nicole.Services.Settings;
 using System.Linq;
@@ -21,16 +20,7 @@ internal sealed class AgentConversationProfileCoordinator(AppSettings settings)
             return null;
         }
 
-        return new()
-        {
-            ProviderType = providerProfile.ProviderType.Value,
-            ModelId = modelProfile.ModelId.Trim(),
-            Endpoint = providerProfile.Endpoint,
-            ApiKey = providerProfile.ApiKey,
-            ReasoningEffort = ReasoningEffort.High,
-            ThinkingEnabled = true,
-            OmitReasoningEffortWhenThinkingDisabled = true,
-        };
+        return ExtendedAgentOptions.Create(providerProfile, modelProfile);
     }
 
     public void ResolveConversationProfile(AgentConversationViewModel conversation, Guid? providerProfileId, Guid? modelProfileId)

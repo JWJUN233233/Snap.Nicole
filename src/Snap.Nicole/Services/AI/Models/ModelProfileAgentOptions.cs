@@ -1,0 +1,35 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.AI;
+using Snap.Nicole.Core;
+
+namespace Snap.Nicole.Services.AI.Models;
+
+[GeneratedCopyFrom<ModelProfileAgentOptions>]
+internal sealed partial class ModelProfileAgentOptions : ObservableObject, ICopyFrom<ModelProfileAgentOptions>
+{
+    public const string DefaultSystemPrompt = "You are an interactive agent that helps users with software engineering tasks.";
+
+    [ObservableProperty]
+    public partial float? Temperature { get; set; }
+
+    [ObservableProperty]
+    public partial float? TopP { get; set; }
+
+    [ObservableProperty]
+    public partial ReasoningEffort? ReasoningEffort { get; set; } = Microsoft.Extensions.AI.ReasoningEffort.High;
+
+    [ObservableProperty]
+    public partial bool ThinkingEnabled { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool OmitReasoningEffortWhenThinkingDisabled { get; set; } = true;
+
+    [ObservableProperty]
+    public partial int? MaxInputTokens { get; set; }
+
+    [ObservableProperty]
+    public partial int? MaxOutputTokens { get; set; }
+
+    [ObservableProperty]
+    public partial string? SystemPrompt { get; set; } = DefaultSystemPrompt;
+}

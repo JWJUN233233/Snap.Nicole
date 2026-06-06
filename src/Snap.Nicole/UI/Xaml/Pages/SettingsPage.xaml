@@ -24,6 +24,7 @@
         <cwconv:DoubleToVisibilityConverter x:Key="PositiveCountVisibilityConverter" GreaterThan="0" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEditorVisibilityConverter" />
         <snuxd:EmptyObjectToVisibilityConverter x:Key="ModelProviderProfileEmptyStateVisibilityConverter" IsInverted="True" />
+        <snuxd:NullableNumberBoxValueConverter x:Key="NullableNumberBoxValueConverter" />
     </Page.Resources>
 
     <ScrollViewer>
@@ -350,6 +351,77 @@
                                         <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelName}">
                                             <TextBox Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.Name, Mode=TwoWay}" />
                                         </cwcont:SettingsCard>
+                                        <cwcont:SettingsExpander Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelAgentOptions}" IsExpanded="True">
+                                            <cwcont:SettingsExpander.Items>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelTemperature}">
+                                                    <NumberBox
+                                                        LargeChange="0.5"
+                                                        Maximum="2"
+                                                        Minimum="0"
+                                                        PlaceholderText="{snuxm:StringResource Name=UIXamlPagesSettingsPagePlaceholderProviderDefault}"
+                                                        SmallChange="0.1"
+                                                        SpinButtonPlacementMode="Compact"
+                                                        Value="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.Temperature, Mode=TwoWay, Converter={StaticResource NullableNumberBoxValueConverter}}" />
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelTopP}">
+                                                    <NumberBox
+                                                        LargeChange="0.1"
+                                                        Maximum="1"
+                                                        Minimum="0"
+                                                        PlaceholderText="{snuxm:StringResource Name=UIXamlPagesSettingsPagePlaceholderProviderDefault}"
+                                                        SmallChange="0.05"
+                                                        SpinButtonPlacementMode="Compact"
+                                                        Value="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.TopP, Mode=TwoWay, Converter={StaticResource NullableNumberBoxValueConverter}}" />
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelReasoningEffort}">
+                                                    <ComboBox
+                                                        MinWidth="180"
+                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        DisplayMemberPath="Label">
+                                                        <mxi:Interaction.Behaviors>
+                                                            <snuxb:SelectorSelectedValueBindingWorkaroundBehavior
+                                                                ItemsSource="{Binding ReasoningEfforts}"
+                                                                SelectedValue="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.ReasoningEffort, Mode=TwoWay}"
+                                                                SelectedValuePath="Value" />
+                                                        </mxi:Interaction.Behaviors>
+                                                    </ComboBox>
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelThinkingEnabled}">
+                                                    <ToggleSwitch IsOn="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.ThinkingEnabled, Mode=TwoWay}" />
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelOmitReasoningEffortWhenThinkingDisabled}">
+                                                    <ToggleSwitch IsOn="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.OmitReasoningEffortWhenThinkingDisabled, Mode=TwoWay}" />
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelMaxInputTokens}">
+                                                    <NumberBox
+                                                        LargeChange="1024"
+                                                        Maximum="2147483647"
+                                                        Minimum="0"
+                                                        PlaceholderText="{snuxm:StringResource Name=UIXamlPagesSettingsPagePlaceholderProviderDefault}"
+                                                        SmallChange="1024"
+                                                        SpinButtonPlacementMode="Compact"
+                                                        Value="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.MaxInputTokens, Mode=TwoWay, Converter={StaticResource NullableNumberBoxValueConverter}}" />
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelMaxOutputTokens}">
+                                                    <NumberBox
+                                                        LargeChange="1024"
+                                                        Maximum="2147483647"
+                                                        Minimum="0"
+                                                        PlaceholderText="{snuxm:StringResource Name=UIXamlPagesSettingsPagePlaceholderProviderDefault}"
+                                                        SmallChange="1024"
+                                                        SpinButtonPlacementMode="Compact"
+                                                        Value="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.MaxOutputTokens, Mode=TwoWay, Converter={StaticResource NullableNumberBoxValueConverter}}" />
+                                                </cwcont:SettingsCard>
+                                                <cwcont:SettingsCard Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelModelSystemPrompt}">
+                                                    <TextBox
+                                                        MinHeight="96"
+                                                        AcceptsReturn="True"
+                                                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                        Text="{Binding Settings.ModelProviderProfiles.CurrentItem.ModelProfiles.CurrentItem.AgentOptions.SystemPrompt, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                        TextWrapping="Wrap" />
+                                                </cwcont:SettingsCard>
+                                            </cwcont:SettingsExpander.Items>
+                                        </cwcont:SettingsExpander>
                                     </StackPanel>
 
                                 </StackPanel>

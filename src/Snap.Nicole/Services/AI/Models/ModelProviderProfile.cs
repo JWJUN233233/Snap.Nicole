@@ -6,6 +6,7 @@ using System.ComponentModel;
 
 namespace Snap.Nicole.Services.AI.Models;
 
+[GeneratedCopyFrom<ModelProviderProfile>]
 internal sealed partial class ModelProviderProfile : ObservableObject, IIdentifiable<Guid>, ICopyFrom<ModelProviderProfile>, IOptionsObservableChildrenProvider
 {
     [ObservableProperty]
@@ -32,20 +33,6 @@ internal sealed partial class ModelProviderProfile : ObservableObject, IIdentifi
     {
         get => ModelProfiles.CurrentItemId;
         set => ModelProfiles.CurrentItemId = value;
-    }
-
-    public void CopyFrom(ModelProviderProfile source)
-    {
-        ArgumentNullException.ThrowIfNull(source);
-
-        Id = source.Id;
-        Name = source.Name;
-        ProviderType = source.ProviderType;
-        Endpoint = source.Endpoint;
-        ApiKey = source.ApiKey;
-        ModelListDocumentationLink = source.ModelListDocumentationLink;
-        ModelProfiles.CopyFrom(source.ModelProfiles);
-        SelectedModelProfileId = source.SelectedModelProfileId;
     }
 
     public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()

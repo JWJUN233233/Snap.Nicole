@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.AI;
 using Microsoft.UI.Xaml.Controls;
 using Sentry;
 using Snap.Nicole.Core;
@@ -29,6 +30,17 @@ internal sealed partial class SettingsModelConfigurationViewModel(IServiceProvid
         new("OpenAI Chat Completions | ~/chat/completions", EnumBox.Of(ModelProviderType.OpenAIChatCompletion)),
         new("OpenAI Responses | ~/responses", EnumBox.Of(ModelProviderType.OpenAIResponses)),
         new("Anthropic Messages | ~/v1/messages", EnumBox.Of(ModelProviderType.Anthropic)),
+    ];
+
+    // TODO: Use StringResourceValue for the display name.
+    public IReadOnlyList<SettingsItem<ReasoningEffort?>> ReasoningEfforts { get; } =
+    [
+        new("Provider default", null),
+        new("None", ReasoningEffort.None),
+        new("Low", ReasoningEffort.Low),
+        new("Medium", ReasoningEffort.Medium),
+        new("High", ReasoningEffort.High),
+        new("Extra high", ReasoningEffort.ExtraHigh),
     ];
 
     [ObservableProperty]

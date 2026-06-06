@@ -8,7 +8,8 @@ using System.Globalization;
 
 namespace Snap.Nicole.Services.Settings;
 
-internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IOptionsObservableChildrenProvider
+[GeneratedCopyFrom<AppSettings>]
+internal sealed partial class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IOptionsObservableChildrenProvider
 {
     public string Language
     {
@@ -28,15 +29,6 @@ internal sealed class AppSettings : ObservableObject, ICopyFrom<AppSettings>, IO
     {
         get => ModelProviderProfiles.CurrentItemId;
         set => ModelProviderProfiles.CurrentItemId = value;
-    }
-
-    public void CopyFrom(AppSettings source)
-    {
-        ArgumentNullException.ThrowIfNull(source);
-
-        Language = source.Language;
-        ModelProviderProfiles.CopyFrom(source.ModelProviderProfiles);
-        SelectedModelProviderProfileId = source.SelectedModelProviderProfileId;
     }
 
     public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()

@@ -248,6 +248,12 @@
   <data name="UIXamlPagesAgentPageLabelModelProfile" xml:space="preserve">
     <value>Model</value>
   </data>
+  <data name="UIXamlPagesAgentPageLabelAttachment" xml:space="preserve">
+    <value>Attachment</value>
+  </data>
+  <data name="UIXamlPagesAgentPageLabelSwitchModel" xml:space="preserve">
+    <value>Switch model</value>
+  </data>
   <data name="UIXamlPagesAgentPageLabelConversations" xml:space="preserve">
     <value>Conversations</value>
   </data>
@@ -346,6 +352,36 @@
   </data>
   <data name="UIXamlPagesSettingsPageLabelModelName" xml:space="preserve">
     <value>Model Name</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelAgentOptions" xml:space="preserve">
+    <value>Model Options</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelTemperature" xml:space="preserve">
+    <value>Temperature</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelTopP" xml:space="preserve">
+    <value>Top P</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelReasoningEffort" xml:space="preserve">
+    <value>Reasoning Effort</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelThinkingEnabled" xml:space="preserve">
+    <value>Enable Thinking</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelOmitReasoningEffortWhenThinkingDisabled" xml:space="preserve">
+    <value>Omit reasoning effort when Thinking is off</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelMaxInputTokens" xml:space="preserve">
+    <value>Input Token Limit</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelMaxOutputTokens" xml:space="preserve">
+    <value>Output Token Limit</value>
+  </data>
+  <data name="UIXamlPagesSettingsPageLabelModelSystemPrompt" xml:space="preserve">
+    <value>System Prompt</value>
+  </data>
+  <data name="UIXamlPagesSettingsPagePlaceholderProviderDefault" xml:space="preserve">
+    <value>Provider default</value>
   </data>
   <data name="UIXamlPagesSettingsPageLabelFetchModels" xml:space="preserve">
     <value>Fetch</value>

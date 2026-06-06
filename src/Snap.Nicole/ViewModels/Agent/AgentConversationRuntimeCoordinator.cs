@@ -61,6 +61,8 @@ internal sealed class AgentConversationRuntimeCoordinator(IAgentService agentSer
             && string.Equals(agentOptions.ApiKey, requestOptions.ApiKey, StringComparison.Ordinal)
             && string.Equals(agentOptions.ModelId, requestOptions.ModelId, StringComparison.Ordinal)
             && agentOptions.ThinkingEnabled == requestOptions.ThinkingEnabled
+            && agentOptions.MaxInputTokens == requestOptions.MaxInputTokens
+            && agentOptions.MaxOutputTokens == requestOptions.MaxOutputTokens
             && string.Equals(agentOptions.SystemPrompt, requestOptions.SystemPrompt, StringComparison.Ordinal);
     }
 

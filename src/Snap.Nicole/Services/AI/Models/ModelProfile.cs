@@ -1,11 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Snap.Nicole.Core;
+using Snap.Nicole.Services.Settings;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace Snap.Nicole.Services.AI.Models;
 
 [GeneratedCopyFrom<ModelProfile>]
-internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Guid>
+internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Guid>, ICopyFrom<ModelProfile>, IOptionsObservableChildrenProvider
 {
     [ObservableProperty]
     public partial Guid Id { get; set; } = Guid.NewGuid();
@@ -17,6 +20,21 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(DisplayName))]
     public partial string ModelId { get; set; } = string.Empty;
+
+    public ModelProfileAgentOptions AgentOptions
+    {
+        get;
+        set
+        {
+            ModelProfileAgentOptions options = new();
+            if (value is not null)
+            {
+                options.CopyFrom(value);
+            }
+
+            SetProperty(ref field, options);
+        }
+    } = new();
 
     [JsonIgnore]
     public string DisplayName
@@ -48,5 +66,10 @@ internal sealed partial class ModelProfile : ObservableObject, IIdentifiable<Gui
             Name = string.IsNullOrWhiteSpace(model.DisplayName) ? model.ID : model.DisplayName,
             ModelId = model.ID,
         };
+    }
+
+    public IEnumerable<INotifyPropertyChanged> EnumerateObservableChildren()
+    {
+        yield return AgentOptions;
     }
 }
