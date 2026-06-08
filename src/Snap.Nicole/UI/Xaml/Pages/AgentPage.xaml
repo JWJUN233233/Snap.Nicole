@@ -59,7 +59,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
-                        <Grid DataContext="{Binding DataContext, RelativeSource={RelativeSource TemplatedParent}}">
+                        <Grid d:DataContext="{d:DesignInstance snv:AgentViewModel}" DataContext="{Binding DataContext, RelativeSource={RelativeSource TemplatedParent}}">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
@@ -155,23 +155,25 @@
                                         Orientation="Horizontal"
                                         Spacing="6">
                                         <Button
-                                            MaxWidth="240"
+                                            Padding="12,5,12,7"
                                             Style="{StaticResource AgentInputToolbarButtonStyle}"
                                             ToolTipService.ToolTip="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelSwitchModel}">
-                                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                                <TextBlock
-                                                    MaxWidth="150"
-                                                    VerticalAlignment="Center"
-                                                    Text="{Binding Conversations.CurrentItem.ModelProfile.DisplayName}"
-                                                    TextTrimming="CharacterEllipsis" />
+                                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                                <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                                    <TextBlock.Inlines>
+                                                        <Run Text="{Binding Conversations.CurrentItem.ModelProviderProfile.Name}" />
+                                                        <Run Text="|" />
+                                                        <Run Text="{Binding Conversations.CurrentItem.ModelProfile.DisplayName}" />
+                                                    </TextBlock.Inlines>
+                                                </TextBlock>
                                                 <FontIcon
-                                                    VerticalAlignment="Center"
+                                                    Margin="0,2,0,0"
                                                     FontSize="10"
                                                     Glyph="&#xE70D;"
                                                     Opacity="0.7" />
                                             </StackPanel>
                                             <Button.Flyout>
-                                                <Flyout>
+                                                <Flyout Placement="TopEdgeAlignedRight">
                                                     <Flyout.FlyoutPresenterStyle>
                                                         <Style BasedOn="{StaticResource DefaultFlyoutPresenterStyle}" TargetType="FlyoutPresenter">
                                                             <Setter Property="MinWidth" Value="320" />
@@ -531,7 +533,8 @@
                     IsSpellCheckEnabled="False"
                     PlaceholderText="{snuxm:StringResource Name=UIXamlPagesAgentPageLabelPlaceholder}"
                     Style="{StaticResource AgentInputTextBoxStyle}"
-                    Text="{Binding Conversations.CurrentItem.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    Text="{Binding Conversations.CurrentItem.InputText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap">
                     <mxi:Interaction.Behaviors>
                         <snuxb:SubmitOnEnterTextBoxBehavior Command="{Binding Conversations.CurrentItem.SendMessageCommand}" />
                     </mxi:Interaction.Behaviors>
