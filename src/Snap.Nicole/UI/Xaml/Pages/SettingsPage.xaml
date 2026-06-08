@@ -283,7 +283,9 @@
                                             </ComboBox>
                                             <TextBox Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileEndpoint}" Text="{Binding Settings.ModelProviderProfiles.CurrentItem.Endpoint, Mode=TwoWay}" />
                                             <PasswordBox
-                                                snuxc:PasswordBoxExtensions.Password="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=TwoWay}"
+                                                x:Name="ApiKeyPasswordBox"
+                                                snuxc:PasswordBoxExtensions.Password="{Binding Settings.ModelProviderProfiles.CurrentItem.ApiKey, Mode=OneWay}"
+                                                PasswordChanged="OnApiKeyPasswordChanged"
                                                 Description="{snuxm:StringResource Name=UIXamlPagesSettingsPageDescriptionProfileApiKey}"
                                                 Header="{snuxm:StringResource Name=UIXamlPagesSettingsPageLabelProfileApiKey}"
                                                 PasswordChar="&#x2022;"
